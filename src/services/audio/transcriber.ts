@@ -11,7 +11,8 @@ import {
   getLanguageName,
   normalizeLanguageCode,
 } from '../ai/translation';
-import { speechStatus, whisperEngine, toWhisperLanguage, isNonSpeech } from './whisper-engine';
+import { speechStatus, speechEngine, toWhisperLanguage, isNonSpeech } from './speech-engine';
+import { resolveTranscriptionEngine, getTranscriptionEngine, MULTILINGUAL_FALLBACK_ENGINE } from './transcription-engines';
 import { startPcmCapture, takeChunkBatch, locateInBatch, type PcmCapture, type SpeechChunk } from './pcm-capture';
 
 // Longest audio merged into one Whisper call (the model window is 30 s)
@@ -288,7 +289,7 @@ export class LiveSpeechTranscriber {
   private session = 0;
 
   isSupported(): boolean {
-    return whisperEngine.isSupported() || this.fallback.isSupported();
+    return speechEngine.isSupported() || this.fallback.isSupported();
   }
 
   /** Transcribe this stream instead of opening the microphone. Pass null to clear. */
@@ -319,7 +320,7 @@ export class LiveSpeechTranscriber {
 
   /** Download the speech model ahead of time so the first phrase is not delayed. */
   preload(): void {
-    if (whisperEngine.isSupported()) whisperEngine.load().catch(() => {});
+    if (speechEngine.isSupported()) speechEngine.load(resolveTranscriptionEngine(this.language)).catch(() => {});
   }
 
   start(
@@ -334,7 +335,7 @@ export class LiveSpeechTranscriber {
   }
 
   private async startCapture(session: number): Promise<void> {
-    if (!whisperEngine.isSupported()) {
+    if (!speechEngine.isSupported()) {
       this.startFallback();
       return;
     }
@@ -351,8 +352,19 @@ export class LiveSpeechTranscriber {
         return;
       }
       this.capture = await startPcmCapture(stream, (chunk) => this.enqueue(chunk));
-      whisperEngine.load().catch((err) => {
-        console.warn('[HuskyNote] Whisper model unavailable, using browser speech recognition:', err);
+      const engine = resolveTranscriptionEngine(this.language);
+      speechEngine.load(engine).catch(async (err) => {
+        console.warn(`[HuskyNote] ${engine.name} could not load:`, err);
+        if (session !== this.session) return;
+        // Try the multilingual engine before giving up on on-device transcription
+        if (engine.id !== MULTILINGUAL_FALLBACK_ENGINE) {
+          try {
+            await speechEngine.load(getTranscriptionEngine(MULTILINGUAL_FALLBACK_ENGINE));
+            return;
+          } catch (fallbackErr) {
+            console.warn('[HuskyNote] Fallback speech engine could not load:', fallbackErr);
+          }
+        }
         if (session === this.session) this.startFallback();
       });
     } catch (err: any) {
@@ -395,7 +407,7 @@ export class LiveSpeechTranscriber {
       const batch = takeChunkBatch(this.pendingChunks, MAX_BATCH_SECONDS);
       const language = batch.parts[0].meta.language;
       try {
-        const pieces = await whisperEngine.transcribe(batch.audio, toWhisperLanguage(language));
+        const pieces = await speechEngine.transcribe(batch.audio, toWhisperLanguage(language));
         for (const piece of pieces) {
           if (!piece.text || isNonSpeech(piece.text)) continue;
           const { captureSeconds, meta } = locateInBatch(batch, piece.start);

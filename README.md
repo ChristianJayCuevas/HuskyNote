@@ -15,7 +15,7 @@ Modern knowledge work is fragmented across meetings, documents, screen procedure
 - Meeting Secretary: Real browser audio recording, live transcripts, clickable milestone timelines, and local AI synthesis of decisions and action items.
 - Document Intelligence: Built-in PDF reader powered by PDF.js, coordinate-anchored annotations, text selection contextual AI actions, and automated "Turn into Steps" conversion.
 - Operation Capture & Manual Generator: Capture screen states and operations, detect meaningful steps, annotate screenshots with click coordinates, and generate production-grade standard operating procedure (SOP) manuals exportable to PDF, Markdown, JSON, and HTML.
-- Local AI Workspace: Direct connection to local Ollama models (e.g., Llama 3.2, Gemma 2, Qwen 2.5) with multi-entity context attachment and streaming responses.
+- AI Workspace: Local Ollama models (e.g., Llama 3.2, Gemma 2, Qwen 2.5) or Claude with your own Anthropic API key, chosen in Settings, with multi-entity context attachment and streaming responses.
 - Local-First Architecture: 100% of data is stored client-side in IndexedDB (Dexie). No external cloud databases, no telemetry, and no tracking.
 
 ---
@@ -58,7 +58,7 @@ Modern knowledge work is fragmented across meetings, documents, screen procedure
 ### 2. Meeting Assistant and Live Audio
 - High-fidelity microphone capture using browser MediaRecorder and Web Audio API.
 - Real-time live waveform visualizer and elapsed timer.
-- On-device speech-to-text with Whisper (WebGPU or WebAssembly) for microphone and shared tab audio, with timestamped segments. The speech model downloads once on first use (about 77 MB for CPU, about 206 MB for the faster GPU version).
+- On-device speech-to-text for microphone and shared tab audio, with timestamped segments. Pick the engine in Settings: Parakeet TDT v3 (fastest; English and 24 other European languages), Moonshine Base (light, English), or Whisper Base (multilingual, used automatically for languages the others lack). Each model downloads once on first use.
 - Post-meeting AI synthesis: automatic extraction of key decisions, structured action items, discussion topics, and timeline milestones.
 - Simultaneous manual note-taking during ongoing meetings.
 

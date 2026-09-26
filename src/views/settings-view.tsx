@@ -53,6 +53,7 @@ import {
 import { ChromeIcon } from '../components/ui/chrome-icon';
 import { SUPPORTED_LANGUAGES } from '../services/ai/translation';
 import { AIProviderSettings } from '../components/settings/ai-provider-settings';
+import { TranscriptionSettings } from '../components/settings/transcription-settings';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -1234,13 +1235,15 @@ export const SettingsView: React.FC = () => {
             </div>
           </div>
 
+          <TranscriptionSettings spokenLanguage={currentSpeechLang} />
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-4 rounded-xl border border-slate-200 dark:border-zinc-850 bg-slate-50/60 dark:bg-zinc-900/40 space-y-2">
               <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 <span>Default Spoken Language</span>
               </label>
               <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed font-medium">
-                The primary language your browser listens for when starting new meeting recordings.
+                The primary language used when transcribing new meeting recordings.
               </p>
               <select
                 value={currentSpeechLang}

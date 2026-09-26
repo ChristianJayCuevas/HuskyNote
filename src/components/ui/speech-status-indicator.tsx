@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AlertCircle, Download, X } from 'lucide-react';
-import { speechStatus, type SpeechEngineStatus } from '../../services/audio/whisper-engine';
+import { speechStatus, type SpeechEngineStatus } from '../../services/audio/speech-engine';
 
 export function useSpeechStatus(): SpeechEngineStatus {
   const [status, setStatus] = useState<SpeechEngineStatus>(speechStatus.get());
@@ -23,7 +23,7 @@ export const SpeechStatusIndicator: React.FC = () => {
       <div className="fixed bottom-4 left-4 z-50 w-72 px-3.5 py-3 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl text-xs text-slate-800 dark:text-zinc-200">
         <div className="flex items-center gap-2 font-medium">
           <Download className="w-3.5 h-3.5 shrink-0" />
-          <span>{downloading ? `Downloading speech model ${progress}%` : 'Starting the speech model...'}</span>
+          <span>{downloading ? `Downloading ${status.engineName ?? 'speech model'} ${progress}%` : `Starting ${status.engineName ?? 'the speech model'}...`}</span>
         </div>
         <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-500 leading-normal">
           {downloading

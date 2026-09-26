@@ -49,7 +49,8 @@ HuskyNote integrates five primary knowledge and capture modalities into a unifie
 - **Markdown Engine**: React Markdown, Remark GFM, DOMPurify for HTML sanitization
 - **Export Engines**: jsPDF (for client-side PDF rendering), native Markdown/JSON serializers
 - **Local AI Service**: Ollama REST API (streaming generate, chat, and tag endpoints)
-- **Speech-to-Text**: Whisper (`Xenova/whisper-base`) via transformers.js in a web worker, on WebGPU or WebAssembly. The model downloads once and is cached; audio is transcribed on-device. The Web Speech API is a fallback only.
+- **Speech-to-Text**: On-device engines in web workers, selectable in Settings (`src/services/audio/transcription-engines.ts`): Parakeet TDT v3 via parakeet.js (default; 25 European languages), Moonshine Base and Whisper Base via transformers.js. WebGPU when available, WebAssembly otherwise. Languages the chosen engine lacks use Whisper Base automatically. The Web Speech API is a last-resort fallback.
+- **Optional Cloud AI**: Claude through the Anthropic API with the user's own key (`src/services/ai/claude.ts`), selectable instead of Ollama in Settings. Only the text of a request is sent; audio and stored data stay local.
 
 ### 3.2 Native Desktop Applications
 - **macOS Desktop App (`desktop/main.swift`)**:

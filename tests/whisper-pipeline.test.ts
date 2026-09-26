@@ -7,7 +7,7 @@ import {
   WHISPER_SAMPLE_RATE,
   type SpeechChunk,
 } from '../src/services/audio/pcm-capture';
-import { isNonSpeech, toWhisperLanguage } from '../src/services/audio/whisper-engine';
+import { isNonSpeech, toWhisperLanguage } from '../src/services/audio/speech-engine';
 
 const RATE = 48000;
 
