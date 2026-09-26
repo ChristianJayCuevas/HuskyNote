@@ -4,7 +4,7 @@ import { db } from '../db';
 import { useWorkspace } from '../context/workspace-context';
 import { useSound } from '../context/sound-context';
 import { useAI } from '../context/ai-context';
-import { ollama } from '../services/ai/ollama';
+import { ai } from '../services/ai/active-provider';
 import { Button } from '../components/ui/button';
 import { TiltCard } from '../components/ui/tilt-card';
 import type { ScheduleEvent, ScheduleCategory, GoogleCalendarConfig } from '../types';
@@ -340,7 +340,7 @@ Respond STRICTLY with a valid JSON array of objects formatted as:
 [{"title": "Task Name", "time": "09:00", "durationMin": 45, "category": "deep-work", "notes": "Brief focus note"}]
 Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Return only the JSON array.`;
 
-      const response = await ollama.generate(prompt, { model: selectedModel });
+      const response = await ai.generate(prompt, { model: selectedModel });
       const jsonMatch = response.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);

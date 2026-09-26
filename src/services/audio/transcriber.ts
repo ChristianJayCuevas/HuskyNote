@@ -1,6 +1,6 @@
 import type { TranscriptSegment, MeetingSummary, TimelineItem, ScheduleEvent } from '../../types';
 export type { TranscriptSegment, MeetingSummary, TimelineItem, ScheduleEvent };
-import { ollama } from '../ai/ollama';
+import { ai } from '../ai/active-provider';
 import {
   detectAllEventsInText,
   createScheduleEventFromMatch,
@@ -580,7 +580,7 @@ Respond STRICTLY with valid JSON in this exact structure, with no extra text or 
 }`;
 
   try {
-    const response = await ollama.generate(prompt, {
+    const response = await ai.generate(prompt, {
       model: modelName,
       temperature: 0.1,
     });
@@ -814,7 +814,7 @@ Respond STRICTLY with a valid JSON array of objects formatted as:
 Return only the JSON array with no extra text or markdown formatting.`;
 
   try {
-    const response = await ollama.generate(prompt, {
+    const response = await ai.generate(prompt, {
       model: modelName,
       temperature: 0.1,
     });

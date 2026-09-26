@@ -15,6 +15,7 @@
     "start": "node scripts/start.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
     "@huggingface/transformers": "^3.8.1",
     "clsx": "^2.1.1",
     "dexie": "^4.0.11",

@@ -10,7 +10,7 @@ import { Modal } from '../ui/modal';
 import { useAI } from '../../context/ai-context';
 import { useWorkspace } from '../../context/workspace-context';
 import { chunkDocumentPages, retrieveRelevantChunks, buildRAGPrompt } from '../../services/ai/rag';
-import { ollama } from '../../services/ai/ollama';
+import { ai } from '../../services/ai/active-provider';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DOMPurify from 'dompurify';
@@ -596,7 +596,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         setAiResponse(fullAiAnswer);
         setIsAiLoading(false);
       } else {
-        await ollama.streamGenerate(
+        await ai.streamGenerate(
           prompt,
           (chunk) => {
             fullAiAnswer += chunk;

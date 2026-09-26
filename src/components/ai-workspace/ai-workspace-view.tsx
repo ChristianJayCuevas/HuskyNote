@@ -3,7 +3,7 @@ import type { AIContextChip, AIChatMessage } from '../../types';
 import { ContextSelector } from './context-selector';
 import { useAI } from '../../context/ai-context';
 import { useWorkspace } from '../../context/workspace-context';
-import { ollama } from '../../services/ai/ollama';
+import { ai } from '../../services/ai/active-provider';
 import { db } from '../../db';
 import { Button } from '../ui/button';
 import ReactMarkdown from 'react-markdown';
@@ -120,7 +120,7 @@ export const AIWorkspaceView: React.FC = () => {
       combinedPrompt += `USER REQUEST: ${textToSend}`;
 
       let streamedText = '';
-      await ollama.streamGenerate(
+      await ai.streamGenerate(
         combinedPrompt,
         (chunk) => {
           streamedText += chunk;

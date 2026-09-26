@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 import { useAI } from '../../context/ai-context';
 import { useWorkspace } from '../../context/workspace-context';
 import { db } from '../../db';
-import { ollama } from '../../services/ai/ollama';
+import { ai } from '../../services/ai/active-provider';
 import { ListOrdered, Sparkles, Save, BookOpen } from 'lucide-react';
 
 interface StepsModeProps {
@@ -55,7 +55,7 @@ Respond ONLY with valid JSON in this exact structure, with no additional text:
 }`;
 
       try {
-        const res = await ollama.generate(prompt, {
+        const res = await ai.generate(prompt, {
           model: selectedModel,
           temperature: 0.1,
         });

@@ -1,16 +1,28 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import type { OllamaModel } from '../types';
+import type { OllamaModel, AppSettings } from '../types';
 import { ollama, type PullProgressUpdate } from '../services/ai/ollama';
+import { claude, DEFAULT_CLAUDE_MODEL } from '../services/ai/claude';
+import { setActiveProvider, type AIProviderId } from '../services/ai/active-provider';
 import { db, DEFAULT_SETTINGS } from '../db';
 
-export type { PullProgressUpdate };
+export type { PullProgressUpdate, AIProviderId };
 
 interface AIContextType {
+  /** The active provider can answer requests (Ollama reachable, or Claude key verified) */
   isConnected: boolean;
   isChecking: boolean;
+  /** Models of the active provider */
   models: OllamaModel[];
+  /** Selected model of the active provider */
   selectedModel: string;
   baseUrl: string;
+  provider: AIProviderId;
+  setProvider: (provider: AIProviderId) => Promise<void>;
+  hasClaudeApiKey: boolean;
+  /** Saves (or clears, with '') the Claude API key and verifies it */
+  setClaudeApiKey: (apiKey: string) => Promise<boolean>;
+  /** Local Ollama status, regardless of the active provider */
+  isOllamaConnected: boolean;
   setSelectedModel: (model: string) => Promise<void>;
   setBaseUrl: (url: string) => Promise<void>;
   checkConnection: () => Promise<boolean>;
@@ -26,18 +38,45 @@ const AIContext = createContext<AIContextType | null>(null);
 
 const STORAGE_KEY_SELECTED_MODEL = 'huskynote_user_selected_model';
 
+async function saveSettings(patch: Partial<AppSettings>): Promise<void> {
+  const existing = await db.settings.get('current');
+  if (existing) await db.settings.update('current', patch);
+  else await db.settings.put({ ...DEFAULT_SETTINGS, ...patch });
+}
+
 export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isOllamaConnected, setIsOllamaConnected] = useState<boolean>(false);
   const [isChecking, setIsChecking] = useState<boolean>(true);
-  const [models, setModels] = useState<OllamaModel[]>([]);
+  const [ollamaModels, setOllamaModels] = useState<OllamaModel[]>([]);
   // Synchronous initial load from localStorage ensures zero-flicker and instant persistence across reloads
-  const [selectedModel, setSelectedModelState] = useState<string>(() => {
+  const [ollamaModel, setOllamaModelState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem(STORAGE_KEY_SELECTED_MODEL) || '';
     }
     return '';
   });
   const [baseUrl, setBaseUrlState] = useState<string>('http://localhost:11434');
+
+  const [provider, setProviderState] = useState<AIProviderId>('ollama');
+  const [claudeModel, setClaudeModelState] = useState<string>(DEFAULT_CLAUDE_MODEL);
+  const [claudeModels, setClaudeModels] = useState<OllamaModel[]>([]);
+  const [hasClaudeApiKey, setHasClaudeApiKey] = useState<boolean>(false);
+  const [isClaudeReady, setIsClaudeReady] = useState<boolean>(false);
+
+  useEffect(() => {
+    claude.getModels().then(setClaudeModels);
+  }, []);
+
+  const checkClaude = useCallback(async (): Promise<boolean> => {
+    setIsChecking(true);
+    try {
+      const ok = await claude.isAvailable();
+      setIsClaudeReady(ok);
+      return ok;
+    } finally {
+      setIsChecking(false);
+    }
+  }, []);
 
   // Load persisted settings on mount
   useEffect(() => {
@@ -51,7 +90,7 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
         const modelToUse = localSaved || settings?.selectedModel || '';
 
         if (modelToUse && isMounted) {
-          setSelectedModelState(modelToUse);
+          setOllamaModelState(modelToUse);
           if (typeof window !== 'undefined' && !localSaved) {
             localStorage.setItem(STORAGE_KEY_SELECTED_MODEL, modelToUse);
           }
@@ -60,6 +99,16 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
         if (settings && isMounted) {
           setBaseUrlState(settings.ollamaBaseUrl || 'http://localhost:11434');
           ollama.setBaseUrl(settings.ollamaBaseUrl || 'http://localhost:11434');
+
+          const savedProvider: AIProviderId = settings.aiProvider === 'claude' ? 'claude' : 'ollama';
+          setProviderState(savedProvider);
+          setActiveProvider(savedProvider);
+          if (settings.claudeModel) setClaudeModelState(settings.claudeModel);
+          if (settings.claudeApiKey) {
+            claude.setApiKey(settings.claudeApiKey);
+            setHasClaudeApiKey(true);
+            checkClaude();
+          }
         }
       } catch (err) {
         console.warn('[HuskyNote] Could not read settings:', err);
@@ -70,20 +119,20 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [checkClaude]);
 
-  const checkConnection = useCallback(async (): Promise<boolean> => {
+  const checkOllama = useCallback(async (): Promise<boolean> => {
     setIsChecking(true);
     try {
       const available = await ollama.isAvailable();
-      setIsConnected(available);
+      setIsOllamaConnected(available);
       if (available) {
         const fetchedModels = await ollama.getModels();
-        setModels(fetchedModels);
+        setOllamaModels(fetchedModels);
 
         // Auto-select first model ONLY if the user has NEVER selected any model anywhere
         if (fetchedModels.length > 0) {
-          setSelectedModelState((curr) => {
+          setOllamaModelState((curr) => {
             const savedChoice =
               typeof window !== 'undefined'
                 ? localStorage.getItem(STORAGE_KEY_SELECTED_MODEL)
@@ -102,40 +151,77 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
             if (typeof window !== 'undefined') {
               localStorage.setItem(STORAGE_KEY_SELECTED_MODEL, defaultPick);
             }
-            db.settings.get('current').then((existing) => {
-              if (existing) {
-                db.settings.update('current', { selectedModel: defaultPick }).catch(() => {});
-              } else {
-                db.settings.put({ ...DEFAULT_SETTINGS, selectedModel: defaultPick }).catch(() => {});
-              }
-            }).catch(() => {});
+            saveSettings({ selectedModel: defaultPick }).catch(() => {});
             return defaultPick;
           });
         }
       } else {
-        setModels([]);
+        setOllamaModels([]);
       }
       return available;
     } catch {
-      setIsConnected(false);
-      setModels([]);
+      setIsOllamaConnected(false);
+      setOllamaModels([]);
       return false;
     } finally {
       setIsChecking(false);
     }
   }, []);
 
-  // Poll connection every 12 seconds
+  const checkConnection = useCallback(
+    (): Promise<boolean> => (provider === 'claude' ? checkClaude() : checkOllama()),
+    [provider, checkClaude, checkOllama]
+  );
+
+  // Poll the local Ollama service every 12 seconds (Claude is verified only when its key changes)
   useEffect(() => {
-    checkConnection();
-    const interval = setInterval(checkConnection, 12000);
+    checkOllama();
+    const interval = setInterval(checkOllama, 12000);
     return () => clearInterval(interval);
-  }, [checkConnection]);
+  }, [checkOllama]);
+
+  const setProvider = async (next: AIProviderId) => {
+    setProviderState(next);
+    setActiveProvider(next);
+    try {
+      await saveSettings({ aiProvider: next });
+    } catch (err) {
+      console.warn('[HuskyNote] Failed to persist AI provider:', err);
+    }
+    if (next === 'claude' && claude.hasApiKey()) checkClaude();
+  };
+
+  const setClaudeApiKey = async (apiKey: string): Promise<boolean> => {
+    const key = apiKey.trim();
+    claude.setApiKey(key);
+    setHasClaudeApiKey(!!key);
+    try {
+      await saveSettings({ claudeApiKey: key || undefined });
+    } catch (err) {
+      console.warn('[HuskyNote] Failed to persist Claude API key:', err);
+    }
+    if (!key) {
+      setIsClaudeReady(false);
+      return false;
+    }
+    return checkClaude();
+  };
 
   const setSelectedModel = async (model: string) => {
     if (!model || !model.trim()) return;
     const cleanModel = model.trim();
-    setSelectedModelState(cleanModel);
+
+    if (provider === 'claude') {
+      setClaudeModelState(cleanModel);
+      try {
+        await saveSettings({ claudeModel: cleanModel });
+      } catch (err) {
+        console.warn('[HuskyNote] Failed to persist Claude model:', err);
+      }
+      return;
+    }
+
+    setOllamaModelState(cleanModel);
 
     // Save to localStorage immediately (synchronous, immune to DB delays)
     if (typeof window !== 'undefined') {
@@ -144,12 +230,7 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
 
     // Persist to Dexie IndexedDB
     try {
-      const existing = await db.settings.get('current');
-      if (existing) {
-        await db.settings.update('current', { selectedModel: cleanModel });
-      } else {
-        await db.settings.put({ ...DEFAULT_SETTINGS, selectedModel: cleanModel });
-      }
+      await saveSettings({ selectedModel: cleanModel });
     } catch (err) {
       console.warn('[HuskyNote] Failed to persist selected model:', err);
     }
@@ -160,7 +241,7 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
     ollama.setBaseUrl(url);
     try {
       await db.settings.update('current', { ollamaBaseUrl: url });
-      await checkConnection();
+      await checkOllama();
     } catch (err) {
       console.warn('[HuskyNote] Failed to persist base URL:', err);
     }
@@ -177,7 +258,7 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
       if (res && res.ok) {
         // Wait 3 seconds and check
         await new Promise((r) => setTimeout(r, 3000));
-        const ok = await checkConnection();
+        const ok = await checkOllama();
         return {
           success: ok,
           message: ok
@@ -187,7 +268,7 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
       }
 
       // If companion is not running, ping standard endpoint again
-      const directOk = await checkConnection();
+      const directOk = await checkOllama();
       if (directOk) {
         return { success: true, message: 'Connected to Ollama service.' };
       }
@@ -211,19 +292,26 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
   ): Promise<{ success: boolean; message: string }> => {
     const result = await ollama.pullModel(name, onProgress, signal);
     if (result.success) {
-      await checkConnection();
+      await checkOllama();
     }
     return result;
   };
 
+  const isClaude = provider === 'claude';
+
   return (
     <AIContext.Provider
       value={{
-        isConnected,
+        isConnected: isClaude ? isClaudeReady : isOllamaConnected,
         isChecking,
-        models,
-        selectedModel,
+        models: isClaude ? claudeModels : ollamaModels,
+        selectedModel: isClaude ? claudeModel : ollamaModel,
         baseUrl,
+        provider,
+        setProvider,
+        hasClaudeApiKey,
+        setClaudeApiKey,
+        isOllamaConnected,
         setSelectedModel,
         setBaseUrl,
         checkConnection,

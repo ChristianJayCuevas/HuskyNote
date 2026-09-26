@@ -52,6 +52,7 @@ import {
 } from 'lucide-react';
 import { ChromeIcon } from '../components/ui/chrome-icon';
 import { SUPPORTED_LANGUAGES } from '../services/ai/translation';
+import { AIProviderSettings } from '../components/settings/ai-provider-settings';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -65,6 +66,7 @@ export const SettingsView: React.FC = () => {
     checkConnection,
     startOllamaService,
     pullModel,
+    provider,
   } = useAI();
   const { addToast, setIsExtensionModalOpen } = useWorkspace();
 
@@ -337,7 +339,7 @@ export const SettingsView: React.FC = () => {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
           <button
             type="button"
-            onClick={() => document.getElementById('section-ai')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() => document.getElementById('section-ai-provider')?.scrollIntoView({ behavior: 'smooth' })}
             className="px-3 py-1 rounded-md bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white hover:border-slate-300 dark:hover:border-zinc-700 transition-colors whitespace-nowrap text-xs cursor-pointer shadow-xs font-medium"
           >
             AI Engine
@@ -375,7 +377,10 @@ export const SettingsView: React.FC = () => {
       </div>
 
       <div className="space-y-8">
+        <AIProviderSettings />
+
         {/* Local AI / Ollama Configuration */}
+        {provider === 'ollama' && (
         <div id="section-ai" className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 space-y-5 scroll-mt-28 shadow-xs dark:shadow-xl transition-colors duration-500">
           <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-850 pb-4">
             <div className="flex items-center gap-3">
@@ -903,6 +908,7 @@ export const SettingsView: React.FC = () => {
             </span>
           </div>
         </div>
+        )}
 
         {/* Google Calendar & Cloud Sync Section */}
         <div id="section-google-calendar" className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 space-y-6 scroll-mt-28 shadow-xs dark:shadow-xl transition-colors duration-500">

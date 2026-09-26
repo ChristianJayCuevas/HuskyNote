@@ -152,7 +152,8 @@ export async function exportWorkspaceToJson(): Promise<string> {
       operationSessions,
       manuals,
       customTemplates: templates,
-      settings: settings || DEFAULT_SETTINGS,
+      // Never write the Claude API key into an exported backup file
+      settings: { ...(settings || DEFAULT_SETTINGS), claudeApiKey: undefined },
       schedule,
     },
   };

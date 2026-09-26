@@ -5,7 +5,7 @@ import { screenAnnotator } from '../../services/screen/annotator';
 import { useAI } from '../../context/ai-context';
 import { useWorkspace } from '../../context/workspace-context';
 import { db } from '../../db';
-import { ollama } from '../../services/ai/ollama';
+import { ai } from '../../services/ai/active-provider';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import {
@@ -100,7 +100,7 @@ export const OperationRecorder: React.FC<OperationRecorderProps> = ({
     if (isConnected && selectedModel) {
       try {
         const descPrompt = `Provide a concise, formal single-sentence instruction for Step ${stepNum} in an operational manual titled "${sessionTitle}". Keep it direct and procedural.`;
-        const res = await ollama.generate(descPrompt, {
+        const res = await ai.generate(descPrompt, {
           model: selectedModel,
           temperature: 0.2,
         });

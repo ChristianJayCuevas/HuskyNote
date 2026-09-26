@@ -4,7 +4,7 @@ import type { Manual, ManualStep, Note } from '../types';
 import { useWorkspace } from '../context/workspace-context';
 import { useSound } from '../context/sound-context';
 import { useAI } from '../context/ai-context';
-import { ollama } from '../services/ai/ollama';
+import { ai } from '../services/ai/active-provider';
 import { screenAnnotator, grabFrameFromStreamOrVideo } from '../services/screen/annotator';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -320,7 +320,7 @@ CRITICAL RULES:
 - NEVER mention "equipment", "maintenance", "good condition", "inspection", or "Follow these steps".
 - Output exactly ONE concise sentence (under 12 words) describing a concrete software interaction.`;
 
-            const res = await ollama.generate(prompt, {
+            const res = await ai.generate(prompt, {
               model: selectedModel,
               temperature: 0.7,
             });

@@ -1,4 +1,4 @@
-import { ollama } from './ollama';
+import { ai } from './active-provider';
 import type { TranscriptSegment } from '../../types';
 
 export interface SupportedLanguage {
@@ -371,7 +371,7 @@ SOURCE TEXT:
 ${trimmed}`;
 
   try {
-    const response = await ollama.generate(prompt, {
+    const response = await ai.generate(prompt, {
       model: modelName,
       temperature: 0.1,
     });

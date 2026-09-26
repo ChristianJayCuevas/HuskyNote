@@ -40,7 +40,10 @@ export const Sidebar: React.FC = () => {
     setIsExtensionModalOpen,
   } = useWorkspace();
   const { t } = useLanguage();
-  const { isConnected, isChecking, selectedModel, checkConnection, startOllamaService } = useAI();
+  const { isConnected, isChecking, selectedModel, checkConnection, startOllamaService, provider } = useAI();
+  const isClaude = provider === 'claude';
+  const aiActiveLabel = isClaude ? 'Claude Active' : 'Local AI Active';
+  const aiOfflineLabel = isClaude ? 'Claude not connected' : 'Local AI offline';
   const { starCount } = useGitHubStars();
 
   // Collapsible state persisted to localStorage for desktop
@@ -214,7 +217,7 @@ export const Sidebar: React.FC = () => {
               className={`w-2 h-2 rounded-full ${
                 isConnected ? 'bg-emerald-500 ring-2 ring-emerald-500/20' : 'bg-red-500 animate-pulse'
               }`}
-              title={isConnected ? `Ollama Active (${selectedModel || 'Ready'})` : 'Ollama Offline'}
+              title={isConnected ? `${aiActiveLabel} (${selectedModel || 'Ready'})` : aiOfflineLabel}
             />
             <button
               onClick={() => checkConnection()}
@@ -234,7 +237,7 @@ export const Sidebar: React.FC = () => {
                   }`}
                 />
                 <span className="text-xs font-bold text-slate-950 dark:text-zinc-200 truncate">
-                  {isConnected ? 'Local AI Active' : 'AI Offline'}
+                  {isConnected ? aiActiveLabel : 'AI Offline'}
                 </span>
               </div>
               <button
@@ -247,16 +250,16 @@ export const Sidebar: React.FC = () => {
             </div>
 
             <div className="text-[10px] font-mono text-slate-700 dark:text-zinc-400 font-semibold truncate mb-2">
-              {isConnected ? selectedModel || 'Ready' : 'Local AI offline'}
+              {isConnected ? selectedModel || 'Ready' : aiOfflineLabel}
             </div>
 
             {!isConnected && (
               <button
-                onClick={() => startOllamaService()}
+                onClick={() => (isClaude ? setActiveView('settings') : startOllamaService())}
                 className="w-full flex items-center justify-center gap-1.5 py-1 px-2 rounded bg-slate-900 hover:bg-black dark:bg-zinc-800 dark:hover:bg-zinc-700 text-white text-[10px] font-semibold transition-colors shadow-sm"
               >
                 <Power className="w-3 h-3 text-emerald-400" />
-                <span>Start Local AI</span>
+                <span>{isClaude ? 'Set Up Claude' : 'Start Local AI'}</span>
               </button>
             )}
           </div>

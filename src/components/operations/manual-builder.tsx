@@ -7,7 +7,7 @@ import { exportManualToMarkdown } from '../../services/export/markdown';
 import { downloadJsonFile } from '../../services/export/json';
 import { useWorkspace } from '../../context/workspace-context';
 import { useAI } from '../../context/ai-context';
-import { ollama } from '../../services/ai/ollama';
+import { ai } from '../../services/ai/active-provider';
 import {
   Download,
   Plus,
@@ -237,7 +237,7 @@ Step Title: "${step.title}".
 CRITICAL RULE:
 - NEVER mention "equipment", "maintenance", "condition before", or "Follow these steps".
 - Output ONE direct software action sentence (max 12 words) describing what the user clicks or does on screen.`;
-            const res = await ollama.generate(prompt, { model: selectedModel, temperature: 0.6 });
+            const res = await ai.generate(prompt, { model: selectedModel, temperature: 0.6 });
             const cand = res?.trim().replace(/^"|"$/g, '');
             if (cand && !/equipment|maintenance|condition before|follow these steps/i.test(cand)) {
               cleanDesc = cand;

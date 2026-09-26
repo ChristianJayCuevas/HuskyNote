@@ -196,6 +196,13 @@ export interface AppSettings {
   theme: 'dark';
   autoSaveIntervalSeconds: number;
   speechLanguage: string;
+  /** Which AI answers requests: local Ollama (default) or Claude via the Anthropic API */
+  aiProvider?: 'ollama' | 'claude';
+  /** User's own Anthropic API key; stays on this device and is excluded from workspace exports */
+  claudeApiKey?: string;
+  claudeModel?: string;
+  /** Speech-to-text engine id (see services/audio/transcription-engines) */
+  transcriptionEngine?: string;
 }
 
 export interface StoredBlob {
