@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PandaMascot } from './panda-mascot';
+import { HuskyMascot } from './husky-mascot';
 import { useWorkspace } from '../../context/workspace-context';
 import { useSound } from '../../context/sound-context';
 import { useAI } from '../../context/ai-context';
@@ -37,7 +37,7 @@ export const GlobalMascotDock: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <PandaMascot size="sm" showSpeechBubble={false} />
+            <HuskyMascot size="sm" showSpeechBubble={false} />
             <div className="space-y-1">
               <p className="text-zinc-200 text-xs font-medium">
                 "I'm keeping your notes and meetings organized locally."
@@ -82,13 +82,13 @@ export const GlobalMascotDock: React.FC = () => {
             setIsExpanded(true);
           }}
           className="group flex items-center gap-2.5 px-3 py-2 rounded-full bg-zinc-950/90 border border-zinc-800 hover:border-zinc-700 shadow-2xl backdrop-blur-md transition-all duration-200 hover:scale-105"
-          title="Open Panda Focus Companion"
+          title="Open Husky Focus Companion"
         >
           <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center">
-            <PandaMascot size="sm" showSpeechBubble={false} enableInteraction={false} />
+            <HuskyMascot size="sm" showSpeechBubble={false} enableInteraction={false} />
           </div>
           <span className="font-mono text-xs text-zinc-300 group-hover:text-white pr-1">
-            Panda Notes
+            Husky Notes
           </span>
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
         </button>

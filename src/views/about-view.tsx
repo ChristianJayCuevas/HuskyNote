@@ -1,7 +1,7 @@
 import React from 'react';
 import { ExternalLink, Sparkles, Star } from 'lucide-react';
 import { GithubIcon } from '../components/ui/github-icon';
-import { PandaMascot } from '../components/ui/panda-mascot';
+import { HuskyMascot } from '../components/ui/husky-mascot';
 import { TiltCard } from '../components/ui/tilt-card';
 import { useGitHubStars } from '../services/github/stars';
 import logoImg from '../assets/official_huskynote.png';
@@ -51,10 +51,10 @@ export const AboutView: React.FC = () => {
               <span>Focus Companion</span>
             </div>
             <h3 className="text-lg font-bold text-slate-950 dark:text-white tracking-tight">
-              Meet HuskyNote's Panda Companion
+              Meet HuskyNote's Husky Companion
             </h3>
             <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
-              Designed in a clean, minimal black-and-white style. The panda sits quietly taking notes in
+              Designed in a clean, minimal black-and-white style. The husky sits quietly taking notes in
               your Husky Notes workspace, reacting as you type and keeping track of your session without distractions.
             </p>
             <div className="text-xs text-slate-500 dark:text-zinc-500">
@@ -63,7 +63,7 @@ export const AboutView: React.FC = () => {
           </div>
 
           <div className="shrink-0 flex items-center justify-center">
-            <PandaMascot size="lg" />
+            <HuskyMascot size="lg" />
           </div>
         </section>
 

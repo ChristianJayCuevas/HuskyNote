@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import pandaImg from '../../assets/panda-mascot.png';
+import mascotImg from '../../assets/husky-mascot.png';
 import { useSound } from '../../context/sound-context';
 import { Edit3 } from 'lucide-react';
 
-interface PandaMascotProps {
+interface HuskyMascotProps {
   size?: 'sm' | 'md' | 'lg' | 'hero';
   isWriting?: boolean;
   message?: string;
@@ -13,7 +13,7 @@ interface PandaMascotProps {
   badge?: string;
 }
 
-export const PandaMascot: React.FC<PandaMascotProps> = ({
+export const HuskyMascot: React.FC<HuskyMascotProps> = ({
   size = 'md',
   isWriting = false,
   className = '',
@@ -66,8 +66,8 @@ export const PandaMascot: React.FC<PandaMascotProps> = ({
         } ${enableInteraction ? 'cursor-pointer' : ''}`}
       >
         <img
-          src={pandaImg}
-          alt="HuskyNote Panda Mascot"
+          src={mascotImg}
+          alt="HuskyNote Husky Mascot"
           className="w-full h-full object-contain rounded-3xl filter drop-shadow-[0_12px_24px_rgba(255,255,255,0.06)] animate-[float_4s_ease-in-out_infinite]"
           style={{ mixBlendMode: 'screen' }}
         />

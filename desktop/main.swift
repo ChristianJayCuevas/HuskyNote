@@ -30,8 +30,9 @@
  * - Menu bar icon status pill updates between "AI Active" and "AI Ready"
  *
  * BUILD:
- * The included `desktop/HuskyNote` binary is a pre-compiled universal app.
- * To recompile from source:
+ * `.github/workflows/build-macos.yml` compiles the universal binary, assembles
+ * HuskyNote.app (Info.plist, AppIcon.icns, bundled `web/` assets) and the .dmg files.
+ * To compile locally:
  *   swiftc main.swift -o HuskyNote -framework Cocoa -framework WebKit
  *
  * SIGN & NOTARIZE (for distribution):
@@ -161,7 +162,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
 
     /**
      * createStatusBarIcon
-     * Draws the HuskyNote mascot (a cute face with ears) as a template image
+     * Draws the HuskyNote mascot (a husky face with pointed ears) as a template image
      * suitable for both light and dark menu bars.
      *
      * Coordinates are in 18×18 points. The `isTemplate = true` flag lets
@@ -177,13 +178,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
             ctx.setFillColor(color)
             ctx.setStrokeColor(color)
 
-            // 1. Left Ear
-            let leftEar = CGRect(x: 1.5, y: 11.5, width: 4.8, height: 4.8)
-            ctx.fillEllipse(in: leftEar)
-
-            // 2. Right Ear
-            let rightEar = CGRect(x: 11.7, y: 11.5, width: 4.8, height: 4.8)
-            ctx.fillEllipse(in: rightEar)
+            // 1. Pointed ears
+            for ear in [
+                [CGPoint(x: 2.4, y: 10.5), CGPoint(x: 3.4, y: 17.2), CGPoint(x: 7.4, y: 13.2)],
+                [CGPoint(x: 15.6, y: 10.5), CGPoint(x: 14.6, y: 17.2), CGPoint(x: 10.6, y: 13.2)],
+            ] {
+                ctx.move(to: ear[0])
+                ctx.addLine(to: ear[1])
+                ctx.addLine(to: ear[2])
+                ctx.closePath()
+                ctx.fillPath()
+            }
 
             // 3. Head Outline (Rounded pill / face)
             let headRect = CGRect(x: 2.0, y: 2.0, width: 14.0, height: 12.0)
@@ -192,13 +197,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
             ctx.setLineWidth(1.6)
             ctx.strokePath()
 
-            // 4. Eye patches
-            let leftEye = CGRect(x: 4.5, y: 7.2, width: 3.2, height: 3.8)
-            let rightEye = CGRect(x: 10.3, y: 7.2, width: 3.2, height: 3.8)
+            // 4. Husky forehead marking (dark cap with a point between the eyes)
+            ctx.move(to: CGPoint(x: 5.0, y: 13.4))
+            ctx.addLine(to: CGPoint(x: 13.0, y: 13.4))
+            ctx.addLine(to: CGPoint(x: 9.0, y: 9.0))
+            ctx.closePath()
+            ctx.fillPath()
+
+            // 5. Eyes
+            let leftEye = CGRect(x: 4.6, y: 7.0, width: 2.4, height: 2.4)
+            let rightEye = CGRect(x: 11.0, y: 7.0, width: 2.4, height: 2.4)
             ctx.fillEllipse(in: leftEye)
             ctx.fillEllipse(in: rightEye)
 
-            // 5. Cute nose
+            // 6. Nose
             let nose = CGRect(x: 8.1, y: 4.8, width: 1.8, height: 1.4)
             ctx.fillEllipse(in: nose)
 

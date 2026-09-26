@@ -45,7 +45,7 @@ import { InteractiveFeatureDemo } from '../components/landing/interactive-featur
 import { BrandCarouselBelts } from '../components/landing/brand-carousel-belts';
 import { TiltCard } from '../components/ui/tilt-card';
 import { useGitHubStars } from '../services/github/stars';
-import pandaImg from '../assets/panda-mascot.png';
+import mascotImg from '../assets/husky-mascot.png';
 import logoImg from '../assets/official_huskynote.png';
 
 const TYPEWRITER_PHRASES: Record<string, string[]> = {

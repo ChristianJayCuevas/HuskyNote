@@ -3,7 +3,7 @@ import { db } from '../db';
 import type { Note } from '../types';
 import { useWorkspace } from '../context/workspace-context';
 import { useSound } from '../context/sound-context';
-import { PandaMascot } from '../components/ui/panda-mascot';
+import { HuskyMascot } from '../components/ui/husky-mascot';
 import { Button } from '../components/ui/button';
 import {
   Feather,
@@ -276,9 +276,9 @@ export const ZenFocusView: React.FC = () => {
           )}
         </div>
 
-        {/* Animated Panda Mascot Companion in Bottom Right Corner */}
+        {/* Animated Husky Mascot Companion in Bottom Right Corner */}
         <div className="fixed bottom-6 right-6 z-30 pointer-events-auto">
-          <PandaMascot
+          <HuskyMascot
             size="md"
             isWriting={isTyping}
           />

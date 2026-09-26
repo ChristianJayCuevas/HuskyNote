@@ -171,7 +171,7 @@ export const NodeNetworkBackground: React.FC<NodeNetworkBackgroundProps> = ({
         const px = centerX + n.x * scale;
         const py = centerY + n.y * scale;
 
-        // Mascot exclusion zone: fade out so nodes NEVER obstruct the panda mascot's face
+        // Mascot exclusion zone: fade out so nodes NEVER obstruct the husky mascot's face
         let alphaMod = 1;
         if (mascotEx) {
           const dx = px - mascotEx.cx;

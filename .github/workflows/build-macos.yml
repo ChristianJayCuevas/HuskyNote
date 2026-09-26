@@ -1,0 +1,62 @@
+name: Build macOS App
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  build-macos:
+    name: Build HuskyNote.app and disk images
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Web Bundle
+        run: npm run build
+
+      - name: Compile Native Shell
+        run: |
+          mkdir -p build
+          swiftc desktop/main.swift -O -target arm64-apple-macos12.0 -o build/HuskyNote-arm64 -framework Cocoa -framework WebKit
+          swiftc desktop/main.swift -O -target x86_64-apple-macos12.0 -o build/HuskyNote-x64 -framework Cocoa -framework WebKit
+          lipo -create build/HuskyNote-arm64 build/HuskyNote-x64 -output build/HuskyNote-Universal
+          lipo -info build/HuskyNote-Universal
+
+      - name: Package App Bundles and Disk Images
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          for ARCH in Universal arm64 x64; do
+            STAGE="build/stage-$ARCH"
+            APP="$STAGE/HuskyNote.app"
+            mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/web"
+            cp "build/HuskyNote-$ARCH" "$APP/Contents/MacOS/HuskyNote"
+            # Bundle the web app without the downloadable installers
+            rsync -a --exclude 'downloads' dist/ "$APP/Contents/Resources/web/"
+            cp AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+            sed "s/__VERSION__/$VERSION/g" desktop/Info.plist > "$APP/Contents/Info.plist"
+            codesign --force --deep --sign - --entitlements desktop/entitlements.plist "$APP"
+            cp "desktop/Open HuskyNote.command" "$STAGE/"
+            chmod +x "$STAGE/Open HuskyNote.command"
+            ln -s /Applications "$STAGE/Applications"
+            hdiutil create -volname HuskyNote -srcfolder "$STAGE" -ov -format UDZO "build/HuskyNote-macOS-$ARCH.dmg"
+          done
+          ls -lh build/*.dmg
+          shasum -a 256 build/*.dmg
+
+      - name: Upload Disk Images
+        uses: actions/upload-artifact@v4
+        with:
+          name: huskynote-macos-dmg
+          path: build/*.dmg
+          if-no-files-found: error
