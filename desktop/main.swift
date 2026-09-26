@@ -620,8 +620,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
               The bundled web assets were not found and no development server is running.
               Start HuskyNote from the Terminal:
             </p>
-            <code>cd HuskyNote
-./start.sh</code>
+            <code>cd HuskyNote<br>./start.sh</code>
             <p>Or in developer mode (after <code style="display:inline;padding:2px 6px">npm run build</code>):</p>
             <code>./HuskyNote --dev</code>
             <p class="note">
