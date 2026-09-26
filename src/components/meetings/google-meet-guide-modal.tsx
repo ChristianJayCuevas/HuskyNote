@@ -37,7 +37,7 @@ export const GoogleMeetGuideModal: React.FC<GoogleMeetGuideModalProps> = ({
         <div>
           <h4 className="font-semibold text-zinc-200 mb-2">Option 1: Browser Screen / Tab Share Audio (Immediate)</h4>
           <p className="text-zinc-400 mb-2">
-            Click the button below to invoke the browser capture prompt. Select the <strong>Chrome Tab</strong> containing your Google Meet call and ensure <strong>"Also share tab audio"</strong> is checked.
+            Click the button below to invoke the capture prompt. In a browser, select the <strong>tab</strong> containing your Google Meet call and ensure <strong>"Also share tab audio"</strong> is checked. In the HuskyNote desktop app, choose <strong>Entire screen</strong> and turn on <strong>"Share system audio"</strong>. Your microphone is mixed in automatically, and both sides are transcribed on this device.
           </p>
           <Button
             size="sm"

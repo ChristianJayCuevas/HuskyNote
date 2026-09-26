@@ -39,6 +39,7 @@ export const GlobalMicRecorder: React.FC = () => {
         setAudioLevel(level);
       });
 
+      speechTranscriberRef.current?.setInputStream(audioRecorderRef.current?.getStream() ?? null);
       speechTranscriberRef.current?.start((seg) => {
         setTranscript((prev) => [...prev, seg]);
         // Also emit event so editors can insert text live

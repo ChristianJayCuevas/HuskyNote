@@ -166,6 +166,7 @@ export const StudioView: React.FC = () => {
       if (enableMic) {
         try {
           await audioRecorderRef.current?.start((lvl) => setAudioLevel(lvl));
+          speechTranscriberRef.current?.setInputStream(audioRecorderRef.current?.getStream() ?? null);
           speechTranscriberRef.current?.start(
             (seg) => {
               setLiveTranscript((prev) => [...prev, seg]);

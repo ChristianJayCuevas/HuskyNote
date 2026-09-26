@@ -22,6 +22,7 @@ export class AudioRecorder {
   private analyser: AnalyserNode | null = null;
   private source: MediaStreamAudioSourceNode | null = null;
   private stream: MediaStream | null = null;
+  private ownsStream = true;
   private chunks: Blob[] = [];
   private animFrameId: number | null = null;
 
@@ -32,18 +33,26 @@ export class AudioRecorder {
    *
    * @param onAudioLevel - Optional callback invoked per animation frame with
    *   the current audio input level (0–100).
+   * @param inputStream - Record this stream (for example mixed tab + mic audio)
+   *   instead of opening the microphone. The caller keeps ownership of it.
    * @throws Will throw if microphone access is denied by the user.
    */
-  async start(onAudioLevel?: (level: number) => void): Promise<void> {
+  async start(onAudioLevel?: (level: number) => void, inputStream?: MediaStream): Promise<void> {
     this.chunks = [];
 
-    // Request microphone permission explicitly
-    this.stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-      },
-    });
+    if (inputStream) {
+      this.stream = inputStream;
+      this.ownsStream = false;
+    } else {
+      // Request microphone permission explicitly
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+        },
+      });
+      this.ownsStream = true;
+    }
 
     // Setup Web Audio Analyser for visualizer
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -109,7 +118,7 @@ export class AudioRecorder {
 
         // Clean up tracks
         if (this.stream) {
-          this.stream.getTracks().forEach((track) => track.stop());
+          if (this.ownsStream) this.stream.getTracks().forEach((track) => track.stop());
           this.stream = null;
         }
 
@@ -135,6 +144,11 @@ export class AudioRecorder {
         track.enabled = !muted;
       });
     }
+  }
+
+  /** The stream being recorded, so a transcriber can listen to the same audio. */
+  getStream(): MediaStream | null {
+    return this.stream;
   }
 
   /**

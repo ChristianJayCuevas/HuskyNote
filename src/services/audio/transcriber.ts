@@ -11,10 +11,17 @@ import {
   getLanguageName,
   normalizeLanguageCode,
 } from '../ai/translation';
+import { speechStatus, whisperEngine, toWhisperLanguage, isNonSpeech } from './whisper-engine';
+import { startPcmCapture, takeChunkBatch, locateInBatch, type PcmCapture, type SpeechChunk } from './pcm-capture';
+
+// Longest audio merged into one Whisper call (the model window is 30 s)
+const MAX_BATCH_SECONDS = 25;
 
 /**
- * LiveSpeechTranscriber provides real-time speech-to-text transcription
- * using the browser's Web Speech API (SpeechRecognition).
+ * WebSpeechTranscriber provides real-time speech-to-text transcription
+ * using the browser's Web Speech API (SpeechRecognition). It only hears the
+ * default microphone and relies on the browser vendor's cloud service, so
+ * LiveSpeechTranscriber uses it only as a fallback when Whisper cannot run.
  *
  * Features:
  * - Continuous listening with automatic restart on speech end
@@ -24,7 +31,7 @@ import {
  *
  * Usage:
  * ```ts
- * const transcriber = new LiveSpeechTranscriber();
+ * const transcriber = new WebSpeechTranscriber();
  * transcriber.start((segment) => {
  *   console.log(segment.text); // live transcribed text
  * });
@@ -32,7 +39,7 @@ import {
  * transcriber.stop();
  * ```
  */
-export class LiveSpeechTranscriber {
+export class WebSpeechTranscriber {
   private recognition: any = null;
   private isListening: boolean = false;
   private startTime: number = 0;
@@ -114,7 +121,9 @@ export class LiveSpeechTranscriber {
             console.error('[HuskyNote] Microphone not available or disconnected.');
             break;
           case 'not-allowed':
+          case 'service-not-allowed':
             console.error('[HuskyNote] Microphone permission denied by user or browser.');
+            speechStatus.set({ state: 'error', message: 'Speech recognition is not allowed in this browser.' });
             this.isListening = false; // Stop trying to restart
             break;
           case 'network':
@@ -145,6 +154,7 @@ export class LiveSpeechTranscriber {
           }, delay);
         } else if (this.restartAttempts >= this.maxRestartAttempts) {
           console.warn('[HuskyNote] Speech recognition exceeded max restart attempts. Stopping.');
+          speechStatus.set({ state: 'error', message: 'Browser speech recognition stopped responding.' });
           this.isListening = false;
         }
       };
@@ -250,6 +260,198 @@ export class LiveSpeechTranscriber {
         // ignore
       }
     }
+  }
+}
+
+/**
+ * LiveSpeechTranscriber transcribes speech on-device with Whisper.
+ *
+ * It listens to an input stream set with `setInputStream` (for example the
+ * mixed tab + microphone audio of a meeting) or opens the microphone itself,
+ * cuts the audio into phrases at natural pauses, and emits one timestamped
+ * segment per phrase. Progress and errors are published on `speechStatus`.
+ * Falls back to the browser's Web Speech API when Whisper cannot run.
+ */
+export class LiveSpeechTranscriber {
+  private fallback = new WebSpeechTranscriber();
+  private usingFallback = false;
+  private inputStream: MediaStream | null = null;
+  private ownedStream: MediaStream | null = null;
+  private capture: PcmCapture | null = null;
+  private pendingChunks: (SpeechChunk & { meta: { speaker: string; language: string } })[] = [];
+  private draining: Promise<void> | null = null;
+  private onSegmentCallback: ((segment: TranscriptSegment) => void) | null = null;
+  private onInterimCallback: ((interimText: string) => void) | null = null;
+  private segmentCounter = 0;
+  private language = 'auto';
+  private activeSpeaker = 'You / Host';
+  private session = 0;
+
+  isSupported(): boolean {
+    return whisperEngine.isSupported() || this.fallback.isSupported();
+  }
+
+  /** Transcribe this stream instead of opening the microphone. Pass null to clear. */
+  setInputStream(stream: MediaStream | null): void {
+    this.inputStream = stream;
+  }
+
+  setLanguage(lang: string): void {
+    if (!lang) return;
+    this.language = lang;
+    this.fallback.setLanguage(lang);
+  }
+
+  getLanguage(): string {
+    return this.language;
+  }
+
+  setActiveSpeaker(speaker: string): void {
+    if (speaker && speaker.trim()) {
+      this.activeSpeaker = speaker.trim();
+      this.fallback.setActiveSpeaker(speaker);
+    }
+  }
+
+  getActiveSpeaker(): string {
+    return this.activeSpeaker;
+  }
+
+  /** Download the speech model ahead of time so the first phrase is not delayed. */
+  preload(): void {
+    if (whisperEngine.isSupported()) whisperEngine.load().catch(() => {});
+  }
+
+  start(
+    onSegment: (segment: TranscriptSegment) => void,
+    onInterim?: (interimText: string) => void
+  ): void {
+    this.onSegmentCallback = onSegment;
+    this.onInterimCallback = onInterim || null;
+    this.segmentCounter = 0;
+    const session = ++this.session;
+    void this.startCapture(session);
+  }
+
+  private async startCapture(session: number): Promise<void> {
+    if (!whisperEngine.isSupported()) {
+      this.startFallback();
+      return;
+    }
+    try {
+      let stream = this.inputStream;
+      if (!stream) {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true },
+        });
+        this.ownedStream = stream;
+      }
+      if (session !== this.session) {
+        this.releaseOwnedStream();
+        return;
+      }
+      this.capture = await startPcmCapture(stream, (chunk) => this.enqueue(chunk));
+      whisperEngine.load().catch((err) => {
+        console.warn('[HuskyNote] Whisper model unavailable, using browser speech recognition:', err);
+        if (session === this.session) this.startFallback();
+      });
+    } catch (err: any) {
+      console.error('[HuskyNote] Could not start audio capture for transcription:', err);
+      speechStatus.set({ state: 'error', message: err?.message || 'Could not access audio for transcription.' });
+    }
+  }
+
+  private startFallback(): void {
+    if (this.usingFallback || !this.fallback.isSupported() || !this.onSegmentCallback) return;
+    this.usingFallback = true;
+    this.stopCapture();
+    this.fallback.setLanguage(this.language);
+    this.fallback.setActiveSpeaker(this.activeSpeaker);
+    this.fallback.start(this.onSegmentCallback, this.onInterimCallback || undefined);
+  }
+
+  private enqueue(chunk: SpeechChunk): void {
+    if (!this.onSegmentCallback) return;
+    this.pendingChunks.push({ ...chunk, meta: { speaker: this.activeSpeaker, language: this.language } });
+    if (!this.draining) {
+      this.draining = this.drain().finally(() => {
+        this.draining = null;
+      });
+    }
+  }
+
+  /**
+   * Transcribe queued phrases one model call at a time. Each call costs about
+   * the same regardless of length, so phrases that queued up while the model
+   * was busy are merged into a single call.
+   */
+  private async drain(): Promise<void> {
+    while (this.pendingChunks.length > 0) {
+      const onSegment = this.onSegmentCallback;
+      if (!onSegment) {
+        this.pendingChunks = [];
+        return;
+      }
+      const batch = takeChunkBatch(this.pendingChunks, MAX_BATCH_SECONDS);
+      const language = batch.parts[0].meta.language;
+      try {
+        const pieces = await whisperEngine.transcribe(batch.audio, toWhisperLanguage(language));
+        for (const piece of pieces) {
+          if (!piece.text || isNonSpeech(piece.text)) continue;
+          const { captureSeconds, meta } = locateInBatch(batch, piece.start);
+          onSegment({
+            id: `seg-${++this.segmentCounter}-${Date.now()}`,
+            timestampSeconds: Math.floor(captureSeconds),
+            speaker: meta.speaker,
+            text: piece.text,
+            sourceLanguage: language === 'auto' ? detectLikelyLanguage(piece.text) : language,
+          });
+        }
+      } catch (err) {
+        console.warn('[HuskyNote] Whisper transcription failed for a batch:', err);
+      }
+    }
+  }
+
+  pause(): void {
+    if (this.usingFallback) this.fallback.stop();
+    else this.capture?.pause();
+  }
+
+  resume(): void {
+    if (this.usingFallback) {
+      if (this.onSegmentCallback) this.fallback.start(this.onSegmentCallback, this.onInterimCallback || undefined);
+    } else {
+      this.capture?.resume();
+    }
+  }
+
+  private stopCapture(): void {
+    this.capture?.stop();
+    this.capture = null;
+    this.releaseOwnedStream();
+  }
+
+  private releaseOwnedStream(): void {
+    this.ownedStream?.getTracks().forEach((t) => t.stop());
+    this.ownedStream = null;
+  }
+
+  /**
+   * Stop listening. Resolves once phrases already captured are transcribed
+   * (bounded by `timeoutMs`), so callers can save a complete transcript.
+   */
+  async stop(timeoutMs = 30000): Promise<void> {
+    this.session++;
+    this.stopCapture();
+    if (this.usingFallback) {
+      this.fallback.stop();
+      this.usingFallback = false;
+    }
+    await Promise.race([this.draining ?? Promise.resolve(), new Promise((r) => setTimeout(r, timeoutMs))]);
+    this.pendingChunks = [];
+    this.onSegmentCallback = null;
+    this.onInterimCallback = null;
   }
 }
 

@@ -205,7 +205,12 @@ export default defineConfig({
       },
     },
   },
+  // The Whisper worker code-splits transformers.js, which needs ES module workers
+  worker: {
+    format: 'es',
+  },
   optimizeDeps: {
     include: ['pdfjs-dist'],
+    exclude: ['@huggingface/transformers'],
   },
 });

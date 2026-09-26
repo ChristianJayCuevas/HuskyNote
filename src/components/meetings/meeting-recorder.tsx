@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSpeechStatus } from '../ui/speech-status-indicator';
 import type { TranscriptSegment, Meeting, MeetingScreenshot, ScheduleEvent } from '../../types';
 import { AudioRecorder } from '../../services/audio/recorder';
 import {
@@ -108,6 +109,12 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
   // Hardware/Audio level diarization between Host Mic and Meeting Tab Audio
   const activeAudioChannelRef = useRef<'host' | 'remote' | 'unknown'>('unknown');
   const diarizerContextRef = useRef<AudioContext | null>(null);
+  // Host mic opened for tab capture; muted separately from the mixed recording
+  const tabMicStreamRef = useRef<MediaStream | null>(null);
+  // Latest transcript for saving after the final phrases finish transcribing
+  const transcriptRef = useRef<TranscriptSegment[]>([]);
+  const announcedEventKeysRef = useRef<Set<string>>(new Set());
+  const speechEngine = useSpeechStatus();
   const diarizerIntervalRef = useRef<any>(null);
 
   // Visual Participant Scanner — works without Chrome extension
@@ -221,6 +228,19 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
     }
   };
 
+  /**
+   * Records a detected event once per date and time. Side effects stay outside
+   * the state updater, which React may run more than once.
+   */
+  const announceDetectedEvent = (ev: ScheduleEvent): boolean => {
+    const key = `${ev.date} ${ev.time}`;
+    if (announcedEventKeysRef.current.has(key)) return false;
+    announcedEventKeysRef.current.add(key);
+    setDetectedEvents((prev) => (prev.some((e) => e.date === ev.date && e.time === ev.time) ? prev : [...prev, ev]));
+    notifyDetectedEvent(ev);
+    return true;
+  };
+
   const handleIncomingSegment = (seg: TranscriptSegment) => {
     setLiveInterimText('');
     const rawText = seg.text;
@@ -289,13 +309,9 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
         source: 'transcript',
         sourceTitle: meetingTitle.trim() || 'Meeting Title',
       });
-      setDetectedEvents((prev) => {
-        const exists = prev.some((e) => e.date === ev.date && e.time === ev.time);
-        if (exists) return prev;
-        notifyDetectedEvent(ev);
+      if (announceDetectedEvent(ev)) {
         addToast(`📅 Scheduled Event detected: "${ev.title}" on ${ev.date} at ${ev.time}`, 'info');
-        return [...prev, ev];
-      });
+      }
     }
 
     // Real-time asynchronous AI translation into target language
@@ -322,13 +338,9 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
               source: 'transcript',
               sourceTitle: meetingTitle.trim() || 'Meeting Title',
             });
-            setDetectedEvents((prev) => {
-              const exists = prev.some((e) => e.date === ev.date && e.time === ev.time);
-              if (exists) return prev;
-              notifyDetectedEvent(ev);
+            if (announceDetectedEvent(ev)) {
               addToast(`📅 Scheduled Event detected from translation: "${ev.title}" on ${ev.date} at ${ev.time}`, 'info');
-              return [...prev, ev];
-            });
+            }
           }
         })
         .catch((err) => {
@@ -409,6 +421,10 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
     };
   }, []);
 
+  useEffect(() => {
+    transcriptRef.current = transcript;
+  }, [transcript]);
+
   // Auto-scroll transcript
   useEffect(() => {
     if (transcriptBottomRef.current) {
@@ -461,7 +477,8 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
         setAudioLevel(level);
       });
 
-      // Start speech recognition with configured spoken language and real-time interim streaming
+      // Transcribe the same microphone stream that is being recorded
+      speechTranscriberRef.current?.setInputStream(audioRecorderRef.current?.getStream() ?? null);
       speechTranscriberRef.current?.setLanguage(spokenLanguage);
       speechTranscriberRef.current?.start(handleIncomingSegment, handleIncomingInterim);
 
@@ -492,7 +509,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
       const audioTracks = stream.getAudioTracks();
       if (audioTracks.length === 0) {
         addToast(
-          'No audio was shared. Please check "Also share tab audio" when selecting the tab.',
+          'No audio was shared. Pick a browser tab with "Also share tab audio" checked, or share your entire screen with "Share system audio" turned on (the option available in the desktop app).',
           'warning'
         );
         stream.getTracks().forEach((t) => t.stop());
@@ -542,16 +559,25 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
       });
 
       // Request host microphone to perform dual-channel hardware diarization (Host Mic vs Meeting Tab Audio)
-      const micStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
+      const micStream = await navigator.mediaDevices
+        .getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })
+        .catch(() => null);
+      tabMicStreamRef.current = micStream;
+
+      // Tab + mic mixed into one stream that is both recorded and transcribed
+      let mixedStream: MediaStream = new MediaStream([audioTracks[0]]);
 
       try {
         const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
         diarizerContextRef.current = audioCtx;
+        if (audioCtx.state === 'suspended') await audioCtx.resume().catch(() => {});
+        const mixDestination = audioCtx.createMediaStreamDestination();
 
         const tabSource = audioCtx.createMediaStreamSource(new MediaStream([audioTracks[0]]));
         const tabAnalyser = audioCtx.createAnalyser();
         tabAnalyser.fftSize = 128;
         tabSource.connect(tabAnalyser);
+        tabSource.connect(mixDestination);
 
         let micAnalyser: AnalyserNode | null = null;
         if (micStream && micStream.getAudioTracks().length > 0) {
@@ -559,7 +585,9 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
           micAnalyser = audioCtx.createAnalyser();
           micAnalyser.fftSize = 128;
           micSource.connect(micAnalyser);
+          micSource.connect(mixDestination);
         }
+        mixedStream = mixDestination.stream;
 
         const tabData = new Uint8Array(tabAnalyser.frequencyBinCount);
         const micData = micAnalyser ? new Uint8Array(micAnalyser.frequencyBinCount) : null;
@@ -592,7 +620,9 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
         setElapsedSeconds((s) => s + 1);
       }, 1000);
 
-      // Ensure tab audio is transcribed through the full speaker hook and real-time interim pipeline
+      // Record and transcribe the mixed tab + mic audio
+      await audioRecorderRef.current?.start((level) => setAudioLevel(level), mixedStream);
+      speechTranscriberRef.current?.setInputStream(mixedStream);
       speechTranscriberRef.current?.setLanguage(spokenLanguage);
       speechTranscriberRef.current?.start(handleIncomingSegment, handleIncomingInterim);
 
@@ -702,10 +732,10 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
     const nextPaused = !isPaused;
     setIsPaused(nextPaused);
     if (nextPaused) {
-      speechTranscriberRef.current?.stop();
+      speechTranscriberRef.current?.pause();
       addToast('Meeting recording paused.', 'info');
     } else {
-      speechTranscriberRef.current?.start(handleIncomingSegment);
+      speechTranscriberRef.current?.resume();
       addToast('Meeting recording resumed.', 'info');
     }
   };
@@ -713,7 +743,12 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
   const handleToggleMicMute = () => {
     const nextMuted = !isMicMuted;
     setIsMicMuted(nextMuted);
-    audioRecorderRef.current?.setMuted(nextMuted);
+    if (tabMicStreamRef.current) {
+      // Tab capture: mute only the host mic, keep recording the meeting audio
+      tabMicStreamRef.current.getAudioTracks().forEach((t) => (t.enabled = !nextMuted));
+    } else {
+      audioRecorderRef.current?.setMuted(nextMuted);
+    }
     addToast(nextMuted ? 'Microphone muted.' : 'Microphone unmuted.', 'info');
   };
 
@@ -805,6 +840,8 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
   };
 
   const stopAndSaveMeeting = async () => {
+    // Stop listening first; phrases already captured keep transcribing while we wrap up
+    const transcriptionDone = speechTranscriberRef.current?.stop() ?? Promise.resolve();
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     if (diarizerIntervalRef.current) {
       clearInterval(diarizerIntervalRef.current);
@@ -835,7 +872,13 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
     try {
       // Stop audio recording and get blob
       const audioBlob = await audioRecorderRef.current?.stop();
-      speechTranscriberRef.current?.stop();
+      tabMicStreamRef.current?.getTracks().forEach((t) => t.stop());
+      tabMicStreamRef.current = null;
+
+      // Wait for the last phrases, then let React commit their segments
+      await transcriptionDone;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const transcript = transcriptRef.current;
 
       const meetingId = `meeting-${Date.now()}`;
       const now = Date.now();
@@ -1335,7 +1378,13 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                 {isRecording ? (
                   <>
                     <Mic className="w-6 h-6 mb-2 text-zinc-400 animate-pulse" />
-                    <span>Listening to conversation... Speech recognition is streaming transcript live.</span>
+                    <span>
+                      {speechEngine.state === 'loading'
+                        ? 'Preparing the on-device speech model. Audio is being captured and will be transcribed once it is ready.'
+                        : speechEngine.state === 'error'
+                        ? `Transcription problem: ${speechEngine.message}`
+                        : 'Listening to conversation... Each phrase appears here a moment after it is spoken.'}
+                    </span>
                   </>
                 ) : (
                   <span>Transcript will appear live with speaker names once recording begins.</span>
