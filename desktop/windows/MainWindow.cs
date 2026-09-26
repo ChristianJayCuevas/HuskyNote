@@ -8,7 +8,7 @@ using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 
-namespace DomoNote
+namespace HuskyNote
 {
     public class MainWindow : Form
     {
@@ -34,7 +34,7 @@ namespace DomoNote
             _args = args;
 
             // Form properties
-            Text = "DomoNote";
+            Text = "HuskyNote";
             BackColor = Color.Black;
             ForeColor = Color.White;
             StartPosition = FormStartPosition.CenterScreen;
@@ -75,7 +75,7 @@ namespace DomoNote
                 ShowImageMargin = false
             };
 
-            var headerItem = new ToolStripMenuItem("DomoNote — Your Personal AI Secretary")
+            var headerItem = new ToolStripMenuItem("HuskyNote — Your Personal AI Secretary")
             {
                 Enabled = false,
                 Font = new Font(Font, FontStyle.Bold)
@@ -90,23 +90,23 @@ namespace DomoNote
             _trayMenu.Items.Add(_statusMenuItem);
             _trayMenu.Items.Add(new ToolStripSeparator());
 
-            _trayMenu.Items.Add("Open DomoNote", null, (s, e) => ShowAndActivate());
+            _trayMenu.Items.Add("Open HuskyNote", null, (s, e) => ShowAndActivate());
             _trayMenu.Items.Add("New Note", null, (s, e) => { ShowAndActivate(); NavigateTo("notes", "new"); });
-            _trayMenu.Items.Add("Domo Notes Focus Mode", null, (s, e) => { ShowAndActivate(); NavigateTo("zen"); });
+            _trayMenu.Items.Add("Husky Notes Focus Mode", null, (s, e) => { ShowAndActivate(); NavigateTo("zen"); });
             _trayMenu.Items.Add("Start Meeting / Voice Note", null, (s, e) => { ShowAndActivate(); NavigateTo("meetings", "record"); });
             _trayMenu.Items.Add("Schedule & Calendar", null, (s, e) => { ShowAndActivate(); NavigateTo("schedule"); });
             _trayMenu.Items.Add("Screen Recorder Studio", null, (s, e) => { ShowAndActivate(); NavigateTo("studio"); });
             _trayMenu.Items.Add("Toggle Quick Bar", null, (s, e) => ToggleHud());
             _trayMenu.Items.Add(new ToolStripSeparator());
             _trayMenu.Items.Add("Settings...", null, (s, e) => { ShowAndActivate(); NavigateTo("settings"); });
-            _trayMenu.Items.Add("About DomoNote", null, (s, e) => { ShowAndActivate(); NavigateTo("about"); });
+            _trayMenu.Items.Add("About HuskyNote", null, (s, e) => { ShowAndActivate(); NavigateTo("about"); });
             _trayMenu.Items.Add(new ToolStripSeparator());
-            _trayMenu.Items.Add("Quit DomoNote", null, (s, e) => ExitApplication());
+            _trayMenu.Items.Add("Quit HuskyNote", null, (s, e) => ExitApplication());
 
             _trayIcon = new NotifyIcon
             {
                 Icon = Icon ?? SystemIcons.Application,
-                Text = "DomoNote — Your Personal AI Secretary",
+                Text = "HuskyNote — Your Personal AI Secretary",
                 ContextMenuStrip = _trayMenu,
                 Visible = true
             };
@@ -129,10 +129,26 @@ namespace DomoNote
         {
             try
             {
-                string userDataFolder = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "DomoNote", "WebView2Data"
-                );
+                string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                string userDataFolder = Path.Combine(localAppData, "HuskyNote", "WebView2Data");
+
+                // Carry over notes and settings stored by pre-rebrand DomoNote builds
+                string legacyUserDataFolder = Path.Combine(localAppData, "DomoNote", "WebView2Data");
+                if (!Directory.Exists(userDataFolder) && Directory.Exists(legacyUserDataFolder))
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(Path.Combine(localAppData, "HuskyNote"));
+                        Directory.Move(legacyUserDataFolder, userDataFolder);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Keep using the legacy folder rather than starting with an empty workspace
+                        System.Diagnostics.Trace.WriteLine($"[Migration Warning] {ex.Message}");
+                        userDataFolder = legacyUserDataFolder;
+                    }
+                }
+
                 var env = await CoreWebView2Environment.CreateAsync(userDataFolder: userDataFolder);
                 await _webView.EnsureCoreWebView2Async(env);
 
@@ -157,8 +173,8 @@ namespace DomoNote
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Error initializing DomoNote Web Interface:\n{ex.Message}\n\nPlease ensure Microsoft Edge WebView2 Runtime is installed.",
-                    "DomoNote Error",
+                    $"Error initializing HuskyNote Web Interface:\n{ex.Message}\n\nPlease ensure Microsoft Edge WebView2 Runtime is installed.",
+                    "HuskyNote Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
                 );
@@ -181,7 +197,7 @@ namespace DomoNote
                 }
             }
 
-            // Check bundled web resources (shipped with DomoNote in ./web or ../dist)
+            // Check bundled web resources (shipped with HuskyNote in ./web or ../dist)
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
             string[] possibleWebDirs = {
                 Path.Combine(baseDir, "web"),
@@ -267,14 +283,14 @@ namespace DomoNote
         {
             if (_webView.CoreWebView2 == null) return;
             string actionScript = string.IsNullOrEmpty(action) ? "" : $", action: '{action}'";
-            string script = $"window.dispatchEvent(new CustomEvent('domonote:navigate', {{ detail: {{ view: '{view}'{actionScript} }} }}))";
+            string script = $"window.dispatchEvent(new CustomEvent('huskynote:navigate', {{ detail: {{ view: '{view}'{actionScript} }} }}))";
             _webView.CoreWebView2.ExecuteScriptAsync(script);
         }
 
         public void ToggleHud()
         {
             if (_webView.CoreWebView2 == null) return;
-            _webView.CoreWebView2.ExecuteScriptAsync("window.dispatchEvent(new CustomEvent('domonote:toggle-hud'))");
+            _webView.CoreWebView2.ExecuteScriptAsync("window.dispatchEvent(new CustomEvent('huskynote:toggle-hud'))");
         }
 
         public void ExitApplication()
@@ -294,8 +310,8 @@ namespace DomoNote
                 Hide();
                 _trayIcon.ShowBalloonTip(
                     2000,
-                    "DomoNote Running",
-                    "DomoNote is still running in the background. Double-click this icon to reopen.",
+                    "HuskyNote Running",
+                    "HuskyNote is still running in the background. Double-click this icon to reopen.",
                     ToolTipIcon.Info
                 );
                 return;

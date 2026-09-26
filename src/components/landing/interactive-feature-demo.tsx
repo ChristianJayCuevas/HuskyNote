@@ -49,7 +49,7 @@ export const InteractiveFeatureDemo: React.FC<InteractiveFeatureDemoProps> = ({
       name: 'Elena Rostova',
       role: 'Woman',
       audioSrc: '/audio/speaker-elena.mp3',
-      text: "Yes! DomoNote listens to our voices in real-time and writes down every single word on the spot without typing.",
+      text: "Yes! HuskyNote listens to our voices in real-time and writes down every single word on the spot without typing.",
     },
     {
       id: 2,
@@ -281,9 +281,9 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
 - [x] Red Border Box: Highlights the key meeting decision so you save time.
 
 ## To-Do List
-- [x] Download DomoNote to your computer (@Arron, Done!)
+- [x] Download HuskyNote to your computer (@Arron, Done!)
 - [x] Turn off your Wi-Fi and write a quick note (@Elena, Try it!)
-- [ ] Let DomoNote highlight a meeting transcript in red (@Marcus, Easy!)
+- [ ] Let HuskyNote highlight a meeting transcript in red (@Marcus, Easy!)
 `;
     navigator.clipboard.writeText(notesMarkdown);
     setCopied(true);
@@ -310,7 +310,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
       title: 'Works With No Wi-Fi',
       speaker: 'Elena Rostova',
       timestamp: '00:32',
-      targetText: 'NO INTERNET NEEDED: DomoNote has its own smart brain built right into your laptop. You can write, talk, and get helpful answers even if your internet is completely turned off.',
+      targetText: 'NO INTERNET NEEDED: HuskyNote has its own smart brain built right into your laptop. You can write, talk, and get helpful answers even if your internet is completely turned off.',
       stepTag: '02 • Works Everywhere',
       note: 'Confirms that you can take notes on an airplane, in the car, or offline with zero internet.',
     },
@@ -318,7 +318,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
       title: 'Red Box Time Saver',
       speaker: 'Marcus Vance',
       timestamp: '00:41',
-      targetText: 'READS FOR YOU: Instead of forcing you to read ten pages of words, DomoNote draws a clean red border box around the only sentence that actually matters so you save time.',
+      targetText: 'READS FOR YOU: Instead of forcing you to read ten pages of words, HuskyNote draws a clean red border box around the only sentence that actually matters so you save time.',
       stepTag: '03 • Saves Your Time',
       note: 'Finds the exact answer in two seconds so you can spot what was decided without reading the whole page.',
     },
@@ -712,7 +712,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
 
                 <div className="p-3 rounded bg-zinc-950 border border-zinc-800 text-zinc-300 leading-relaxed text-xs">
                   <div className="text-[10px] text-zinc-500 uppercase font-semibold mb-1">In Simple Words</div>
-                  DomoNote listens to your voice, writes your notes, and keeps all your secrets locked safely on this computer so nobody else can see them.
+                  HuskyNote listens to your voice, writes your notes, and keeps all your secrets locked safely on this computer so nobody else can see them.
                 </div>
 
                 <div className="space-y-2 text-xs">
@@ -799,7 +799,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                     <div className="border-b-2 border-zinc-900 pb-3 mb-4 flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                       <div>
                         <div className="text-[10px] font-mono tracking-widest uppercase font-bold text-zinc-500">
-                          DOMONOTE AUDIO TRANSCRIBER
+                          HUSKYNOTE AUDIO TRANSCRIBER
                         </div>
                         <h3 className="text-sm sm:text-base font-black text-zinc-950 tracking-tight mt-1">
                           Official Meeting Transcript: Product Sync & Privacy
@@ -848,7 +848,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                           <span className="font-bold text-zinc-900">Elena Rostova:</span>
                         </div>
                         <p className="pl-3 border-l-2 border-zinc-200 text-zinc-600">
-                          "Yes, DomoNote listens to our voices in real-time and writes down every sentence cleanly so no one has to take manual notes."
+                          "Yes, HuskyNote listens to our voices in real-time and writes down every sentence cleanly so no one has to take manual notes."
                         </p>
                       </div>
 
@@ -918,7 +918,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
 
                   {/* A4 Paper Footer */}
                   <div className="mt-6 pt-3 border-t border-zinc-300 flex items-center justify-between text-[10px] font-mono text-zinc-500">
-                    <span>DOMONOTE AUDIO TRANSCRIPT • A4 STANDARD</span>
+                    <span>HUSKYNOTE AUDIO TRANSCRIPT • A4 STANDARD</span>
                     <span>100% PRIVATE • LOCAL STORAGE ONLY</span>
                   </div>
                 </div>
@@ -1047,7 +1047,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                   <div>
                     <div className="font-semibold text-zinc-300 mb-1 text-xs">Quick Summary</div>
                     <p className="p-2.5 rounded bg-zinc-950 border border-zinc-850 text-zinc-300 text-xs leading-relaxed">
-                      We all agreed: DomoNote is the best because all our notes stay on our own computer, and it writes down to-dos automatically!
+                      We all agreed: HuskyNote is the best because all our notes stay on our own computer, and it writes down to-dos automatically!
                     </p>
                   </div>
 
@@ -1071,9 +1071,9 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                   <div className="font-semibold text-zinc-300 mb-1 text-xs">To-Do List (Click to check off!)</div>
 
                   {[
-                    { text: 'Download DomoNote to your computer', owner: '@Arron' },
+                    { text: 'Download HuskyNote to your computer', owner: '@Arron' },
                     { text: 'Turn off Wi-Fi and write a secret note', owner: '@Elena' },
-                    { text: 'Let DomoNote highlight a long paper in red', owner: '@Marcus' },
+                    { text: 'Let HuskyNote highlight a long paper in red', owner: '@Marcus' },
                   ].map((task, idx) => (
                     <div
                       key={idx}

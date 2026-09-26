@@ -43,7 +43,7 @@ export const GlobalMicRecorder: React.FC = () => {
         setTranscript((prev) => [...prev, seg]);
         // Also emit event so editors can insert text live
         window.dispatchEvent(
-          new CustomEvent('domonote:voice-dictation', { detail: { text: seg.text } })
+          new CustomEvent('huskynote:voice-dictation', { detail: { text: seg.text } })
         );
       });
 
@@ -54,7 +54,7 @@ export const GlobalMicRecorder: React.FC = () => {
 
       addToast('Global microphone active. Listening for voice dictation...', 'info');
     } catch (err: any) {
-      console.warn('[DomoNote] Mic start error:', err);
+      console.warn('[HuskyNote] Mic start error:', err);
       addToast('Microphone access was denied. Please allow microphone permissions in your browser.', 'error');
     }
   };

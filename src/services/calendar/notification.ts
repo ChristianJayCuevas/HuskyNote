@@ -15,7 +15,7 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
   try {
     return await Notification.requestPermission();
   } catch (err) {
-    console.warn('[DomoNote] Notification permission request error:', err);
+    console.warn('[HuskyNote] Notification permission request error:', err);
     return 'denied';
   }
 }
@@ -30,7 +30,7 @@ export function notifyDetectedEvent(event: ScheduleEvent, onClick?: () => void):
 
   try {
     const title = `📅 Event Detected: ${event.title}`;
-    const body = `Scheduled for ${event.date} at ${event.time} (${event.durationMin}m). Click to view in DomoNote or add to Computer Calendar.`;
+    const body = `Scheduled for ${event.date} at ${event.time} (${event.durationMin}m). Click to view in HuskyNote or add to Computer Calendar.`;
 
     const notification = new Notification(title, {
       body,
@@ -47,7 +47,7 @@ export function notifyDetectedEvent(event: ScheduleEvent, onClick?: () => void):
 
     return notification;
   } catch (err) {
-    console.warn('[DomoNote] Desktop notification failed:', err);
+    console.warn('[HuskyNote] Desktop notification failed:', err);
     return null;
   }
 }

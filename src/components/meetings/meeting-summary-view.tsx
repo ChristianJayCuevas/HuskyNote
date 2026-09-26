@@ -383,7 +383,7 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
       });
       addToast(`Transcript successfully translated to ${targetName}.`, 'success');
     } catch (err: any) {
-      console.warn('[DomoNote] Translate error:', err);
+      console.warn('[HuskyNote] Translate error:', err);
       addToast('Failed to translate transcript.', 'error');
     } finally {
       setIsTranslating(false);
@@ -432,7 +432,7 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
       });
       addToast(`Meeting summary re-synthesized in ${langLabel}.`, 'success');
     } catch (err: any) {
-      console.warn('[DomoNote] Resynthesize error:', err);
+      console.warn('[HuskyNote] Resynthesize error:', err);
       addToast('Failed to re-synthesize summary.', 'error');
     } finally {
       setIsResynthesizing(false);
@@ -461,7 +461,7 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
       exportMeetingToPdf(meeting);
       addToast('Meeting exported to PDF with full notes and screenshots.', 'success');
     } catch (err: any) {
-      console.error('[DomoNote] PDF export failed:', err);
+      console.error('[HuskyNote] PDF export failed:', err);
       addToast('Failed to generate PDF export.', 'error');
     }
   };

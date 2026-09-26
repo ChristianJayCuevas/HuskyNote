@@ -22,7 +22,7 @@ export const GlobalMascotDock: React.FC = () => {
           <div className="flex items-center justify-between border-b border-zinc-850 pb-2.5">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="font-bold text-white tracking-tight">Domo Panda Companion</span>
+              <span className="font-bold text-white tracking-tight">HuskyNote Companion</span>
             </div>
             <button
               onClick={() => {
@@ -58,7 +58,7 @@ export const GlobalMascotDock: React.FC = () => {
             >
               <span className="flex items-center gap-2">
                 <Feather className="w-3.5 h-3.5 text-zinc-300" />
-                <span>Open Domo Notes</span>
+                <span>Open Husky Notes</span>
               </span>
               <ArrowRight className="w-3.5 h-3.5 text-zinc-500" />
             </button>

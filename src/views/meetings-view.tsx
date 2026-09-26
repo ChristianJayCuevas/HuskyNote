@@ -25,8 +25,8 @@ export const MeetingsView: React.FC = () => {
   // Listen to Topbar trigger
   useEffect(() => {
     const handleStartEvent = () => setIsRecordingMode(true);
-    window.addEventListener('domonote:start-meeting', handleStartEvent);
-    return () => window.removeEventListener('domonote:start-meeting', handleStartEvent);
+    window.addEventListener('huskynote:start-meeting', handleStartEvent);
+    return () => window.removeEventListener('huskynote:start-meeting', handleStartEvent);
   }, []);
 
   const selectedMeeting = meetings.find((m) => m.id === activeMeetingId);

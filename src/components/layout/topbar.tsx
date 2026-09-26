@@ -11,7 +11,7 @@ import { LanguageSwitcher } from '../ui/language-switcher';
 import { GlobalMicRecorder } from './global-mic-recorder';
 import { ScreenHudLauncher } from '../hud/screen-hud-launcher';
 import { ChromeIcon } from '../ui/chrome-icon';
-import logoImg from '../../assets/official_domonote.png';
+import logoImg from '../../assets/official_huskynote.png';
 
 export const Topbar: React.FC = () => {
   const {
@@ -54,7 +54,7 @@ export const Topbar: React.FC = () => {
       case 'privacy':
         return t('nav.privacy');
       default:
-        return 'DomoNote';
+        return 'HuskyNote';
     }
   };
 
@@ -75,10 +75,10 @@ export const Topbar: React.FC = () => {
           type="button"
           onClick={() => setActiveView('landing')}
           className="md:hidden p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors flex items-center shrink-0"
-          title="DomoNote — Return to Landing Page"
+          title="HuskyNote — Return to Landing Page"
           aria-label="Return to Landing Page"
         >
-          <img src={logoImg} alt="DomoNote" className="w-6 h-6 rounded-md object-contain" />
+          <img src={logoImg} alt="HuskyNote" className="w-6 h-6 rounded-md object-contain" />
         </button>
 
         <h1 className="text-sm font-bold text-slate-950 dark:text-white tracking-tight truncate max-w-[120px] sm:max-w-[160px] md:max-w-xs">
@@ -114,7 +114,7 @@ export const Topbar: React.FC = () => {
         <button
           onClick={() => setIsExtensionModalOpen(true)}
           className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-black border border-slate-300 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 hover:text-black dark:hover:text-white hover:border-slate-400 dark:hover:border-zinc-700 transition-all text-xs font-semibold shadow-xs group"
-          title="DomoNote Chrome Extension (1-Click Automated Setup)"
+          title="HuskyNote Chrome Extension (1-Click Automated Setup)"
           aria-label="Open Chrome Extension setup"
         >
           <ChromeIcon className="w-3.5 h-3.5 shrink-0 transition-transform group-hover:scale-110" />
@@ -140,7 +140,7 @@ export const Topbar: React.FC = () => {
             size="sm"
             variant="primary"
             onClick={() => {
-              window.dispatchEvent(new CustomEvent('domonote:new-note'));
+              window.dispatchEvent(new CustomEvent('huskynote:new-note'));
             }}
           >
             <Plus className="w-3.5 h-3.5" />
@@ -153,7 +153,7 @@ export const Topbar: React.FC = () => {
             size="sm"
             variant="primary"
             onClick={() => {
-              window.dispatchEvent(new CustomEvent('domonote:start-meeting'));
+              window.dispatchEvent(new CustomEvent('huskynote:start-meeting'));
             }}
           >
             <Mic className="w-3.5 h-3.5" />
@@ -166,7 +166,7 @@ export const Topbar: React.FC = () => {
             size="sm"
             variant="primary"
             onClick={() => {
-              window.dispatchEvent(new CustomEvent('domonote:upload-pdf'));
+              window.dispatchEvent(new CustomEvent('huskynote:upload-pdf'));
             }}
           >
             <FileUp className="w-3.5 h-3.5" />

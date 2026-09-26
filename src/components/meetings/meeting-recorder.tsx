@@ -165,7 +165,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
           // Always pass participants if we have them (pre-recording roster build)
           if (Array.isArray(data.participants) && data.participants.length > 0) {
             speakerHookManager.handleIncomingPayload({
-              type: 'DOMONOTE_MEETING_PARTICIPANTS',
+              type: 'HUSKYNOTE_MEETING_PARTICIPANTS',
               app: data.app || detectedMeetingApp || 'Google Meet',
               participants: data.participants,
               activeSpeaker: data.activeSpeaker ?? undefined,
@@ -173,7 +173,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
           } else if (data.activeSpeaker) {
             // Even without participants list, update active speaker immediately
             speakerHookManager.handleIncomingPayload({
-              type: 'DOMONOTE_ACTIVE_SPEAKER',
+              type: 'HUSKYNOTE_ACTIVE_SPEAKER',
               app: data.app || detectedMeetingApp || 'Google Meet',
               activeSpeaker: data.activeSpeaker,
             });
@@ -332,7 +332,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
           }
         })
         .catch((err) => {
-          console.warn('[DomoNote] Live translation error:', err);
+          console.warn('[HuskyNote] Live translation error:', err);
           setTranscript((prev) =>
             prev.map((s) => (s.id === enrichedSeg.id ? { ...s, isTranslating: false } : s))
           );
@@ -381,7 +381,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
       setTranscript(polished);
       addToast('Transcript polished with speaker diarization & grammar.', 'success');
     } catch (err: any) {
-      console.warn('[DomoNote] Polish error:', err);
+      console.warn('[HuskyNote] Polish error:', err);
       addToast('Failed to polish transcript with AI.', 'error');
     } finally {
       setIsPolishingAI(false);
@@ -443,7 +443,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
       setTranscript(updated);
       addToast(`Transcript translated to ${getLanguageName(targetLang)}.`, 'success');
     } catch (err: any) {
-      console.warn('[DomoNote] Batch translation error:', err);
+      console.warn('[HuskyNote] Batch translation error:', err);
       addToast('Failed to translate transcript.', 'error');
     } finally {
       setIsTranslatingAll(false);
@@ -473,7 +473,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
 
       addToast(`Recording started (${getLanguageName(spokenLanguage)}).`, 'info');
     } catch (err: any) {
-      console.error('[DomoNote] Microphone permission denied or failed:', err);
+      console.error('[HuskyNote] Microphone permission denied or failed:', err);
       addToast(
         'Microphone access was denied. Please allow microphone permissions in your browser.',
         'error'
@@ -585,7 +585,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
           }
         }, 150);
       } catch (e) {
-        console.warn('[DomoNote] Audio diarizer setup error:', e);
+        console.warn('[HuskyNote] Audio diarizer setup error:', e);
       }
 
       timerIntervalRef.current = setInterval(() => {
@@ -604,7 +604,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
       }
       detectVisionModel().then((model) => {
         if (model) {
-          console.log(`[DomoNote] Visual participant scanner started (${model})`);
+          console.log(`[HuskyNote] Visual participant scanner started (${model})`);
           visualScannerStopRef.current = startVisualParticipantScanner(
             () => screenVideoRef.current,
             (names, source) => {
@@ -612,13 +612,13 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
             }
           );
         } else {
-          console.info('[DomoNote] No vision model available — install llava-phi3 for extension-free speaker detection');
+          console.info('[HuskyNote] No vision model available — install llava-phi3 for extension-free speaker detection');
         }
       });
 
       addToast(`${appName} / Tab audio capture started with multi-speaker detection.`, 'info');
     } catch (err: any) {
-      console.warn('[DomoNote] Tab capture cancelled:', err?.message);
+      console.warn('[HuskyNote] Tab capture cancelled:', err?.message);
     }
   };
 
@@ -689,7 +689,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
       setScreenshots((prev) => [...prev, screenshot]);
       addToast(`Screenshot captured at ${formatSecondsToTime(elapsedSeconds)}.`, 'success');
     } catch (err: any) {
-      console.warn('[DomoNote] Screenshot capture cancelled:', err?.message);
+      console.warn('[HuskyNote] Screenshot capture cancelled:', err?.message);
       addToast('Screenshot capture was cancelled or denied.', 'warning');
     }
   };
@@ -799,7 +799,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
       setScreenshots((prev) => [...prev, screenshot]);
       addToast(`Portion snip captured at ${formatSecondsToTime(elapsedSeconds)}.`, 'success');
     } catch (err: any) {
-      console.warn('[DomoNote] Portion snip cancelled or failed:', err);
+      console.warn('[HuskyNote] Portion snip cancelled or failed:', err);
       addToast('Portion snip was cancelled.', 'info');
     }
   };
@@ -909,7 +909,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
         }));
       }
 
-      // Plot all detected events into DomoNote schedule table
+      // Plot all detected events into HuskyNote schedule table
       if (allDetected.length > 0) {
         for (const ev of allDetected) {
           await db.schedule.put(ev);
@@ -944,7 +944,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
         onMeetingSaved(newMeeting);
       }
     } catch (err: any) {
-      console.error('[DomoNote] Failed to save meeting:', err);
+      console.error('[HuskyNote] Failed to save meeting:', err);
       addToast('Failed to save meeting data.', 'error');
     } finally {
       setIsProcessingAI(false);

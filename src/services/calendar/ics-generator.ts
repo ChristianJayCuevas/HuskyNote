@@ -40,10 +40,10 @@ export function generateVEventString(event: ScheduleEvent): string {
   const endDate = new Date(startDate.getTime() + (event.durationMin || 30) * 60 * 1000);
   const now = new Date();
 
-  const uid = `${event.id}@domonote.local`;
+  const uid = `${event.id}@huskynote.local`;
   const summary = escapeIcsText(event.title);
   const description = escapeIcsText(
-    `${event.notes || ''}\n\nCategory: ${event.category}\nOrganized via DomoNote Offline Intelligence`
+    `${event.notes || ''}\n\nCategory: ${event.category}\nOrganized via HuskyNote Offline Intelligence`
   );
 
   return [
@@ -69,7 +69,7 @@ export function generateIcsContent(events: ScheduleEvent[]): string {
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//DomoNote//Local Calendar Intelligence//EN',
+    'PRODID:-//HuskyNote//Local Calendar Intelligence//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     vEvents,
@@ -93,7 +93,7 @@ export function downloadIcsFile(event: ScheduleEvent, customFilename?: string): 
     .replace(/^-+|-+$/g, '')
     .slice(0, 30);
 
-  const fileName = customFilename || `domonote-${safeTitle}-${event.date}.ics`;
+  const fileName = customFilename || `huskynote-${safeTitle}-${event.date}.ics`;
 
   const link = document.createElement('a');
   link.href = url;
@@ -113,7 +113,7 @@ export function downloadMultipleEventsIcs(events: ScheduleEvent[], customFilenam
   const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);
 
-  const fileName = customFilename || `domonote-schedule-export-${events[0].date}.ics`;
+  const fileName = customFilename || `huskynote-schedule-export-${events[0].date}.ics`;
 
   const link = document.createElement('a');
   link.href = url;

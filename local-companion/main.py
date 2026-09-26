@@ -10,18 +10,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 app = FastAPI(
-    title="DomoNote Local Companion",
+    title="HuskyNote Local Companion",
     description="Local service for desktop capture, Whisper speech processing, and Ollama automation",
     version="0.1.0"
 )
 
-# Strict CORS for local DomoNote web client
+# Strict CORS for local HuskyNote web client
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
-        "https://domonote.vercel.app"
+        "https://huskynote.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
@@ -39,7 +39,7 @@ class ChangeDetectionRequest(BaseModel):
 
 @app.get("/health")
 def get_health():
-    """Health status check for DomoNote web client."""
+    """Health status check for HuskyNote web client."""
     ollama_online = False
     try:
         r = requests.get(f"{OLLAMA_URL}/api/tags", timeout=2)
@@ -49,7 +49,7 @@ def get_health():
 
     return {
         "status": "ok",
-        "service": "domonote-companion",
+        "service": "huskynote-companion",
         "version": "0.1.0",
         "ollama_online": ollama_online,
         "ollama_url": OLLAMA_URL
@@ -132,7 +132,7 @@ async def transcribe_audio(file: UploadFile = File(...)):
             model = WhisperModel("base", device="cpu", compute_type="int8")
             audio_bytes = await file.read()
             # Save temporarily
-            tmp_path = f"/tmp/domonote_{file.filename}"
+            tmp_path = f"/tmp/huskynote_{file.filename}"
             with open(tmp_path, "wb") as f:
                 f.write(audio_bytes)
             

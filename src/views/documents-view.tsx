@@ -63,7 +63,7 @@ export const DocumentsView: React.FC = () => {
         setActiveDocumentId(remaining.length > 0 ? remaining[0].id : null);
       }
     } catch (err: any) {
-      console.error('[DomoNote] Failed to delete document:', err);
+      console.error('[HuskyNote] Failed to delete document:', err);
       addToast(`Failed to delete document: ${err?.message || 'Unknown error'}`, 'error');
     } finally {
       setDocToDelete(null);
@@ -134,7 +134,7 @@ export const DocumentsView: React.FC = () => {
       const unit = result.fileType === 'pptx' || result.fileType === 'ppt' ? 'slides' : 'pages';
       addToast(`Parsed "${file.name}" (${result.pageCount} ${unit}). AI summary ready!`, 'success');
     } catch (err: any) {
-      console.error('[DomoNote] Document upload failed:', err);
+      console.error('[HuskyNote] Document upload failed:', err);
       addToast(`Failed to parse file: ${err?.message || 'Invalid format'}`, 'error');
     } finally {
       setIsUploading(false);
@@ -145,8 +145,8 @@ export const DocumentsView: React.FC = () => {
   // Listen to Topbar trigger
   useEffect(() => {
     const handleUploadTrigger = () => fileInputRef.current?.click();
-    window.addEventListener('domonote:upload-pdf', handleUploadTrigger);
-    return () => window.removeEventListener('domonote:upload-pdf', handleUploadTrigger);
+    window.addEventListener('huskynote:upload-pdf', handleUploadTrigger);
+    return () => window.removeEventListener('huskynote:upload-pdf', handleUploadTrigger);
   }, []);
 
   const selectedDocument = documents.find((d) => d.id === activeDocumentId);

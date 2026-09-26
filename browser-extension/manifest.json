@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "DomoNote - Personal AI Secretary",
+  "name": "HuskyNote - Personal AI Secretary",
   "version": "2.0.0",
   "description": "Capture meetings with per-speaker transcription and auto-generate full documentation using local Ollama AI. 100% private — no cloud, no API keys.",
   "permissions": [
@@ -36,7 +36,7 @@
     }
   ],
   "action": {
-    "default_title": "DomoNote AI Secretary (Sidebar)",
+    "default_title": "HuskyNote AI Secretary (Sidebar)",
     "default_icon": {
       "16": "icon.png",
       "48": "icon.png",

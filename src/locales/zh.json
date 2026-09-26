@@ -1,13 +1,13 @@
 {
   "app": {
-    "name": "DomoNote",
+    "name": "HuskyNote",
     "tagline": "您的个人 AI 秘书"
   },
   "nav": {
     "home": "首页",
     "overview": "概览",
     "notes": "笔记",
-    "zen": "Domo 笔记",
+    "zen": "Husky 笔记",
     "meetings": "会议纪要",
     "schedule": "日程规划",
     "documents": "文档库",
@@ -18,7 +18,7 @@
     "landing": "产品首页",
     "download": "下载客户端",
     "settings": "设置",
-    "about": "关于 DomoNote",
+    "about": "关于 HuskyNote",
     "changelog": "更新日志",
     "privacy": "隐私说明",
     "localAi": "个人秘书",
@@ -55,7 +55,7 @@
     },
     "demo": {
       "badge": "实时交互演示",
-      "title": "亲身体验 DomoNote",
+      "title": "亲身体验 HuskyNote",
       "description": "探索实时语音转写、Ollama 本地 AI 智能摘要、动态无遮挡边框标注以及结构化会议笔记——全程在您的设备端本地运行。",
       "interactiveStudio": "交互式演练",
       "walkthroughVideo": "视频演示",
@@ -65,7 +65,7 @@
     "howItWorks": {
       "badge": "工作流程",
       "title": "从实时语音到条理清晰的笔记。",
-      "description": "通话结束后的大多数会议讨论往往被遗忘。DomoNote 记录全部要点，提炼核心决策，并在您的计算机本地将其转化为永久沉淀的笔记。",
+      "description": "通话结束后的大多数会议讨论往往被遗忘。HuskyNote 记录全部要点，提炼核心决策，并在您的计算机本地将其转化为永久沉淀的笔记。",
       "step1Title": "实时语音录制",
       "step1Desc": "浏览器端原生录音，逐句生成带精确时间戳的实时文字稿。",
       "step2Title": "关键决策与亮点",
@@ -94,14 +94,14 @@
       "panelDocumentsTitle": "文档精读与深度分析",
       "panelDocumentsDesc": "支持导入 PDF、Word、演示文稿与纯文本。支持跨文档提问、划词高亮与核心摘要提取。",
       "panelOperationsTitle": "屏幕录制与步骤手册",
-      "panelOperationsDesc": "录制复杂操作流程。DomoNote 自动捕获截图、提取步骤并编排标准作业规程 (SOP)。",
+      "panelOperationsDesc": "录制复杂操作流程。HuskyNote 自动捕获截图、提取步骤并编排标准作业规程 (SOP)。",
       "panelAiTitle": "私密本地 AI 助手",
       "panelAiDesc": "借助 Ollama 在本机全离线运行大模型。在笔记与文档间自由提问，绝无数据外泄之虞。",
       "panelAnnotationTitle": "动态逐步自动标注",
       "panelAnnotationDesc": "实时识别界面元素与操作动线。精准勾勒边框坐标，自动生成图文并茂的图示指南。",
       "panelVaultTitle": "本地 IndexedDB 知识库",
       "panelVaultDesc": "所有笔记、录音稿与电子书仅保存在本机浏览器数据库中。极速即时搜索，零外部数据交换。",
-      "panelZenTitle": "专注无扰的 Domo 笔记",
+      "panelZenTitle": "专注无扰的 Husky 笔记",
       "panelZenDesc": "为深度思考而设计的暗黑极简笔记环境。支持完整 Markdown、历史回滚与专注白噪音氛围音效。",
       "panelExportTitle": "一键多格式通用导出",
       "panelExportDesc": "会议纪要、操作手册与摘要均可一键导出为精美排版 PDF、标准 Markdown 或结构化 JSON。"
@@ -109,7 +109,7 @@
     "setup": {
       "badge": "快速部署",
       "title": "一条命令，自动就绪。",
-      "description": "DomoNote 配备自动化引导程序，可自动检测本地 Ollama、配置跨域权限、拉取推荐模型并打开工作区。",
+      "description": "HuskyNote 配备自动化引导程序，可自动检测本地 Ollama、配置跨域权限、拉取推荐模型并打开工作区。",
       "oneClickInit": "一键初始化",
       "whatLauncherAutomates": "引导脚本包含的操作：",
       "checkOllama": "检查 Ollama 是否安装（若未安装则提示指引）",
@@ -122,7 +122,7 @@
       "privacyBoundariesDesc": "所有笔记与录音永远不离开您的设备。AI 请求仅限于浏览器与本机 http://localhost:11434 之间进行交互。"
     },
     "why": {
-      "badge": "为何选择 DOMONOTE",
+      "badge": "为何选择 HUSKYNOTE",
       "title": "为隐私、极速与数据自主而生",
       "card1Tag": "默认绝对私有",
       "card1Title": "数据始终完全归属于你",
@@ -140,11 +140,11 @@
     "cta": {
       "title": "让专属个人 AI 秘书帮您整理知识与工作。",
       "description": "无需注册账号，无需信用卡。您的工作区完整生存在您的浏览器与本地存储中。",
-      "openApp": "打开 DomoNote",
+      "openApp": "打开 HuskyNote",
       "downloadApp": "下载客户端"
     },
     "footer": {
-      "copyright": "DomoNote. 您的个人 AI 秘书。",
+      "copyright": "HuskyNote. 您的个人 AI 秘书。",
       "description": "您的专属个人 AI 秘书，轻松管理笔记、会议纪要与文档。所有内容完全保存在您的电脑本地——无需注册账号，绝无隐私追踪，不依赖任何云端服务。",
       "privacyNotice": "运行在您本地电脑上的个人 AI 秘书。无需注册账号，绝无隐私追踪，不向云端发送任何数据。",
       "licenseNotice": "MIT 协议 • 开源免费 • 运行于您的设备",

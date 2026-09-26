@@ -1,4 +1,4 @@
-// Web Audio API tactile sound synthesizer for DomoNote
+// Web Audio API tactile sound synthesizer for HuskyNote
 // Generates mechanical keyboard switch "thocks", clicks, pops, and chimes on-the-fly.
 // Zero network latency, works 100% offline, cross-platform.
 
@@ -9,11 +9,11 @@ class SoundFXService {
 
   constructor() {
     if (typeof window !== 'undefined') {
-      const savedMuted = localStorage.getItem('domonote_sound_muted');
+      const savedMuted = localStorage.getItem('huskynote_sound_muted');
       if (savedMuted !== null) {
         this.isMuted = savedMuted === 'true';
       }
-      const savedVolume = localStorage.getItem('domonote_sound_volume');
+      const savedVolume = localStorage.getItem('huskynote_sound_volume');
       if (savedVolume !== null) {
         const parsed = parseFloat(savedVolume);
         if (!isNaN(parsed)) this.volume = Math.max(0, Math.min(1, parsed));
@@ -42,7 +42,7 @@ class SoundFXService {
   public setIsMuted(muted: boolean) {
     this.isMuted = muted;
     if (typeof window !== 'undefined') {
-      localStorage.setItem('domonote_sound_muted', String(muted));
+      localStorage.setItem('huskynote_sound_muted', String(muted));
     }
   }
 
@@ -61,7 +61,7 @@ class SoundFXService {
   public setVolume(vol: number) {
     this.volume = Math.max(0, Math.min(1, vol));
     if (typeof window !== 'undefined') {
-      localStorage.setItem('domonote_sound_volume', String(this.volume));
+      localStorage.setItem('huskynote_sound_volume', String(this.volume));
     }
   }
 

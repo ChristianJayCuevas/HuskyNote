@@ -1,5 +1,5 @@
 /**
- * DomoNote Automatic Speaker Hook & Multi-App Participant Attribution Engine
+ * HuskyNote Automatic Speaker Hook & Multi-App Participant Attribution Engine
  * ─────────────────────────────────────────────────────────────────────────────
  * Automatically hooks into meeting apps (Google Meet, Microsoft Teams, Zoom,
  * Cisco Webex, Slack Huddles, Discord, Jitsi Meet, Skype) to detect real participant
@@ -23,7 +23,7 @@ export interface DiscoveredSpeaker {
 }
 
 export interface MeetingSyncPayload {
-  type: 'DOMONOTE_MEETING_PARTICIPANTS' | 'DOMONOTE_ACTIVE_SPEAKER';
+  type: 'HUSKYNOTE_MEETING_PARTICIPANTS' | 'HUSKYNOTE_ACTIVE_SPEAKER';
   app?: string;
   participants?: string[];
   activeSpeaker?: string;
@@ -366,12 +366,12 @@ export class MeetingSpeakerHook {
   private initBroadcastChannel() {
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
       try {
-        this.channel = new BroadcastChannel('domonote_meeting_sync');
+        this.channel = new BroadcastChannel('huskynote_meeting_sync');
         this.channel.onmessage = (event) => {
           this.handleIncomingPayload(event.data);
         };
       } catch (err) {
-        console.warn('[DomoNote SpeakerHook] BroadcastChannel unavailable:', err);
+        console.warn('[HuskyNote SpeakerHook] BroadcastChannel unavailable:', err);
       }
     }
   }
@@ -379,7 +379,7 @@ export class MeetingSpeakerHook {
   private initWindowListener() {
     if (typeof window !== 'undefined') {
       window.addEventListener('message', (event) => {
-        if (event.data?.type === 'DOMONOTE_MEETING_PARTICIPANTS' || event.data?.type === 'DOMONOTE_ACTIVE_SPEAKER') {
+        if (event.data?.type === 'HUSKYNOTE_MEETING_PARTICIPANTS' || event.data?.type === 'HUSKYNOTE_ACTIVE_SPEAKER') {
           this.handleIncomingPayload(event.data);
         }
       });
@@ -710,7 +710,7 @@ export class MeetingSpeakerHook {
       try {
         (listener as any)(roster, this.detectedApp, this.activeSpeaker, this.selfName);
       } catch (e) {
-        console.warn('[DomoNote SpeakerHook] Listener error:', e);
+        console.warn('[HuskyNote SpeakerHook] Listener error:', e);
       }
     }
   }

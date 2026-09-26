@@ -79,7 +79,7 @@ export const DownloadView: React.FC = () => {
     addToast('Terminal command copied to clipboard.', 'info');
   };
 
-  const GITHUB_REPO = 'https://github.com/darknecrocities/DomoNote';
+  const GITHUB_REPO = 'https://github.com/ChristianJayCuevas/HuskyNote';
   const GITHUB_RELEASE_BASE = `${GITHUB_REPO}/releases/latest/download`;
 
   const handleDownload = async (filename: string, osName: string) => {
@@ -119,7 +119,7 @@ export const DownloadView: React.FC = () => {
             : filename.endsWith('.exe')
             ? 'Windows Installer (.exe)'
             : filename;
-          addToast(`Downloading ${label}. Open the DMG to install DomoNote.`, 'success');
+          addToast(`Downloading ${label}. Open the DMG to install HuskyNote.`, 'success');
           return;
         }
       } catch {
@@ -149,15 +149,15 @@ export const DownloadView: React.FC = () => {
       mimeType = 'application/x-bat';
       blobContent = `@echo off
 rem ========================================================
-rem   DomoNote Desktop - Personal AI Secretary
-rem   App Icon: official_domonote.png
-rem   Repository: https://github.com/darknecrocities/DomoNote
+rem   HuskyNote Desktop - Personal AI Secretary
+rem   App Icon: official_huskynote.png
+rem   Repository: https://github.com/ChristianJayCuevas/HuskyNote
 rem ========================================================
-title DomoNote Desktop Setup
+title HuskyNote Desktop Setup
 echo.
 echo  ========================================================
-echo    DomoNote Desktop - Personal AI Secretary
-echo    Setting up DomoNote for Windows...
+echo    HuskyNote Desktop - Personal AI Secretary
+echo    Setting up HuskyNote for Windows...
 echo  ========================================================
 echo.
 
@@ -173,49 +173,49 @@ if %ERRORLEVEL% neq 0 (
   exit /b 1
 )
 
-set INSTALL_DIR=%USERPROFILE%\\.domonote
+set INSTALL_DIR=%USERPROFILE%\\.huskynote
 if not exist "%INSTALL_DIR%" (
-  echo [DomoNote] Downloading DomoNote to %INSTALL_DIR%...
-  git clone https://github.com/darknecrocities/DomoNote.git "%INSTALL_DIR%"
+  echo [HuskyNote] Downloading HuskyNote to %INSTALL_DIR%...
+  git clone https://github.com/ChristianJayCuevas/HuskyNote.git "%INSTALL_DIR%"
 ) else (
-  echo [DomoNote] Updating existing DomoNote in %INSTALL_DIR%...
+  echo [HuskyNote] Updating existing HuskyNote in %INSTALL_DIR%...
   cd /d "%INSTALL_DIR%"
   git pull
 )
 
 cd /d "%INSTALL_DIR%"
-echo [DomoNote] Installing dependencies...
+echo [HuskyNote] Installing dependencies...
 call npm install
-echo [DomoNote] Starting DomoNote Desktop with app icon...
+echo [HuskyNote] Starting HuskyNote Desktop with app icon...
 call npm run dev
 `;
     } else {
       mimeType = 'application/x-sh';
       blobContent = `#!/usr/bin/env bash
 # ========================================================
-#   DomoNote Desktop - Personal AI Secretary
+#   HuskyNote Desktop - Personal AI Secretary
 #   Target OS: ${osName}
-#   App Icon: official_domonote.png
-#   Repository: https://github.com/darknecrocities/DomoNote
+#   App Icon: official_huskynote.png
+#   Repository: https://github.com/ChristianJayCuevas/HuskyNote
 # ========================================================
 set -e
 
 echo "========================================================"
-echo "  DomoNote Desktop - Local-First AI Secretary"
-echo "  Setting up DomoNote for ${osName}..."
+echo "  HuskyNote Desktop - Local-First AI Secretary"
+echo "  Setting up HuskyNote for ${osName}..."
 echo "========================================================"
 
-INSTALL_DIR="$HOME/.domonote"
+INSTALL_DIR="$HOME/.huskynote"
 if [ ! -d "$INSTALL_DIR" ]; then
-  echo "[DomoNote] Cloning DomoNote repository to $INSTALL_DIR..."
-  git clone https://github.com/darknecrocities/DomoNote.git "$INSTALL_DIR"
+  echo "[HuskyNote] Cloning HuskyNote repository to $INSTALL_DIR..."
+  git clone https://github.com/ChristianJayCuevas/HuskyNote.git "$INSTALL_DIR"
 else
-  echo "[DomoNote] Existing installation found at $INSTALL_DIR, updating..."
+  echo "[HuskyNote] Existing installation found at $INSTALL_DIR, updating..."
   cd "$INSTALL_DIR" && git pull || true
 fi
 
 cd "$INSTALL_DIR"
-echo "[DomoNote] Launching DomoNote with official app icon..."
+echo "[HuskyNote] Launching HuskyNote with official app icon..."
 bash start.sh
 `;
     }
@@ -246,13 +246,13 @@ bash start.sh
             <ArrowLeft className="w-4 h-4" />
           </button>
           <img
-            src="/official_domonote.png"
-            alt="DomoNote Logo"
+            src="/official_huskynote.png"
+            alt="HuskyNote Logo"
             className="w-10 h-10 rounded-xl shadow-md border border-slate-200 dark:border-zinc-800"
           />
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">
-              Download DomoNote Desktop
+              Download HuskyNote Desktop
             </h1>
             <p className="text-xs text-slate-600 dark:text-zinc-400 mt-0.5 font-medium">
               Local-first desktop application with offline Ollama AI, screen recording, and secure local storage.
@@ -270,7 +270,7 @@ bash start.sh
           </button>
 
           <a
-            href="https://github.com/darknecrocities/DomoNote"
+            href="https://github.com/ChristianJayCuevas/HuskyNote"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 text-xs font-semibold text-slate-800 dark:text-zinc-300 hover:text-black dark:hover:text-white hover:border-slate-400 dark:hover:border-white/40 transition-colors shadow-sm"
@@ -301,8 +301,8 @@ bash start.sh
         <div className="flex items-center gap-3.5">
           <div className="relative shrink-0">
             <img
-              src="/official_domonote.png"
-              alt="DomoNote App Logo"
+              src="/official_huskynote.png"
+              alt="HuskyNote App Logo"
               className="w-12 h-12 rounded-xl shadow-md border border-slate-200 dark:border-zinc-800 object-cover"
             />
             <div className="absolute -bottom-1 -right-1 p-1 rounded-md bg-slate-900 dark:bg-white text-white dark:text-black shadow-sm">
@@ -344,13 +344,13 @@ bash start.sh
             onClick={() => {
               if (detectedOS === 'macos') {
                 handleDownload(
-                  isAppleSilicon ? 'DomoNote-macOS-arm64.dmg' : 'DomoNote-macOS-x64.dmg',
+                  isAppleSilicon ? 'HuskyNote-macOS-arm64.dmg' : 'HuskyNote-macOS-x64.dmg',
                   'macOS'
                 );
               } else if (detectedOS === 'windows') {
-                handleDownload('DomoNote-Setup-x64.exe', 'Windows');
+                handleDownload('HuskyNote-Setup-x64.exe', 'Windows');
               } else {
-                handleDownload('DomoNote-Linux-x86_64.AppImage', 'Linux');
+                handleDownload('HuskyNote-Linux-x86_64.AppImage', 'Linux');
               }
             }}
             className="px-5 py-2.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-slate-800 dark:hover:bg-zinc-200 transition-colors flex items-center gap-2 shadow-lg"
@@ -424,8 +424,8 @@ bash start.sh
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <img
-                  src="/official_domonote.png"
-                  alt="DomoNote macOS"
+                  src="/official_huskynote.png"
+                  alt="HuskyNote macOS"
                   className="w-10 h-10 rounded-xl shadow-md border border-slate-200 dark:border-zinc-800 object-cover"
                 />
                 <div className="p-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-black shadow-sm">
@@ -491,7 +491,7 @@ bash start.sh
           <div className="pt-6 space-y-2 mt-auto">
             {/* Apple Silicon DMG */}
             <button
-              onClick={() => handleDownload('DomoNote-macOS-arm64.dmg', 'macOS (Apple Silicon)')}
+              onClick={() => handleDownload('HuskyNote-macOS-arm64.dmg', 'macOS (Apple Silicon)')}
               className="w-full py-2.5 px-4 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-slate-800 dark:hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 shadow-sm"
               title="Download Apple Silicon .dmg installer (M1, M2, M3, M4) · 21 MB"
               aria-label="Download macOS Apple Silicon .dmg"
@@ -500,7 +500,7 @@ bash start.sh
               <span>Apple Silicon (.dmg)</span>
             </button>
             <button
-              onClick={() => handleDownload('DomoNote-macOS-x64.dmg', 'macOS (Intel)')}
+              onClick={() => handleDownload('HuskyNote-macOS-x64.dmg', 'macOS (Intel)')}
               className="w-full py-2 px-4 rounded-lg bg-white dark:bg-black border border-slate-300 dark:border-zinc-800 text-slate-800 dark:text-zinc-300 text-xs font-semibold hover:border-slate-500 dark:hover:border-white/40 hover:text-black dark:hover:text-white transition-colors flex items-center justify-center gap-2"
               title="Download Intel Mac .dmg installer (Core i5, i7, i9) · 21 MB"
               aria-label="Download macOS Intel .dmg"
@@ -509,7 +509,7 @@ bash start.sh
               <span>Intel Mac (.dmg)</span>
             </button>
             <button
-              onClick={() => handleDownload('DomoNote-macOS-Universal.dmg', 'macOS (Universal)')}
+              onClick={() => handleDownload('HuskyNote-macOS-Universal.dmg', 'macOS (Universal)')}
               className="w-full py-1.5 px-3 rounded-lg border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 text-[11px] font-medium hover:border-slate-400 dark:hover:border-zinc-600 hover:text-black dark:hover:text-white transition-colors flex items-center justify-center gap-1.5"
               title="Download Universal .dmg installer — works on any Mac · 21 MB"
               aria-label="Download Universal macOS .dmg"
@@ -533,8 +533,8 @@ bash start.sh
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <img
-                  src="/official_domonote.png"
-                  alt="DomoNote Windows"
+                  src="/official_huskynote.png"
+                  alt="HuskyNote Windows"
                   className="w-10 h-10 rounded-xl shadow-md border border-slate-200 dark:border-zinc-800 object-cover"
                 />
                 <div className="p-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-black shadow-sm">
@@ -599,21 +599,21 @@ bash start.sh
           {/* Download Buttons */}
           <div className="pt-6 space-y-2 mt-auto">
             <button
-              onClick={() => handleDownload('DomoNote-Setup-x64.exe', 'Windows')}
+              onClick={() => handleDownload('HuskyNote-Setup-x64.exe', 'Windows')}
               className="w-full py-2.5 px-4 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-slate-800 dark:hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 shadow-sm"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download Installer (.EXE)</span>
             </button>
             <button
-              onClick={() => handleDownload('DomoNote-Windows-Portable.zip', 'Windows Portable')}
+              onClick={() => handleDownload('HuskyNote-Windows-Portable.zip', 'Windows Portable')}
               className="w-full py-2 px-4 rounded-lg bg-white dark:bg-black border border-slate-300 dark:border-zinc-800 text-slate-800 dark:text-zinc-300 text-xs font-semibold hover:border-slate-500 dark:hover:border-white/40 hover:text-black dark:hover:text-white transition-colors flex items-center justify-center gap-2"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download Portable (.ZIP)</span>
             </button>
             <a
-              href="https://github.com/darknecrocities/DomoNote/releases"
+              href="https://github.com/ChristianJayCuevas/HuskyNote/releases"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full py-1.5 px-3 rounded-lg border border-dashed border-slate-300 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 text-[11px] font-medium hover:border-slate-500 dark:hover:border-zinc-600 hover:text-black dark:hover:text-white transition-colors flex items-center justify-center gap-1.5"
@@ -637,8 +637,8 @@ bash start.sh
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <img
-                  src="/official_domonote.png"
-                  alt="DomoNote Linux"
+                  src="/official_huskynote.png"
+                  alt="HuskyNote Linux"
                   className="w-10 h-10 rounded-xl shadow-md border border-slate-200 dark:border-zinc-800 object-cover"
                 />
                 <div className="p-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-black shadow-sm">
@@ -703,14 +703,14 @@ bash start.sh
           {/* Download Buttons */}
           <div className="pt-6 space-y-2 mt-auto">
             <button
-              onClick={() => handleDownload('DomoNote-Linux-x86_64.AppImage', 'Linux AppImage')}
+              onClick={() => handleDownload('HuskyNote-Linux-x86_64.AppImage', 'Linux AppImage')}
               className="w-full py-2.5 px-4 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-slate-800 dark:hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 shadow-sm"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download AppImage (.AppImage)</span>
             </button>
             <button
-              onClick={() => handleDownload('domonote_1.0.0_amd64.deb', 'Debian/Ubuntu')}
+              onClick={() => handleDownload('huskynote_1.0.0_amd64.deb', 'Debian/Ubuntu')}
               className="w-full py-2 px-4 rounded-lg bg-white dark:bg-black border border-slate-300 dark:border-zinc-800 text-slate-800 dark:text-zinc-300 text-xs font-semibold hover:border-slate-500 dark:hover:border-white/40 hover:text-black dark:hover:text-white transition-colors flex items-center justify-center gap-2"
             >
               <Download className="w-3.5 h-3.5" />
@@ -728,15 +728,15 @@ bash start.sh
             <span>macOS Gatekeeper First-Launch Fix (Resolves "App is damaged / cannot be opened")</span>
           </div>
           <p className="text-xs text-slate-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
-            macOS Gatekeeper automatically quarantines open-source software downloaded via browsers. If macOS reports the app is damaged, run this single terminal command to remove the quarantine flag, or double-click the included <span className="font-semibold text-slate-900 dark:text-white">Open DomoNote.command</span>:
+            macOS Gatekeeper automatically quarantines open-source software downloaded via browsers. If macOS reports the app is damaged, run this single terminal command to remove the quarantine flag, or double-click the included <span className="font-semibold text-slate-900 dark:text-white">Open HuskyNote.command</span>:
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <code className="text-xs font-mono bg-white dark:bg-black p-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white select-all">
-            xattr -cr /Applications/DomoNote.app
+            xattr -cr /Applications/HuskyNote.app
           </code>
           <button
-            onClick={() => copyCommand('xattr -cr /Applications/DomoNote.app', 'gatekeeper')}
+            onClick={() => copyCommand('xattr -cr /Applications/HuskyNote.app', 'gatekeeper')}
             className="px-3 py-2 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-slate-800 dark:hover:bg-zinc-200 transition-colors flex items-center gap-1.5 shadow-sm"
           >
             {copiedCmd === 'gatekeeper' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -775,7 +775,7 @@ bash start.sh
           <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 space-y-2">
             <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
               <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              Issue: "Apple could not verify DomoNote" / Not Opened
+              Issue: "Apple could not verify HuskyNote" / Not Opened
             </div>
             <p className="text-slate-600 dark:text-zinc-400 leading-relaxed">
               Standard Apple Gatekeeper check for free open-source software without a paid $99/yr Apple certificate. Quick 5-second fix:
@@ -787,11 +787,11 @@ bash start.sh
               </div>
               <div>
                 <div className="font-semibold text-slate-700 dark:text-zinc-300 mb-0.5">Method 2 — Right-Click Bypass:</div>
-                <p className="text-slate-600 dark:text-zinc-400">In Applications, <strong>Right-Click (or Control-Click)</strong> DomoNote.app → select <strong>Open</strong> → click <strong>Open</strong>.</p>
+                <p className="text-slate-600 dark:text-zinc-400">In Applications, <strong>Right-Click (or Control-Click)</strong> HuskyNote.app → select <strong>Open</strong> → click <strong>Open</strong>.</p>
               </div>
               <div>
                 <div className="font-semibold text-slate-700 dark:text-zinc-300 mb-0.5">Method 3 — Terminal 1-Liner:</div>
-                <code className="block font-mono text-[10px] bg-black/10 dark:bg-white/5 px-2.5 py-1.5 rounded border border-slate-200 dark:border-zinc-800 select-all text-slate-900 dark:text-zinc-200">xattr -cr /Applications/DomoNote.app</code>
+                <code className="block font-mono text-[10px] bg-black/10 dark:bg-white/5 px-2.5 py-1.5 rounded border border-slate-200 dark:border-zinc-800 select-all text-slate-900 dark:text-zinc-200">xattr -cr /Applications/HuskyNote.app</code>
               </div>
             </div>
           </div>
@@ -801,7 +801,7 @@ bash start.sh
             <Terminal className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400" />
             Always-working alternative — Terminal (no binary required, Intel &amp; Silicon):
           </div>
-          <code className="block font-mono text-[11px] bg-white dark:bg-black p-2.5 rounded border border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white select-all whitespace-pre">{`git clone https://github.com/darknecrocities/DomoNote.git && cd DomoNote && ./start.sh`}</code>
+          <code className="block font-mono text-[11px] bg-white dark:bg-black p-2.5 rounded border border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white select-all whitespace-pre">{`git clone https://github.com/ChristianJayCuevas/HuskyNote.git && cd HuskyNote && ./start.sh`}</code>
           <p className="text-slate-500 dark:text-zinc-600 mt-1.5">Requires Node.js 18+ from <a href="https://nodejs.org" target="_blank" rel="noopener noreferrer" className="underline hover:text-black dark:hover:text-white">nodejs.org</a>.</p>
         </div>
       </div>
@@ -822,7 +822,7 @@ bash start.sh
               </span>
             </div>
             <h3 className="text-lg font-bold text-slate-950 dark:text-white mt-1">
-              DomoNote Chrome Extension & Side Panel
+              HuskyNote Chrome Extension & Side Panel
             </h3>
             <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1 max-w-xl leading-relaxed">
               Use notes, voice dictation, local Ollama AI summarization, and screen capture right inside your browser without opening the full desktop app.
@@ -861,7 +861,7 @@ bash start.sh
               <button
                 onClick={() =>
                   copyCommand(
-                    'git clone https://github.com/darknecrocities/DomoNote.git && cd DomoNote && ./start.sh',
+                    'git clone https://github.com/ChristianJayCuevas/HuskyNote.git && cd HuskyNote && ./start.sh',
                     'mac'
                   )
                 }
@@ -872,7 +872,7 @@ bash start.sh
               </button>
             </div>
             <code className="block text-[11px] text-slate-800 dark:text-zinc-300 font-mono bg-slate-100 dark:bg-zinc-900/60 p-2.5 rounded border border-slate-200 dark:border-zinc-800 overflow-x-auto whitespace-pre font-medium">
-              git clone https://github.com/darknecrocities/DomoNote.git && cd DomoNote && ./start.sh
+              git clone https://github.com/ChristianJayCuevas/HuskyNote.git && cd HuskyNote && ./start.sh
             </code>
           </div>
 
@@ -885,7 +885,7 @@ bash start.sh
               <button
                 onClick={() =>
                   copyCommand(
-                    'git clone https://github.com/darknecrocities/DomoNote.git; cd DomoNote; npm install; npm run dev',
+                    'git clone https://github.com/ChristianJayCuevas/HuskyNote.git; cd HuskyNote; npm install; npm run dev',
                     'win'
                   )
                 }
@@ -896,7 +896,7 @@ bash start.sh
               </button>
             </div>
             <code className="block text-[11px] text-slate-800 dark:text-zinc-300 font-mono bg-slate-100 dark:bg-zinc-900/60 p-2.5 rounded border border-slate-200 dark:border-zinc-800 overflow-x-auto whitespace-pre font-medium">
-              git clone https://github.com/darknecrocities/DomoNote.git; cd DomoNote; npm install; npm run dev
+              git clone https://github.com/ChristianJayCuevas/HuskyNote.git; cd HuskyNote; npm install; npm run dev
             </code>
           </div>
 
@@ -909,7 +909,7 @@ bash start.sh
               <button
                 onClick={() =>
                   copyCommand(
-                    'git clone https://github.com/darknecrocities/DomoNote.git && cd DomoNote && bash start.sh',
+                    'git clone https://github.com/ChristianJayCuevas/HuskyNote.git && cd HuskyNote && bash start.sh',
                     'linux'
                   )
                 }
@@ -920,7 +920,7 @@ bash start.sh
               </button>
             </div>
             <code className="block text-[11px] text-slate-800 dark:text-zinc-300 font-mono bg-slate-100 dark:bg-zinc-900/60 p-2.5 rounded border border-slate-200 dark:border-zinc-800 overflow-x-auto whitespace-pre font-medium">
-              git clone https://github.com/darknecrocities/DomoNote.git && cd DomoNote && bash start.sh
+              git clone https://github.com/ChristianJayCuevas/HuskyNote.git && cd HuskyNote && bash start.sh
             </code>
           </div>
         </div>
@@ -937,10 +937,10 @@ bash start.sh
             Privacy Architecture
           </button>
           <button onClick={() => setActiveView('about')} className="hover:text-black dark:hover:text-white transition-colors">
-            About DomoNote
+            About HuskyNote
           </button>
           <a
-            href="https://github.com/darknecrocities/DomoNote/releases"
+            href="https://github.com/ChristianJayCuevas/HuskyNote/releases"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-black dark:hover:text-white transition-colors flex items-center gap-1"

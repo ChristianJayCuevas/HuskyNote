@@ -227,7 +227,7 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
           });
           pipWindowRef.current = pipWindow;
 
-          // Set background and inject full horizontal controller matching DomoNote HUD
+          // Set background and inject full horizontal controller matching HuskyNote HUD
           pipWindow.document.body.innerHTML = `
             <style>
               * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
@@ -394,7 +394,7 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
               <button class="hud-btn" id="pip-note-btn" title="Add timestamped note">📝 Note</button>
               <button class="hud-btn" id="pip-pause-btn" title="Pause / Resume" style="padding: 5px 7px;">${isPaused ? '▶' : '⏸'}</button>
               <button class="hud-btn" id="pip-mic-btn" title="Mute / Unmute Mic" style="padding: 5px 7px;">${isMicMuted ? '🔇' : '🎙'}</button>
-              <button class="hud-btn" id="pip-focus-btn" title="Focus DomoNote tab" style="padding: 5px 7px;">⤢</button>
+              <button class="hud-btn" id="pip-focus-btn" title="Focus HuskyNote tab" style="padding: 5px 7px;">⤢</button>
             </div>
             <div class="hud-drawer" id="pip-drawer"></div>
           `;
@@ -460,7 +460,7 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
           setIsPiPActive(false);
         }
       } catch (err) {
-        console.warn('[DomoNote] PiP request failed:', err);
+        console.warn('[HuskyNote] PiP request failed:', err);
       }
     }
   };

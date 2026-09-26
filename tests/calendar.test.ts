@@ -109,7 +109,7 @@ describe('iCalendar (.ics) Generator', () => {
   it('generates standard RFC 5545 VEVENT string', () => {
     const vevent = generateVEventString(sampleEvent);
     expect(vevent).toContain('BEGIN:VEVENT');
-    expect(vevent).toContain('UID:ev-test-1@domonote.local');
+    expect(vevent).toContain('UID:ev-test-1@huskynote.local');
     expect(vevent).toContain('SUMMARY:Executive Architecture Review');
     expect(vevent).toContain('CATEGORIES:MEETING');
     expect(vevent).toContain('END:VEVENT');
@@ -119,7 +119,7 @@ describe('iCalendar (.ics) Generator', () => {
     const ics = generateIcsContent([sampleEvent]);
     expect(ics).toContain('BEGIN:VCALENDAR');
     expect(ics).toContain('VERSION:2.0');
-    expect(ics).toContain('PRODID:-//DomoNote//Local Calendar Intelligence//EN');
+    expect(ics).toContain('PRODID:-//HuskyNote//Local Calendar Intelligence//EN');
     expect(ics).toContain('END:VCALENDAR');
   });
 });

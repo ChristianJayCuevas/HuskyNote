@@ -1,13 +1,13 @@
 /**
- * DomoNote Desktop — macOS Native Application Shell
+ * HuskyNote Desktop — macOS Native Application Shell
  * ===================================================
- * A lightweight macOS app that wraps the DomoNote web application inside
+ * A lightweight macOS app that wraps the HuskyNote web application inside
  * a WKWebView and provides native menu bar integration.
  *
  * ARCHITECTURE:
  * ┌─────────────────────────────────────────────────────────────┐
  * │  NSStatusBar item (menu bar HUD)                            │
- * │  NSWindow → WKWebView → DomoNote React app                  │
+ * │  NSWindow → WKWebView → HuskyNote React app                  │
  * │  Local HTTP server (Python 3 http.server OR swift-served)   │
  * │  Ollama health monitor (polls localhost:11434 every 8s)     │
  * └─────────────────────────────────────────────────────────────┘
@@ -30,15 +30,15 @@
  * - Menu bar icon status pill updates between "AI Active" and "AI Ready"
  *
  * BUILD:
- * The included `desktop/DomoNote` binary is a pre-compiled universal app.
+ * The included `desktop/HuskyNote` binary is a pre-compiled universal app.
  * To recompile from source:
- *   swiftc main.swift -o DomoNote -framework Cocoa -framework WebKit
+ *   swiftc main.swift -o HuskyNote -framework Cocoa -framework WebKit
  *
  * SIGN & NOTARIZE (for distribution):
  *   codesign --deep --force --options runtime \
  *     --entitlements entitlements.plist \
  *     --sign "Developer ID Application: <Your Name>" \
- *     DomoNote.app
+ *     HuskyNote.app
  *   xcrun altool --notarize-app ...
  */
 
@@ -90,7 +90,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
             backing: .buffered,
             defer: false
         )
-        window.title = "DomoNote"
+        window.title = "HuskyNote"
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
         window.backgroundColor = .black
@@ -128,8 +128,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         // ── Menu Bar Status Item ──────────────────────────────────────────
         setupStatusBar()
 
-        // ── Load DomoNote Web App ─────────────────────────────────────────
-        loadDomoNote()
+        // ── Load HuskyNote Web App ─────────────────────────────────────────
+        loadHuskyNote()
 
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -139,7 +139,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
 
     /**
      * setupStatusBar
-     * Creates the menu bar status item with the DomoNote icon.
+     * Creates the menu bar status item with the HuskyNote icon.
      * Also starts a repeating health timer for the Ollama service.
      */
     func setupStatusBar() {
@@ -147,7 +147,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         if let button = statusItem.button {
             button.image = createStatusBarIcon()
             button.imagePosition = .imageOnly
-            button.toolTip = "DomoNote — Your Personal AI Secretary"
+            button.toolTip = "HuskyNote — Your Personal AI Secretary"
         }
 
         updateMenu()
@@ -161,7 +161,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
 
     /**
      * createStatusBarIcon
-     * Draws the DomoNote mascot (a cute face with ears) as a template image
+     * Draws the HuskyNote mascot (a cute face with ears) as a template image
      * suitable for both light and dark menu bars.
      *
      * Coordinates are in 18×18 points. The `isTemplate = true` flag lets
@@ -226,7 +226,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         menu.addItem(NSMenuItem.separator())
 
         // Quick navigation actions
-        let openItem = NSMenuItem(title: "Open DomoNote", action: #selector(openDomoNoteWindow), keyEquivalent: "o")
+        let openItem = NSMenuItem(title: "Open HuskyNote", action: #selector(openHuskyNoteWindow), keyEquivalent: "o")
         openItem.target = self
         menu.addItem(openItem)
 
@@ -234,7 +234,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         newNoteItem.target = self
         menu.addItem(newNoteItem)
 
-        let focusItem = NSMenuItem(title: "Domo Notes Focus Mode", action: #selector(menuFocusMode), keyEquivalent: "N")
+        let focusItem = NSMenuItem(title: "Husky Notes Focus Mode", action: #selector(menuFocusMode), keyEquivalent: "N")
         focusItem.keyEquivalentModifierMask = [.command, .shift]
         focusItem.target = self
         menu.addItem(focusItem)
@@ -265,14 +265,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         settingsItem.target = self
         menu.addItem(settingsItem)
 
-        let aboutItem = NSMenuItem(title: "About DomoNote", action: #selector(menuAbout), keyEquivalent: "")
+        let aboutItem = NSMenuItem(title: "About HuskyNote", action: #selector(menuAbout), keyEquivalent: "")
         aboutItem.target = self
         menu.addItem(aboutItem)
 
         menu.addItem(NSMenuItem.separator())
 
         // Quit
-        let quitItem = NSMenuItem(title: "Quit DomoNote", action: #selector(menuQuit), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: "Quit HuskyNote", action: #selector(menuQuit), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
 
@@ -282,14 +282,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
     /**
      * createHeaderView
      * Returns a custom NSView for the top of the dropdown menu showing
-     * the DomoNote branding and live Ollama AI status indicator.
+     * the HuskyNote branding and live Ollama AI status indicator.
      */
     func createHeaderView() -> NSView {
         let headerView = NSView(frame: NSRect(x: 0, y: 0, width: 250, height: 54))
 
         // Title label
         let titleLabel = NSTextField(frame: NSRect(x: 14, y: 27, width: 140, height: 18))
-        titleLabel.stringValue = "DomoNote"
+        titleLabel.stringValue = "HuskyNote"
         titleLabel.font = NSFont.boldSystemFont(ofSize: 13)
         titleLabel.textColor = NSColor.labelColor
         titleLabel.isBezeled = false
@@ -349,71 +349,71 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
 
     // MARK: - Menu Actions
 
-    /// Brings the DomoNote window to the front and activates the app
-    @objc func openDomoNoteWindow() {
+    /// Brings the HuskyNote window to the front and activates the app
+    @objc func openHuskyNoteWindow() {
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
 
     @objc func menuNewNote() {
-        openDomoNoteWindow()
+        openHuskyNoteWindow()
         webView.evaluateJavaScript(
-            "window.dispatchEvent(new CustomEvent('domonote:navigate', { detail: { view: 'notes', action: 'new' } }))",
+            "window.dispatchEvent(new CustomEvent('huskynote:navigate', { detail: { view: 'notes', action: 'new' } }))",
             completionHandler: nil
         )
     }
 
     @objc func menuFocusMode() {
-        openDomoNoteWindow()
+        openHuskyNoteWindow()
         webView.evaluateJavaScript(
-            "window.dispatchEvent(new CustomEvent('domonote:navigate', { detail: { view: 'zen' } }))",
+            "window.dispatchEvent(new CustomEvent('huskynote:navigate', { detail: { view: 'zen' } }))",
             completionHandler: nil
         )
     }
 
     @objc func menuStartMeeting() {
-        openDomoNoteWindow()
+        openHuskyNoteWindow()
         webView.evaluateJavaScript(
-            "window.dispatchEvent(new CustomEvent('domonote:navigate', { detail: { view: 'meetings', action: 'record' } }))",
+            "window.dispatchEvent(new CustomEvent('huskynote:navigate', { detail: { view: 'meetings', action: 'record' } }))",
             completionHandler: nil
         )
     }
 
     @objc func menuSchedule() {
-        openDomoNoteWindow()
+        openHuskyNoteWindow()
         webView.evaluateJavaScript(
-            "window.dispatchEvent(new CustomEvent('domonote:navigate', { detail: { view: 'schedule' } }))",
+            "window.dispatchEvent(new CustomEvent('huskynote:navigate', { detail: { view: 'schedule' } }))",
             completionHandler: nil
         )
     }
 
     @objc func menuStudio() {
-        openDomoNoteWindow()
+        openHuskyNoteWindow()
         webView.evaluateJavaScript(
-            "window.dispatchEvent(new CustomEvent('domonote:navigate', { detail: { view: 'studio' } }))",
+            "window.dispatchEvent(new CustomEvent('huskynote:navigate', { detail: { view: 'studio' } }))",
             completionHandler: nil
         )
     }
 
     @objc func menuToggleHud() {
         webView.evaluateJavaScript(
-            "window.dispatchEvent(new CustomEvent('domonote:toggle-hud'))",
+            "window.dispatchEvent(new CustomEvent('huskynote:toggle-hud'))",
             completionHandler: nil
         )
     }
 
     @objc func menuSettings() {
-        openDomoNoteWindow()
+        openHuskyNoteWindow()
         webView.evaluateJavaScript(
-            "window.dispatchEvent(new CustomEvent('domonote:navigate', { detail: { view: 'settings' } }))",
+            "window.dispatchEvent(new CustomEvent('huskynote:navigate', { detail: { view: 'settings' } }))",
             completionHandler: nil
         )
     }
 
     @objc func menuAbout() {
-        openDomoNoteWindow()
+        openHuskyNoteWindow()
         webView.evaluateJavaScript(
-            "window.dispatchEvent(new CustomEvent('domonote:navigate', { detail: { view: 'about' } }))",
+            "window.dispatchEvent(new CustomEvent('huskynote:navigate', { detail: { view: 'about' } }))",
             completionHandler: nil
         )
     }
@@ -426,7 +426,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
     // MARK: - Navigation & Local Server
 
     /**
-     * loadDomoNote
+     * loadHuskyNote
      * Determines the correct URL to load and initiates navigation in WKWebView.
      *
      * Priority order:
@@ -435,7 +435,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
      * 3. Fallback → Try common dev server ports anyway
      * 4. Error page → Show a helpful inline HTML error if nothing works
      */
-    func loadDomoNote() {
+    func loadHuskyNote() {
         // ── Priority 1: Developer mode (--dev flag) ───────────────────────
         if CommandLine.arguments.contains("--dev") {
             let devPorts = [5176, 5173, 5174, 5175]
@@ -565,7 +565,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
      * loadErrorPage
      * Loads a branded HTML error page directly into WKWebView when no
      * server could be started and no bundled assets were found.
-     * Guides the user to start DomoNote from the terminal.
+     * Guides the user to start HuskyNote from the terminal.
      */
     func loadErrorPage() {
         let html = """
@@ -574,7 +574,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>DomoNote — Start Required</title>
+          <title>HuskyNote — Start Required</title>
           <style>
             * { box-sizing: border-box; margin: 0; padding: 0; }
             body {
@@ -603,15 +603,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         <body>
           <div class="card">
             <div class="icon">🐾</div>
-            <h1>DomoNote needs a web server</h1>
+            <h1>HuskyNote needs a web server</h1>
             <p>
               The bundled web assets were not found and no development server is running.
-              Start DomoNote from the Terminal:
+              Start HuskyNote from the Terminal:
             </p>
-            <code>cd DomoNote
+            <code>cd HuskyNote
 ./start.sh</code>
             <p>Or in developer mode (after <code style="display:inline;padding:2px 6px">npm run build</code>):</p>
-            <code>./DomoNote --dev</code>
+            <code>./HuskyNote --dev</code>
             <p class="note">
               Requires Node.js 18+ and optionally Python 3 for the bundled static server.
             </p>
@@ -626,7 +626,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
 
     /**
      * webView(_:requestMediaCapturePermissionFor:...)
-     * Auto-grants microphone and camera access to the DomoNote web app.
+     * Auto-grants microphone and camera access to the HuskyNote web app.
      * This is required for the Meeting Recorder audio capture feature.
      * Available from macOS 12.0+.
      */
@@ -639,7 +639,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
         decisionHandler: @escaping (WKPermissionDecision) -> Void
     ) {
         // Grant all media capture permissions automatically.
-        // DomoNote only uses the microphone for meeting recording.
+        // HuskyNote only uses the microphone for meeting recording.
         decisionHandler(.grant)
     }
 

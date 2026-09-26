@@ -6,7 +6,7 @@ import fs from 'fs';
 
 function chromeExtensionInstallerPlugin() {
   return {
-    name: 'domonote-chrome-extension-installer',
+    name: 'huskynote-chrome-extension-installer',
     configureServer(server: any) {
       console.log('[Extension Installer] configureServer initialized');
       let latestMeetingRoster: any = null;
@@ -82,8 +82,8 @@ function chromeExtensionInstallerPlugin() {
 
         if (url.startsWith('/api/chrome-extension/auto-install')) {
           const extensionDir = path.resolve(__dirname, 'browser-extension');
-          const userDownloads = path.join(process.env.HOME || '', 'Downloads', 'DomoNote-Chrome-Extension');
-          const userDesktop = path.join(process.env.HOME || '', 'Desktop', 'DomoNote-Chrome-Extension');
+          const userDownloads = path.join(process.env.HOME || '', 'Downloads', 'HuskyNote-Chrome-Extension');
+          const userDesktop = path.join(process.env.HOME || '', 'Desktop', 'HuskyNote-Chrome-Extension');
 
           // 1. Copy unpacked extension directly into user's ~/Downloads and ~/Desktop folders so it appears immediately
           exec(`rm -rf "${userDownloads}" "${userDesktop}" && cp -r "${extensionDir}" "${userDownloads}" && cp -r "${extensionDir}" "${userDesktop}"`, () => {
@@ -124,7 +124,7 @@ function chromeExtensionInstallerPlugin() {
           res.end(
             JSON.stringify({
               success: true,
-              message: 'Chrome launched with DomoNote extension preloaded!',
+              message: 'Chrome launched with HuskyNote extension preloaded!',
               path: extensionDir,
             })
           );
@@ -148,13 +148,13 @@ function chromeExtensionInstallerPlugin() {
         }
 
         if (url.startsWith('/api/chrome-extension/download-zip')) {
-          const zipPath = path.resolve(__dirname, 'public/downloads/DomoNote-Chrome-Extension.zip');
+          const zipPath = path.resolve(__dirname, 'public/downloads/HuskyNote-Chrome-Extension.zip');
           if (fs.existsSync(zipPath)) {
             const stat = fs.statSync(zipPath);
             res.writeHead(200, {
               'Content-Type': 'application/zip',
               'Content-Length': stat.size,
-              'Content-Disposition': 'attachment; filename="DomoNote-Chrome-Extension.zip"',
+              'Content-Disposition': 'attachment; filename="HuskyNote-Chrome-Extension.zip"',
             });
             fs.createReadStream(zipPath).pipe(res);
             return;
@@ -168,7 +168,7 @@ function chromeExtensionInstallerPlugin() {
             res.writeHead(200, {
               'Content-Type': 'application/x-sh',
               'Content-Length': stat.size,
-              'Content-Disposition': 'attachment; filename="Setup-DomoNote-Extension.command"',
+              'Content-Disposition': 'attachment; filename="Setup-HuskyNote-Extension.command"',
             });
             fs.createReadStream(scriptPath).pipe(res);
             return;

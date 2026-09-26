@@ -29,7 +29,7 @@ export default {
         ],
       },
       colors: {
-        domo: {
+        husky: {
           950: '#050505',
           900: '#0a0a0a',
           850: '#121212',

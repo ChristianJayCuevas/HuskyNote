@@ -121,7 +121,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({ noteId, onDeleted, onBac
 
         setSaveStatus('saved');
       } catch (err: any) {
-        console.warn('[DomoNote] Note autosave failed:', err?.message);
+        console.warn('[HuskyNote] Note autosave failed:', err?.message);
         setSaveStatus('saved');
       }
     },
@@ -178,11 +178,11 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({ noteId, onDeleted, onBac
       }
     };
 
-    window.addEventListener('domonote:voice-dictation', handleGlobalDictation);
+    window.addEventListener('huskynote:voice-dictation', handleGlobalDictation);
 
     return () => {
       speechTranscriberRef.current?.stop();
-      window.removeEventListener('domonote:voice-dictation', handleGlobalDictation);
+      window.removeEventListener('huskynote:voice-dictation', handleGlobalDictation);
     };
   }, [title, tags, performSave]);
 

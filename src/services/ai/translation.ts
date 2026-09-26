@@ -391,7 +391,7 @@ ${trimmed}`;
       return cleaned;
     }
   } catch (err: any) {
-    console.warn('[DomoNote] AI Translation failed, falling back to original:', err?.message);
+    console.warn('[HuskyNote] AI Translation failed, falling back to original:', err?.message);
   }
 
   return trimmed;

@@ -1,10 +1,10 @@
 # ========================================================
-#   DomoNote - Automated Windows Desktop & Installer Builder
+#   HuskyNote - Automated Windows Desktop & Installer Builder
 # ========================================================
 $ErrorActionPreference = "Stop"
 
 Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host "  DomoNote Windows Build & Package Pipeline" -ForegroundColor Cyan
+Write-Host "  HuskyNote Windows Build & Package Pipeline" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 
 $ROOT = Split-Path -Parent $PSScriptRoot
@@ -19,9 +19,9 @@ if (-not (Test-Path "dist\index.html")) {
     npm run build
 }
 
-# 2. Build DomoNote Desktop App
-Write-Host "`n[2/5] Publishing DomoNote Desktop Executable..." -ForegroundColor Yellow
-$DesktopProj = "desktop\windows\DomoNote.csproj"
+# 2. Build HuskyNote Desktop App
+Write-Host "`n[2/5] Publishing HuskyNote Desktop Executable..." -ForegroundColor Yellow
+$DesktopProj = "desktop\windows\HuskyNote.csproj"
 $DesktopPublishDir = "desktop\windows\bin\Release\net9.0-windows\win-x64\publish"
 dotnet publish $DesktopProj -c Release -r win-x64 --no-self-contained -o $DesktopPublishDir
 
@@ -50,34 +50,34 @@ Start-Sleep -Milliseconds 500
 # Also create portable zip in public/downloads
 $DownloadsDir = "$ROOT\public\downloads"
 New-Item -ItemType Directory -Force -Path $DownloadsDir | Out-Null
-$PortableZip = "$DownloadsDir\DomoNote-Windows-Portable.zip"
+$PortableZip = "$DownloadsDir\HuskyNote-Windows-Portable.zip"
 if (Test-Path $PortableZip) { Remove-Item -Force $PortableZip }
 Copy-Item $BundleZip -Destination $PortableZip -Force
 Write-Host "Created portable archive: $PortableZip" -ForegroundColor Green
 
-# 4. Build DomoNote Installer (.EXE)
-Write-Host "`n[4/5] Compiling DomoNote Installer (.EXE)..." -ForegroundColor Yellow
-$InstallerProj = "desktop\installer\DomoNoteSetup.csproj"
+# 4. Build HuskyNote Installer (.EXE)
+Write-Host "`n[4/5] Compiling HuskyNote Installer (.EXE)..." -ForegroundColor Yellow
+$InstallerProj = "desktop\installer\HuskyNoteSetup.csproj"
 $InstallerPublishDir = "desktop\installer\bin\Release\net9.0-windows\win-x64\publish"
 dotnet publish $InstallerProj -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=true -o $InstallerPublishDir
 
-# Copy compiled installer to public/downloads/DomoNote-Setup-x64.exe
-$BuiltInstaller = "$InstallerPublishDir\DomoNote-Setup-x64.exe"
+# Copy compiled installer to public/downloads/HuskyNote-Setup-x64.exe
+$BuiltInstaller = "$InstallerPublishDir\HuskyNote-Setup-x64.exe"
 if (Test-Path $BuiltInstaller) {
-    Copy-Item $BuiltInstaller -Destination "$DownloadsDir\DomoNote-Setup-x64.exe" -Force
-    Write-Host "Successfully generated Installer: $DownloadsDir\DomoNote-Setup-x64.exe" -ForegroundColor Green
+    Copy-Item $BuiltInstaller -Destination "$DownloadsDir\HuskyNote-Setup-x64.exe" -Force
+    Write-Host "Successfully generated Installer: $DownloadsDir\HuskyNote-Setup-x64.exe" -ForegroundColor Green
 } else {
     throw "Installer binary was not found at $BuiltInstaller"
 }
 
 # Copy setup-windows.bat
-Copy-Item "scripts\setup-windows.bat" -Destination "$DownloadsDir\DomoNote-Setup.bat" -Force
+Copy-Item "scripts\setup-windows.bat" -Destination "$DownloadsDir\HuskyNote-Setup.bat" -Force
 
 # Clean temporary bundle folder
 Remove-Item -Recurse -Force $BundleDir -ErrorAction SilentlyContinue
 
 Write-Host "`n========================================================" -ForegroundColor Cyan
 Write-Host "  Windows Build Succeeded!" -ForegroundColor Green
-Write-Host "  Installer: $DownloadsDir\DomoNote-Setup-x64.exe" -ForegroundColor White
-Write-Host "  Portable:  $DownloadsDir\DomoNote-Windows-Portable.zip" -ForegroundColor White
+Write-Host "  Installer: $DownloadsDir\HuskyNote-Setup-x64.exe" -ForegroundColor White
+Write-Host "  Portable:  $DownloadsDir\HuskyNote-Windows-Portable.zip" -ForegroundColor White
 Write-Host "========================================================`n" -ForegroundColor Cyan

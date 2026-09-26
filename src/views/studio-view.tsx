@@ -92,7 +92,7 @@ export const StudioView: React.FC = () => {
   useEffect(() => {
     if (hasScreenStream && screenVideoRef.current && screenStreamRef.current) {
       screenVideoRef.current.srcObject = screenStreamRef.current;
-      screenVideoRef.current.play().catch((e) => console.warn('[DomoNote] Screen video play:', e));
+      screenVideoRef.current.play().catch((e) => console.warn('[HuskyNote] Screen video play:', e));
     }
   }, [hasScreenStream]);
 
@@ -100,7 +100,7 @@ export const StudioView: React.FC = () => {
   useEffect(() => {
     if (enableWebcam && webcamVideoRef.current && webcamStreamRef.current) {
       webcamVideoRef.current.srcObject = webcamStreamRef.current;
-      webcamVideoRef.current.play().catch((e) => console.warn('[DomoNote] Webcam video play:', e));
+      webcamVideoRef.current.play().catch((e) => console.warn('[HuskyNote] Webcam video play:', e));
     }
   }, [enableWebcam]);
 
@@ -176,7 +176,7 @@ export const StudioView: React.FC = () => {
             }
           );
         } catch (audioErr) {
-          console.warn('[DomoNote] Mic start optional fallback:', audioErr);
+          console.warn('[HuskyNote] Mic start optional fallback:', audioErr);
         }
       }
 
@@ -187,7 +187,7 @@ export const StudioView: React.FC = () => {
 
       addToast('Screen capture active. Real-time speech transcription & dynamic auto-annotation running.', 'success');
     } catch (err: any) {
-      console.warn('[DomoNote] Screen recording cancelled:', err?.message);
+      console.warn('[HuskyNote] Screen recording cancelled:', err?.message);
       addToast('Screen recording access was cancelled or not permitted.', 'warning');
     }
   };
@@ -349,7 +349,7 @@ CRITICAL RULES:
       setCapturedSteps((prev) => [...prev, newStep]);
       addToast(`Step ${stepNum} annotated and captured.`, 'info');
     } catch (err: any) {
-      console.warn('[DomoNote] Capture annotated step error:', err);
+      console.warn('[HuskyNote] Capture annotated step error:', err);
       addToast('Could not grab annotated frame.', 'error');
     }
   };
@@ -450,7 +450,7 @@ CRITICAL RULES:
       // Synthesize full Markdown SOP
       const md = screenAnnotator.generateSopMarkdown({
         title: sessionTitle || 'Standard Operating Procedure',
-        purpose: `Automated operation procedure manual generated via DomoNote Studio recording. Captured ${capturedSteps.length} dynamically annotated procedural keyframes.`,
+        purpose: `Automated operation procedure manual generated via HuskyNote Studio recording. Captured ${capturedSteps.length} dynamically annotated procedural keyframes.`,
         requirements: ['Verified environment credentials', 'Administrative operational authorization'],
         steps: capturedSteps.map((s) => ({
           stepNumber: s.stepNumber,
@@ -504,7 +504,7 @@ CRITICAL RULES:
       const newManual: Manual = {
         id: manualId,
         title: sessionTitle.trim() || 'Standard Operating Procedure',
-        purpose: `Standard Operating Procedure generated via DomoNote Studio recording. Captured ${capturedSteps.length} procedural keyframes with dynamic annotations.`,
+        purpose: `Standard Operating Procedure generated via HuskyNote Studio recording. Captured ${capturedSteps.length} procedural keyframes with dynamic annotations.`,
         requirements: ['Browser display access', 'Standard computer operational privileges'],
         steps: manualSteps,
         warnings: ['Verify configurations before committing changes.'],
@@ -772,7 +772,7 @@ CRITICAL RULES:
             </h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
               Start recording your screen or window. As you demonstrate tasks,
-              DomoNote automatically captures steps and screenshots into an easy-to-follow guide.
+              HuskyNote automatically captures steps and screenshots into an easy-to-follow guide.
             </p>
             <div className="pt-2 flex flex-wrap items-center justify-center gap-2.5">
               <Button variant="primary" size="md" onClick={handleStartScreenStream}>

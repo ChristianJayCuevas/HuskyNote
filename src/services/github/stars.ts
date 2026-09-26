@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-const REPO_OWNER = 'darknecrocities';
-const REPO_NAME = 'DomoNote';
+const REPO_OWNER = 'ChristianJayCuevas';
+const REPO_NAME = 'HuskyNote';
 const CACHE_KEY = `github_stars_${REPO_OWNER}_${REPO_NAME}`;
 const CACHE_TIME_KEY = `${CACHE_KEY}_timestamp`;
 
@@ -31,7 +31,7 @@ export async function fetchLiveGitHubStars(): Promise<number | null> {
       }
     }
   } catch (err) {
-    console.warn('[DomoNote] GitHub API stars fetch error:', err);
+    console.warn('[HuskyNote] GitHub API stars fetch error:', err);
   }
 
   // 2. Fallback to Shields.io badge JSON (unthrottled public proxy)
@@ -56,7 +56,7 @@ export async function fetchLiveGitHubStars(): Promise<number | null> {
       }
     }
   } catch (err) {
-    console.warn('[DomoNote] Shields fallback stars fetch error:', err);
+    console.warn('[HuskyNote] Shields fallback stars fetch error:', err);
   }
 
   // 3. Fallback to cached value in localStorage

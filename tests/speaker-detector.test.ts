@@ -119,7 +119,7 @@ describe('Automatic Speaker Name Hook & Detection Engine', () => {
 
     it('processes multi-app sync payloads from Google Meet, Teams, or Zoom', () => {
       hook.handleIncomingPayload({
-        type: 'DOMONOTE_MEETING_PARTICIPANTS',
+        type: 'HUSKYNOTE_MEETING_PARTICIPANTS',
         app: 'Google Meet',
         participants: ['Arron Parejas (You)', 'Sarah Connor', 'Alex Chen (Host)'],
         activeSpeaker: 'Sarah Connor',

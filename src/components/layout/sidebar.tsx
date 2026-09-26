@@ -29,7 +29,7 @@ import { useWorkspace, type ViewType } from '../../context/workspace-context';
 import { useLanguage } from '../../context/language-context';
 import { useAI } from '../../context/ai-context';
 import { useGitHubStars } from '../../services/github/stars';
-import logoImg from '../../assets/official_domonote.png';
+import logoImg from '../../assets/official_huskynote.png';
 
 export const Sidebar: React.FC = () => {
   const {
@@ -45,11 +45,11 @@ export const Sidebar: React.FC = () => {
 
   // Collapsible state persisted to localStorage for desktop
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
-    return localStorage.getItem('domonote_sidebar_collapsed') === 'true';
+    return localStorage.getItem('huskynote_sidebar_collapsed') === 'true';
   });
 
   useEffect(() => {
-    localStorage.setItem('domonote_sidebar_collapsed', String(isCollapsed));
+    localStorage.setItem('huskynote_sidebar_collapsed', String(isCollapsed));
   }, [isCollapsed]);
 
   // Global Cmd+B shortcut to toggle sidebar
@@ -267,11 +267,11 @@ export const Sidebar: React.FC = () => {
           <div className="flex items-center justify-between mt-2 px-1 text-[10px] font-mono text-slate-600 dark:text-zinc-500 font-semibold">
             <span>{t('nav.localWorkspace')}</span>
             <a
-              href="https://github.com/darknecrocities/DomoNote"
+              href="https://github.com/ChristianJayCuevas/HuskyNote"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 hover:text-black dark:hover:text-zinc-300 transition-colors"
-              title="Star DomoNote on GitHub"
+              title="Star HuskyNote on GitHub"
             >
               <GithubIcon className="w-3 h-3" />
               <span>GitHub</span>
@@ -309,17 +309,17 @@ export const Sidebar: React.FC = () => {
               type="button"
               onClick={() => setActiveView('landing')}
               className="flex items-center gap-2.5 text-left cursor-pointer hover:opacity-85 transition-opacity min-w-0 group"
-              title="DomoNote — Return to Landing Page"
+              title="HuskyNote — Return to Landing Page"
               aria-label="Return to Landing Page"
             >
               <img
                 src={logoImg}
-                alt="DomoNote"
+                alt="HuskyNote"
                 className="w-8 h-8 rounded-xl object-contain shrink-0 shadow-md border border-slate-200 dark:border-white/10 group-hover:scale-105 transition-transform"
               />
               <div className="truncate">
                 <div className="font-bold text-sm text-slate-950 dark:text-white tracking-tight leading-none truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                  DomoNote
+                  HuskyNote
                 </div>
                 <div className="text-[10px] font-mono text-slate-800 dark:text-zinc-300 font-bold mt-1 tracking-tight truncate flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shadow-[0_0_6px_rgba(16,185,129,0.7)]" />
@@ -362,12 +362,12 @@ export const Sidebar: React.FC = () => {
                   setIsMobileSidebarOpen(false);
                 }}
                 className="flex items-center gap-2.5 text-left cursor-pointer hover:opacity-85 transition-opacity"
-                title="DomoNote — Return to Landing Page"
+                title="HuskyNote — Return to Landing Page"
                 aria-label="Return to Landing Page"
               >
-                <img src={logoImg} alt="DomoNote" className="w-7 h-7 rounded-lg object-contain shrink-0 shadow-xs" />
+                <img src={logoImg} alt="HuskyNote" className="w-7 h-7 rounded-lg object-contain shrink-0 shadow-xs" />
                 <div>
-                  <div className="font-bold text-xs text-slate-950 dark:text-white tracking-tight">DomoNote</div>
+                  <div className="font-bold text-xs text-slate-950 dark:text-white tracking-tight">HuskyNote</div>
                   <div className="text-[10px] font-mono text-slate-800 dark:text-zinc-300 font-bold mt-0.5 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shadow-[0_0_6px_rgba(16,185,129,0.7)]" />
                     <span>Personal Secretary</span>

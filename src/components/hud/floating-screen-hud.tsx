@@ -71,7 +71,7 @@ export const FloatingScreenHud: React.FC<FloatingScreenHudProps> = ({
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
           <span className="text-xs font-bold font-mono tracking-tight text-white">
-            DomoNote Quick Bar
+            HuskyNote Quick Bar
           </span>
           {isRecording && (
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-white/10 text-white border border-white/20 flex items-center gap-1 font-bold">
@@ -88,7 +88,7 @@ export const FloatingScreenHud: React.FC<FloatingScreenHudProps> = ({
               else window.focus();
             }}
             className="p-1 rounded bg-white/5 hover:bg-white/15 border border-white/10 text-zinc-400 hover:text-white transition-colors"
-            title="Focus DomoNote Window"
+            title="Focus HuskyNote Window"
           >
             <ExternalLink className="w-3.5 h-3.5" />
           </button>
@@ -126,7 +126,7 @@ export const FloatingScreenHud: React.FC<FloatingScreenHudProps> = ({
             type="text"
             value={quickNote}
             onChange={(e) => setQuickNote(e.target.value)}
-            placeholder={noteSavedFeedback ? 'Saved to DomoNote!' : 'Quick note... (Enter to save)'}
+            placeholder={noteSavedFeedback ? 'Saved to HuskyNote!' : 'Quick note... (Enter to save)'}
             className="flex-1 px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 font-sans backdrop-blur-sm"
           />
           <button

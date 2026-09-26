@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace DomoNote.Setup
+namespace HuskyNote.Setup
 {
     public class SetupForm : Form
     {
@@ -26,7 +26,7 @@ namespace DomoNote.Setup
         {
             _installDir = InstallerEngine.DefaultInstallDir;
 
-            Text = "DomoNote Setup — Personal AI Secretary";
+            Text = "HuskyNote Setup — Personal AI Secretary";
             BackColor = Color.FromArgb(20, 20, 24);
             ForeColor = Color.White;
             StartPosition = FormStartPosition.CenterScreen;
@@ -58,7 +58,7 @@ namespace DomoNote.Setup
 
             var titleLabel = new Label
             {
-                Text = "DomoNote Desktop Setup",
+                Text = "HuskyNote Desktop Setup",
                 Font = new Font("Segoe UI", 13, FontStyle.Bold),
                 ForeColor = Color.White,
                 Location = new Point(20, 16),
@@ -79,7 +79,7 @@ namespace DomoNote.Setup
             // Body Controls
             _statusLabel = new Label
             {
-                Text = "Ready to install DomoNote to: " + _installDir,
+                Text = "Ready to install HuskyNote to: " + _installDir,
                 Font = new Font("Segoe UI", 9, FontStyle.Regular),
                 ForeColor = Color.FromArgb(200, 200, 210),
                 Location = new Point(20, 95),
@@ -110,7 +110,7 @@ namespace DomoNote.Setup
 
             _launchCheckBox = new CheckBox
             {
-                Text = "Launch DomoNote after installation finishes",
+                Text = "Launch HuskyNote after installation finishes",
                 Checked = true,
                 ForeColor = Color.White,
                 Font = new Font("Segoe UI", 9),

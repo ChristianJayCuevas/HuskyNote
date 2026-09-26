@@ -5,7 +5,7 @@ import { chunkDocumentPages, retrieveRelevantChunks } from '../src/services/ai/r
 import { formatSecondsToTime } from '../src/services/audio/transcriber';
 import type { Note, Manual } from '../src/types';
 
-describe('DomoNote End-to-End Workflow Verification', () => {
+describe('HuskyNote End-to-End Workflow Verification', () => {
   it('instantiates all built-in templates with valid markdown structures', () => {
     expect(BUILTIN_TEMPLATES.length).toBeGreaterThanOrEqual(6);
     BUILTIN_TEMPLATES.forEach((template) => {
@@ -38,7 +38,7 @@ describe('DomoNote End-to-End Workflow Verification', () => {
     const mockPages = [
       {
         pageNumber: 1,
-        text: 'DomoNote provides meeting note-taking, browser capture, and local AI summarization.',
+        text: 'HuskyNote provides meeting note-taking, browser capture, and local AI summarization.',
       },
       {
         pageNumber: 2,

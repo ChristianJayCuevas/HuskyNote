@@ -45,7 +45,7 @@ jobs:
       - name: Generate Checksums
         run: |
           Set-Location public\downloads
-          Get-FileHash -Algorithm SHA256 DomoNote-Setup-x64.exe, DomoNote-Windows-Portable.zip, DomoNote-Setup.bat | 
+          Get-FileHash -Algorithm SHA256 HuskyNote-Setup-x64.exe, HuskyNote-Windows-Portable.zip, HuskyNote-Setup.bat | 
             ForEach-Object { "$($_.Hash)  $($_.Path | Split-Path -Leaf)" } | 
             Out-File -Encoding ascii SHA256SUMS.txt
           Get-Content SHA256SUMS.txt
@@ -54,15 +54,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
-          name: DomoNote ${{ github.event.inputs.tag_name || github.ref_name }}
+          name: HuskyNote ${{ github.event.inputs.tag_name || github.ref_name }}
           draft: false
           prerelease: false
           generate_release_notes: true
           files: |
-            public/downloads/DomoNote-Setup-x64.exe
-            public/downloads/DomoNote-Windows-Portable.zip
-            public/downloads/DomoNote-Setup.bat
-            public/downloads/DomoNote-macOS-Universal.dmg
-            public/downloads/DomoNote-macOS-arm64.dmg
-            public/downloads/DomoNote-macOS-x64.dmg
+            public/downloads/HuskyNote-Setup-x64.exe
+            public/downloads/HuskyNote-Windows-Portable.zip
+            public/downloads/HuskyNote-Setup.bat
+            public/downloads/HuskyNote-macOS-Universal.dmg
+            public/downloads/HuskyNote-macOS-arm64.dmg
+            public/downloads/HuskyNote-macOS-x64.dmg
             public/downloads/SHA256SUMS.txt

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-# DomoNote - Automated Linux Desktop Installer & Desktop Entry Creator
-# Sets up dependencies, installs system desktop shortcut, and launches DomoNote.
+# HuskyNote - Automated Linux Desktop Installer & Desktop Entry Creator
+# Sets up dependencies, installs system desktop shortcut, and launches HuskyNote.
 
 set -e
 
 echo "========================================================"
-echo "  DomoNote Desktop - Linux Automated Setup"
+echo "  HuskyNote Desktop - Linux Automated Setup"
 echo "  Capture it. Understand it. Keep it."
 echo "========================================================"
 
@@ -14,12 +14,12 @@ echo "========================================================"
 if [ -f "package.json" ]; then
   APP_DIR="$(pwd)"
 else
-  APP_DIR="$HOME/.domonote"
+  APP_DIR="$HOME/.huskynote"
   if [ ! -d "$APP_DIR" ]; then
-    echo "[DomoNote] Cloning DomoNote repository to $APP_DIR..."
-    git clone https://github.com/darknecrocities/DomoNote.git "$APP_DIR"
+    echo "[HuskyNote] Cloning HuskyNote repository to $APP_DIR..."
+    git clone https://github.com/ChristianJayCuevas/HuskyNote.git "$APP_DIR"
   else
-    echo "[DomoNote] Updating existing DomoNote in $APP_DIR..."
+    echo "[HuskyNote] Updating existing HuskyNote in $APP_DIR..."
     cd "$APP_DIR" && git pull || true
   fi
 fi
@@ -38,12 +38,12 @@ fi
 
 # 3. Check Ollama
 if [ -f "scripts/setup-ollama.sh" ]; then
-  bash scripts/setup-ollama.sh || echo "[DomoNote] Proceeding with offline browser mode..."
+  bash scripts/setup-ollama.sh || echo "[HuskyNote] Proceeding with offline browser mode..."
 fi
 
 # 4. Install Dependencies
 if [ ! -d "node_modules" ]; then
-  echo "[DomoNote] Installing Node dependencies..."
+  echo "[HuskyNote] Installing Node dependencies..."
   npm install --no-audit --no-fund
 fi
 
@@ -51,12 +51,12 @@ fi
 APPS_DIR="$HOME/.local/share/applications"
 mkdir -p "$APPS_DIR"
 
-ICON_PATH="$APP_DIR/public/official_domonote.png"
-DESKTOP_ENTRY="$APPS_DIR/domonote.desktop"
+ICON_PATH="$APP_DIR/public/official_huskynote.png"
+DESKTOP_ENTRY="$APPS_DIR/huskynote.desktop"
 
 cat << EOF > "$DESKTOP_ENTRY"
 [Desktop Entry]
-Name=DomoNote
+Name=HuskyNote
 Comment=Your Personal AI Secretary for meetings, documents, and notes
 Exec=bash -c "cd '$APP_DIR' && npm run dev"
 Icon=$ICON_PATH
@@ -71,15 +71,15 @@ chmod +x "$DESKTOP_ENTRY"
 
 # Also copy to ~/Desktop if folder exists
 if [ -d "$HOME/Desktop" ]; then
-  cp "$DESKTOP_ENTRY" "$HOME/Desktop/domonote.desktop"
-  chmod +x "$HOME/Desktop/domonote.desktop"
+  cp "$DESKTOP_ENTRY" "$HOME/Desktop/huskynote.desktop"
+  chmod +x "$HOME/Desktop/huskynote.desktop"
   # Support GNOME trusted desktop file
-  gio set "$HOME/Desktop/domonote.desktop" metadata::trusted true 2>/dev/null || true
+  gio set "$HOME/Desktop/huskynote.desktop" metadata::trusted true 2>/dev/null || true
 fi
 
-echo "[DomoNote] System application launcher registered: $DESKTOP_ENTRY"
+echo "[HuskyNote] System application launcher registered: $DESKTOP_ENTRY"
 echo "========================================================"
-echo "  Installation Complete! Starting DomoNote..."
+echo "  Installation Complete! Starting HuskyNote..."
 echo "========================================================"
 
 npm run dev

@@ -20,7 +20,7 @@ export class ScreenCaptureService {
 
       return true;
     } catch (err: any) {
-      console.warn('[DomoNote] Screen capture permission denied or cancelled:', err?.message);
+      console.warn('[HuskyNote] Screen capture permission denied or cancelled:', err?.message);
       return false;
     }
   }

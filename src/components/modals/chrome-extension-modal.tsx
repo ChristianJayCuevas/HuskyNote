@@ -43,14 +43,14 @@ export const ChromeExtensionModal: React.FC<ChromeExtensionModalProps> = ({
     // Check if extension is installed & responding via window messaging or meta tag
     const checkExtension = () => {
       const isExtensionActive =
-        !!(window as any).__domonote_extension_installed ||
-        document.getElementById('domonote-extension-marker') !== null;
+        !!(window as any).__huskynote_extension_installed ||
+        document.getElementById('huskynote-extension-marker') !== null;
 
       if (isExtensionActive) {
         setIsConnected(true);
       } else {
         // Send a ping message in case content script is active
-        window.postMessage({ type: 'DOMONOTE_PING' }, '*');
+        window.postMessage({ type: 'HUSKYNOTE_PING' }, '*');
       }
     };
 
@@ -58,7 +58,7 @@ export const ChromeExtensionModal: React.FC<ChromeExtensionModalProps> = ({
     const interval = setInterval(checkExtension, 1200);
 
     const handleMessage = (e: MessageEvent) => {
-      if (e.data?.type === 'DOMONOTE_PONG' || e.data?.source === 'domonote-extension') {
+      if (e.data?.type === 'HUSKYNOTE_PONG' || e.data?.source === 'huskynote-extension') {
         setIsConnected(true);
       }
     };
@@ -80,7 +80,7 @@ export const ChromeExtensionModal: React.FC<ChromeExtensionModalProps> = ({
     setTimeout(() => setCopiedCmd(false), 2500);
   };
 
-  const copyExtensionPath = (pathText = '/Users/arronkianparejas/domonote/browser-extension') => {
+  const copyExtensionPath = (pathText = '/Users/arronkianparejas/huskynote/browser-extension') => {
     navigator.clipboard.writeText(pathText);
     setCopiedPath(true);
     setTimeout(() => setCopiedPath(false), 2500);
@@ -118,7 +118,7 @@ export const ChromeExtensionModal: React.FC<ChromeExtensionModalProps> = ({
       await fetch('/api/chrome-extension/launch-browser', {
         method: 'POST',
       });
-      setAutoInstallStatus('🚀 Chrome launched with DomoNote extension pre-loaded!');
+      setAutoInstallStatus('🚀 Chrome launched with HuskyNote extension pre-loaded!');
     } catch {
       copyLaunchCommand();
     } finally {
@@ -188,7 +188,7 @@ export const ChromeExtensionModal: React.FC<ChromeExtensionModalProps> = ({
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white mt-1">
-              DomoNote Chrome Extension & Side Panel
+              HuskyNote Chrome Extension & Side Panel
             </h2>
             <p className="text-xs text-zinc-400 mt-1">
               Transcribe Google Meet & Zoom calls, record tab audio, take notes, and summarize webpages directly in your browser.
@@ -309,7 +309,7 @@ export const ChromeExtensionModal: React.FC<ChromeExtensionModalProps> = ({
             {/* Direct ZIP download with proper headers */}
             <a
               href="/api/chrome-extension/download-zip"
-              download="DomoNote-Chrome-Extension.zip"
+              download="HuskyNote-Chrome-Extension.zip"
               className="px-3.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-medium transition-all flex items-center gap-1.5 shadow-sm"
               title="Download zipped extension"
             >
@@ -320,7 +320,7 @@ export const ChromeExtensionModal: React.FC<ChromeExtensionModalProps> = ({
             {/* Direct script download with proper headers */}
             <a
               href="/api/chrome-extension/download-script"
-              download="Setup-DomoNote-Extension.command"
+              download="Setup-HuskyNote-Extension.command"
               className="px-3.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-medium transition-all flex items-center gap-1.5 shadow-sm"
               title="Download executable launcher script"
             >

@@ -3,7 +3,7 @@ import { parseDocumentFile } from '../src/services/documents/universal-parser';
 
 describe('Universal Document Parser', () => {
   it('parses plain text and markdown documents correctly into pages', async () => {
-    const textContent = '# Software Architecture Specification\n\nDomoNote operates 100% locally.\n\nAll notes and documents are stored in client-side IndexedDB.';
+    const textContent = '# Software Architecture Specification\n\nHuskyNote operates 100% locally.\n\nAll notes and documents are stored in client-side IndexedDB.';
     const file = new File([textContent], 'architecture.txt', { type: 'text/plain' });
 
     const result = await parseDocumentFile(file);

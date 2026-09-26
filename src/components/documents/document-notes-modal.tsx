@@ -192,7 +192,7 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
               <p className="text-sm font-medium text-zinc-400">No Notes Captured Yet</p>
               <p className="max-w-md mx-auto text-zinc-500 leading-relaxed">
                 Click "Summarize Page", "Main Steps", or ask a question.
-                DomoNote will locate the referenced text, box it out, take a screenshot, and compile it here.
+                HuskyNote will locate the referenced text, box it out, take a screenshot, and compile it here.
               </p>
             </div>
           ) : (

@@ -103,7 +103,7 @@ export class LiveSpeechTranscriber {
 
       this.recognition.onerror = (event: any) => {
         const errorType = event?.error;
-        console.warn('[DomoNote] Speech recognition event:', errorType);
+        console.warn('[HuskyNote] Speech recognition event:', errorType);
 
         // Handle specific error types
         switch (errorType) {
@@ -111,20 +111,20 @@ export class LiveSpeechTranscriber {
             // Normal — user is silent, will auto-restart via onend
             break;
           case 'audio-capture':
-            console.error('[DomoNote] Microphone not available or disconnected.');
+            console.error('[HuskyNote] Microphone not available or disconnected.');
             break;
           case 'not-allowed':
-            console.error('[DomoNote] Microphone permission denied by user or browser.');
+            console.error('[HuskyNote] Microphone permission denied by user or browser.');
             this.isListening = false; // Stop trying to restart
             break;
           case 'network':
-            console.warn('[DomoNote] Network error in speech recognition. Will retry.');
+            console.warn('[HuskyNote] Network error in speech recognition. Will retry.');
             break;
           case 'aborted':
             // Recognition was aborted, may auto-restart
             break;
           default:
-            console.warn('[DomoNote] Unknown speech recognition error:', errorType);
+            console.warn('[HuskyNote] Unknown speech recognition error:', errorType);
         }
       };
 
@@ -144,7 +144,7 @@ export class LiveSpeechTranscriber {
             }
           }, delay);
         } else if (this.restartAttempts >= this.maxRestartAttempts) {
-          console.warn('[DomoNote] Speech recognition exceeded max restart attempts. Stopping.');
+          console.warn('[HuskyNote] Speech recognition exceeded max restart attempts. Stopping.');
           this.isListening = false;
         }
       };
@@ -437,7 +437,7 @@ Respond STRICTLY with valid JSON in this exact structure, with no extra text or 
             : significantWords.some((w: string) => combinedLower.includes(w));
 
         if (!isGroundedInText && transcript.length > 0) {
-          console.warn(`[DomoNote] Skipping ungrounded AI event hallucination: "${rawTitle}"`);
+          console.warn(`[HuskyNote] Skipping ungrounded AI event hallucination: "${rawTitle}"`);
           continue;
         }
 
@@ -500,7 +500,7 @@ Respond STRICTLY with valid JSON in this exact structure, with no extra text or 
       detectedEvents,
     };
   } catch (err: any) {
-    console.warn('[DomoNote] AI meeting synthesis fallback:', err?.message);
+    console.warn('[HuskyNote] AI meeting synthesis fallback:', err?.message);
     // Safe deterministic fallback when AI fails or model JSON malformed
     return {
       summary: {
@@ -645,7 +645,7 @@ Return only the JSON array with no extra text or markdown formatting.`;
       };
     });
   } catch (err: any) {
-    console.warn('[DomoNote] AI transcript polish fallback:', err?.message);
+    console.warn('[HuskyNote] AI transcript polish fallback:', err?.message);
     // Safe deterministic fallback: capitalize, punctuate, and replace generic "Speaker 1/2" with known names
     return transcript.map((s, idx) => {
       let finalSpeaker = s.speaker;

@@ -99,7 +99,7 @@ export function buildRAGPrompt(
     (c) => `--- DOCUMENT EXCERPT (Source Page: ${c.pageNumber}) ---\n${c.text}`
   );
 
-  return `You are DomoNote's document analysis assistant. Answer the user's question using ONLY the provided document excerpts below.
+  return `You are HuskyNote's document analysis assistant. Answer the user's question using ONLY the provided document excerpts below.
 If the answer cannot be found in the excerpts, clearly state: "I couldn't find that in this document." Do not hallucinate or fabricate facts. When stating facts, cite the source page number (e.g. [Page X]).
 
 ${contextSegments.join('\n\n')}

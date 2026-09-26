@@ -85,7 +85,7 @@ export const ZenFocusView: React.FC = () => {
         await db.notes.put(noteEntity);
         setLastSaved(Date.now());
       } catch (err) {
-        console.warn('[DomoNote] Zen autosave warning:', err);
+        console.warn('[HuskyNote] Zen autosave warning:', err);
       }
     }, 800);
 
@@ -123,10 +123,10 @@ export const ZenFocusView: React.FC = () => {
 
   const handleManualSave = async () => {
     playChime();
-    addToast('Domo note saved to your device.', 'success');
+    addToast('Husky note saved to your device.', 'success');
   };
 
-  // Voice Dictation effect & listener for Domo Notes Focus
+  // Voice Dictation effect & listener for Husky Notes Focus
   useEffect(() => {
     speechTranscriberRef.current = new LiveSpeechTranscriber();
 
@@ -137,11 +137,11 @@ export const ZenFocusView: React.FC = () => {
       }
     };
 
-    window.addEventListener('domonote:voice-dictation', handleGlobalDictation);
+    window.addEventListener('huskynote:voice-dictation', handleGlobalDictation);
 
     return () => {
       speechTranscriberRef.current?.stop();
-      window.removeEventListener('domonote:voice-dictation', handleGlobalDictation);
+      window.removeEventListener('huskynote:voice-dictation', handleGlobalDictation);
     };
   }, []);
 
@@ -170,7 +170,7 @@ export const ZenFocusView: React.FC = () => {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-zinc-400 font-mono text-xs">
             <Feather className="w-3.5 h-3.5 text-zinc-200" />
-            <span className="text-white font-semibold">DOMO NOTES</span>
+            <span className="text-white font-semibold">HUSKY NOTES</span>
           </div>
 
           <span className="text-zinc-600">•</span>
@@ -225,14 +225,14 @@ export const ZenFocusView: React.FC = () => {
             <span className="hidden sm:inline">Save</span>
           </Button>
 
-          {/* Exit Domo Notes */}
+          {/* Exit Husky Notes */}
           <button
             onClick={() => setActiveView('notes')}
             className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white px-2 py-1 rounded bg-zinc-900 border border-zinc-800 transition-colors"
             title="Return to standard workspace"
           >
             <Minimize2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Exit Domo Notes</span>
+            <span className="hidden sm:inline">Exit Husky Notes</span>
           </button>
         </div>
       </header>

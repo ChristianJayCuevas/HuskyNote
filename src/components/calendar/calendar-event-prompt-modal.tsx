@@ -202,7 +202,7 @@ export const CalendarEventPromptModal: React.FC<CalendarEventPromptModalProps> =
             onClick={handleViewSchedule}
             className="text-xs font-bold text-slate-900 dark:text-white hover:underline flex items-center gap-1"
           >
-            <span>View all in DomoNote Schedule</span>
+            <span>View all in HuskyNote Schedule</span>
             <ArrowRight className="w-3.5 h-3.5 text-slate-900 dark:text-white" />
           </button>
 

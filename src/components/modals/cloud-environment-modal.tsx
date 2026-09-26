@@ -28,7 +28,7 @@ export const CloudEnvironmentModal: React.FC<CloudEnvironmentModalProps> = ({
 
   if (!isOpen) return null;
 
-  const cloneCommand = 'git clone https://github.com/darknecrocities/DomoNote.git && cd DomoNote && ./start.sh';
+  const cloneCommand = 'git clone https://github.com/ChristianJayCuevas/HuskyNote.git && cd HuskyNote && ./start.sh';
 
   const handleCopy = () => {
     navigator.clipboard.writeText(cloneCommand);
@@ -81,7 +81,7 @@ export const CloudEnvironmentModal: React.FC<CloudEnvironmentModalProps> = ({
               Local Desktop App Required
             </h2>
             <p className="text-xs text-zinc-400 mt-1">
-              DomoNote is a private, local-first app designed to run exclusively on your physical computer.
+              HuskyNote is a private, local-first app designed to run exclusively on your physical computer.
             </p>
           </div>
         </div>
@@ -121,7 +121,7 @@ export const CloudEnvironmentModal: React.FC<CloudEnvironmentModalProps> = ({
         {/* Action Buttons */}
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
           <a
-            href="https://github.com/darknecrocities/DomoNote"
+            href="https://github.com/ChristianJayCuevas/HuskyNote"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-black border border-zinc-850 text-xs font-medium text-zinc-300 hover:text-white hover:border-white/40 transition-colors flex items-center justify-center gap-2"

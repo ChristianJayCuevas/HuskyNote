@@ -82,7 +82,7 @@ export const ScheduleView: React.FC = () => {
           await db.schedule.bulkDelete(seeded.map((s) => s.id));
         }
       } catch (err) {
-        console.warn('[DomoNote] Failed to remove sample schedule events:', err);
+        console.warn('[HuskyNote] Failed to remove sample schedule events:', err);
       }
     }
     cleanSeedEvents();
@@ -254,7 +254,7 @@ export const ScheduleView: React.FC = () => {
       addToast('No events to export.', 'info');
       return;
     }
-    downloadMultipleEventsIcs(dbEvents, `domonote-full-schedule-${selectedDate}.ics`);
+    downloadMultipleEventsIcs(dbEvents, `huskynote-full-schedule-${selectedDate}.ics`);
     addToast(`Exported ${dbEvents.length} events to Computer Calendar (.ics).`, 'success');
   };
 
@@ -371,7 +371,7 @@ Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Re
         throw new Error('Could not parse AI response JSON.');
       }
     } catch (err: any) {
-      console.warn('[DomoNote] AI scheduling error:', err);
+      console.warn('[HuskyNote] AI scheduling error:', err);
       addToast('Failed to parse AI schedule. Reverting to manual entry.', 'error');
     } finally {
       setIsGeneratingSchedule(false);

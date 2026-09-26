@@ -1,4 +1,4 @@
-// Universal document parser for DomoNote
+// Universal document parser for HuskyNote
 // Extracts structured pages from PDF, PPT/PPTX, DOC/DOCX, TXT, and Markdown files
 // 100% client-side, zero external API or cloud dependencies.
 
@@ -199,7 +199,7 @@ export async function parseDocumentFile(
         }
       }
     } catch (err) {
-      console.warn('[DomoNote] DOCX extraction error, falling back to binary scan:', err);
+      console.warn('[HuskyNote] DOCX extraction error, falling back to binary scan:', err);
     }
 
     // Fallback extraction
@@ -248,7 +248,7 @@ export async function parseDocumentFile(
         };
       }
     } catch (err) {
-      console.warn('[DomoNote] PPTX extraction error, falling back to binary scan:', err);
+      console.warn('[HuskyNote] PPTX extraction error, falling back to binary scan:', err);
     }
 
     // Fallback extraction

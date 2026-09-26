@@ -36,7 +36,7 @@ export async function grabFrameFromStreamOrVideo(
           }
         }
       } catch (err) {
-        console.warn('[DomoNote] ImageCapture grabFrame fallback:', err);
+        console.warn('[HuskyNote] ImageCapture grabFrame fallback:', err);
       }
     }
   }
@@ -95,7 +95,7 @@ export class ScreenAnnotatorService {
           frameRendered = true;
         }
       } catch (drawErr) {
-        console.warn('[DomoNote] Frame draw warning:', drawErr);
+        console.warn('[HuskyNote] Frame draw warning:', drawErr);
       }
     }
 
@@ -121,7 +121,7 @@ export class ScreenAnnotatorService {
       // Window title
       ctx.fillStyle = '#a1a1aa';
       ctx.font = '12px sans-serif';
-      ctx.fillText('DomoNote Workflow Capture Session', 85, 24);
+      ctx.fillText('HuskyNote Workflow Capture Session', 85, 24);
 
       // Subtle workspace grid
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
@@ -249,7 +249,7 @@ export class ScreenAnnotatorService {
     const timeFormatted = options.timestampSeconds
       ? `${Math.floor(options.timestampSeconds / 60)}:${(options.timestampSeconds % 60).toString().padStart(2, '0')}`
       : '00:00';
-    const watermarkText = `DOMONOTE FLIGHT RECORDER • STEP ${options.stepNumber} • ${timeFormatted} • LOCAL PRIVACY GUARANTEED`;
+    const watermarkText = `HUSKYNOTE FLIGHT RECORDER • STEP ${options.stepNumber} • ${timeFormatted} • LOCAL PRIVACY GUARANTEED`;
 
     ctx.save();
     ctx.fillStyle = 'rgba(5, 5, 5, 0.85)';
@@ -297,7 +297,7 @@ export class ScreenAnnotatorService {
     let md = `# ${title || 'Standard Operating Procedure'}\n\n`;
     md += `**Document Type:** Standard Operating Procedure (SOP)  \n`;
     md += `**Generated Date:** ${dateStr}  \n`;
-    md += `**Generator:** DomoNote Screen Studio (Local-First AI Engine)  \n`;
+    md += `**Generator:** HuskyNote Screen Studio (Local-First AI Engine)  \n`;
     md += `**Verification Status:** Verified Automated Workflow  \n\n`;
     md += `---\n\n`;
 
@@ -332,7 +332,7 @@ export class ScreenAnnotatorService {
     md += `## 4. Verification & Quality Acceptance Checklist\n\n`;
     md += `- [ ] All operational steps executed without unexpected exceptions.\n`;
     md += `- [ ] System output verified against expected baseline state.\n`;
-    md += `- [ ] Step log registered in local DomoNote Knowledge Base.\n\n`;
+    md += `- [ ] Step log registered in local HuskyNote Knowledge Base.\n\n`;
 
     md += `## 5. Security & Privacy Audit\n\n`;
     md += `All screenshots, action coordinates, and documentation in this document were processed strictly on your computer. No screenshots or recordings were sent to external servers.\n`;

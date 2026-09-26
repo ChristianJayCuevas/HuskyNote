@@ -1,4 +1,4 @@
-// DomoNote Canonical TypeScript Domain Models
+// HuskyNote Canonical TypeScript Domain Models
 // Strictly typed, normalized entities for local-first storage and AI pipelines.
 
 export interface NoteVersion {

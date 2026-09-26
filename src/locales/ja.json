@@ -1,13 +1,13 @@
 {
   "app": {
-    "name": "DomoNote",
+    "name": "HuskyNote",
     "tagline": "あなたのパーソナル AI 秘書"
   },
   "nav": {
     "home": "ホーム",
     "overview": "概要",
     "notes": "ノート",
-    "zen": "Domo ノート",
+    "zen": "Husky ノート",
     "meetings": "会議録",
     "schedule": "スケジュール",
     "documents": "ドキュメント",
@@ -18,7 +18,7 @@
     "landing": "ランディングページ",
     "download": "アプリをダウンロード",
     "settings": "設定",
-    "about": "DomoNote について",
+    "about": "HuskyNote について",
     "changelog": "変更履歴",
     "privacy": "プライバシー",
     "localAi": "パーソナル秘書",
@@ -55,7 +55,7 @@
     },
     "demo": {
       "badge": "インタラクティブ・ライブデモ",
-      "title": "DomoNote の動作を体感",
+      "title": "HuskyNote の動作を体感",
       "description": "リアルタイム音声書き起こし、Ollama によるローカル AI 要約、動的枠線アノテーション、構造化された議事録作成をすべてお使いのデバイス上で体験できます。",
       "interactiveStudio": "体験スタジオ",
       "walkthroughVideo": "デモ動画",
@@ -65,7 +65,7 @@
     "howItWorks": {
       "badge": "仕組み",
       "title": "会話から整理されたノートへ。",
-      "description": "通話終了後、多くの会話は忘れ去られます。DomoNote は発言内容を記録し、重要な意思決定を抽出し、PC 上で永続的なノートへと変換します。",
+      "description": "通話終了後、多くの会話は忘れ去られます。HuskyNote は発言内容を記録し、重要な意思決定を抽出し、PC 上で永続的なノートへと変換します。",
       "step1Title": "音声録音",
       "step1Desc": "ブラウザでローカルに音声を録音。タイムスタンプ付きでリアルタイムに文字起こしされます。",
       "step2Title": "重要決定とハイライト",
@@ -101,7 +101,7 @@
       "panelAnnotationDesc": "UI 要素や操作動線をリアルタイム認識。境界枠を自動算出し、分かりやすい図解ガイドを作成します。",
       "panelVaultTitle": "ローカル IndexedDB ナレッジ保管庫",
       "panelVaultDesc": "ノート、文字起こし、読み込んだ書籍はすべてブラウザ内データベースに保存。超高速な即時検索を実現します。",
-      "panelZenTitle": "集中できる Domo ノート",
+      "panelZenTitle": "集中できる Husky ノート",
       "panelZenDesc": "明瞭さと集中力を高めるダークエディタ。Markdown、履歴復元、心地よいアンビエント音源を搭載。",
       "panelExportTitle": "ワンクリック多形式エクスポート",
       "panelExportDesc": "議事録やマニュアルを美しい PDF、標準 Markdown、構造化 JSON へワンクリックで書き出せます。"
@@ -109,7 +109,7 @@
     "setup": {
       "badge": "クイックセットアップ",
       "title": "コマンド 1 つですべて初期化。",
-      "description": "DomoNote には自動ランチャーが付属しており、Ollama のセットアップ確認、アクセス設定、軽量モデルのダウンロード、ワークスペースの起動まで自動で行います。",
+      "description": "HuskyNote には自動ランチャーが付属しており、Ollama のセットアップ確認、アクセス設定、軽量モデルのダウンロード、ワークスペースの起動まで自動で行います。",
       "oneClickInit": "ワンクリック初期化",
       "whatLauncherAutomates": "ランチャーが自動化する処理：",
       "checkOllama": "Ollama のインストール状態を確認（未インストールの場合は案内）",
@@ -122,7 +122,7 @@
       "privacyBoundariesDesc": "ノートや音声データはお使いの端末から出ません。AI リクエストはブラウザと http://localhost:11434 の間でのみ通信されます。"
     },
     "why": {
-      "badge": "DOMONOTE を選ぶ理由",
+      "badge": "HUSKYNOTE を選ぶ理由",
       "title": "プライバシー、速度、データ主権のために",
       "card1Tag": "完全プライベート設計",
       "card1Title": "データは常に手元に",
@@ -140,11 +140,11 @@
     "cta": {
       "title": "パーソナル AI 秘書と一緒に、新しいノート体験を始めましょう。",
       "description": "アカウント作成もクレジットカードも不要です。ワークスペースはブラウザとローカルストレージ内で完結します。",
-      "openApp": "DomoNote を開く",
+      "openApp": "HuskyNote を開く",
       "downloadApp": "アプリをダウンロード"
     },
     "footer": {
-      "copyright": "DomoNote. あなたのパーソナル AI 秘書。",
+      "copyright": "HuskyNote. あなたのパーソナル AI 秘書。",
       "description": "ノート、会議録、書類をまとめる、あなただけのパーソナル AI 秘書。すべてのデータはお使いのパソコンに安全に保存され、アカウント作成や追跡、クラウド送信は一切ありません。",
       "privacyNotice": "お使いのパソコンで完結するパーソナル AI 秘書。アカウント登録不要、トラッキングなし、クラウド送信ゼロ。",
       "licenseNotice": "MIT ライセンス • オープンソース • お使いの端末で動作",

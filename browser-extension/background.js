@@ -1,8 +1,21 @@
-// DomoNote Extension Background Service Worker (Manifest V3)
+// HuskyNote Extension Background Service Worker (Manifest V3)
 // Handles: context menus, side-panel, tab capture relay, message routing
 
+// Copy meetings saved by pre-rebrand DomoNote builds (domo_* keys) to husky_* keys
+function migrateLegacyStorage() {
+  const legacyKeys = { domo_meetings: 'husky_meetings', domo_live_meeting_roster: 'husky_live_meeting_roster' };
+  chrome.storage.local.get([...Object.keys(legacyKeys), ...Object.values(legacyKeys)], (res) => {
+    const updates = {};
+    for (const [legacyKey, newKey] of Object.entries(legacyKeys)) {
+      if (res[legacyKey] !== undefined && res[newKey] === undefined) updates[newKey] = res[legacyKey];
+    }
+    if (Object.keys(updates).length > 0) chrome.storage.local.set(updates);
+  });
+}
+
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('[DomoNote] Extension v2.0 installed and ready.');
+  console.log('[HuskyNote] Extension v2.0 installed and ready.');
+  migrateLegacyStorage();
   enableSidePanelOnAction();
 
   // Auto-inject content script into already open meeting tabs so sync starts immediately
@@ -30,18 +43,18 @@ chrome.runtime.onInstalled.addListener(() => {
 
   if (chrome.contextMenus) {
     chrome.contextMenus.create({
-      id: 'domonote-summarize-selection',
-      title: 'Summarize with DomoNote AI (local)',
+      id: 'huskynote-summarize-selection',
+      title: 'Summarize with HuskyNote AI (local)',
       contexts: ['selection'],
     });
     chrome.contextMenus.create({
-      id: 'domonote-add-note',
-      title: 'Save to DomoNote Quick Notes',
+      id: 'huskynote-add-note',
+      title: 'Save to HuskyNote Quick Notes',
       contexts: ['selection'],
     });
     chrome.contextMenus.create({
-      id: 'domonote-start-meeting',
-      title: 'Start DomoNote Meeting Recording',
+      id: 'huskynote-start-meeting',
+      title: 'Start HuskyNote Meeting Recording',
       contexts: ['page'],
     });
   }
@@ -73,7 +86,7 @@ if (chrome.tabs?.onUpdated) {
 // Context menu actions
 if (chrome.contextMenus) {
   chrome.contextMenus.onClicked.addListener((info, tab) => {
-    if (info.menuItemId === 'domonote-add-note' && info.selectionText) {
+    if (info.menuItemId === 'huskynote-add-note' && info.selectionText) {
       chrome.storage.local.get(['notes'], (res) => {
         const notes = res.notes || [];
         notes.unshift({
@@ -87,9 +100,9 @@ if (chrome.contextMenus) {
       });
     }
 
-    if (info.menuItemId === 'domonote-start-meeting' && tab?.id) {
+    if (info.menuItemId === 'huskynote-start-meeting' && tab?.id) {
       // Inject meeting HUD into the active tab
-      chrome.tabs.sendMessage(tab.id, { type: 'DOMO_OPEN_MEETING_HUD' });
+      chrome.tabs.sendMessage(tab.id, { type: 'HUSKY_OPEN_MEETING_HUD' });
     }
   });
 }
@@ -109,7 +122,7 @@ if (chrome.action?.onClicked) {
         await chrome.sidePanel.open({ windowId: tab.windowId });
       }
     } catch (e) {
-      console.warn('[DomoNote] Side panel open triggered:', e);
+      console.warn('[HuskyNote] Side panel open triggered:', e);
     }
   });
 }
@@ -117,20 +130,20 @@ if (chrome.action?.onClicked) {
 // Message routing
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // Status check
-  if (request.type === 'DOMONOTE_CHECK_STATUS') {
+  if (request.type === 'HUSKYNOTE_CHECK_STATUS') {
     sendResponse({ status: 'active', version: '2.0.0' });
     return true;
   }
 
   // Relay: open meeting HUD on specified tab (or current tab)
-  if (request.type === 'DOMO_OPEN_MEETING_HUD') {
+  if (request.type === 'HUSKY_OPEN_MEETING_HUD') {
     const targetTabId = request.tabId;
     if (targetTabId) {
-      chrome.tabs.sendMessage(targetTabId, { type: 'DOMO_OPEN_MEETING_HUD' });
+      chrome.tabs.sendMessage(targetTabId, { type: 'HUSKY_OPEN_MEETING_HUD' });
     } else {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs[0]?.id) {
-          chrome.tabs.sendMessage(tabs[0].id, { type: 'DOMO_OPEN_MEETING_HUD' });
+          chrome.tabs.sendMessage(tabs[0].id, { type: 'HUSKY_OPEN_MEETING_HUD' });
         }
       });
     }
@@ -139,33 +152,33 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   // Retrieve saved meetings
-  if (request.type === 'DOMO_GET_MEETINGS') {
-    chrome.storage.local.get(['domo_meetings'], (res) => {
-      sendResponse({ meetings: res.domo_meetings || [] });
+  if (request.type === 'HUSKY_GET_MEETINGS') {
+    chrome.storage.local.get(['husky_meetings'], (res) => {
+      sendResponse({ meetings: res.husky_meetings || [] });
     });
     return true; // async
   }
 
   // Save meeting from content script (backup path)
-  if (request.type === 'DOMO_SAVE_MEETING') {
-    chrome.storage.local.get(['domo_meetings'], (res) => {
-      const meetings = res.domo_meetings || [];
+  if (request.type === 'HUSKY_SAVE_MEETING') {
+    chrome.storage.local.get(['husky_meetings'], (res) => {
+      const meetings = res.husky_meetings || [];
       meetings.unshift(request.data);
-      chrome.storage.local.set({ domo_meetings: meetings.slice(0, 50) });
+      chrome.storage.local.set({ husky_meetings: meetings.slice(0, 50) });
       sendResponse({ ok: true });
     });
     return true;
   }
 
   // Relay live meeting roster / active speaker across tabs
-  if (request.type === 'DOMO_MEETING_SYNC') {
-    chrome.storage.local.set({ domo_live_meeting_roster: request.data });
-    // Broadcast to all tabs so DomoNote web app receives it
+  if (request.type === 'HUSKY_MEETING_SYNC') {
+    chrome.storage.local.set({ husky_live_meeting_roster: request.data });
+    // Broadcast to all tabs so HuskyNote web app receives it
     chrome.tabs.query({}, (tabs) => {
       tabs.forEach((tab) => {
         if (tab.id && tab.id !== sender?.tab?.id) {
           chrome.tabs.sendMessage(tab.id, {
-            type: 'DOMONOTE_MEETING_PARTICIPANTS',
+            type: 'HUSKYNOTE_MEETING_PARTICIPANTS',
             ...request.data,
           }).catch(() => {});
         }
@@ -176,9 +189,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   // Get current live meeting roster
-  if (request.type === 'DOMO_GET_LIVE_MEETING') {
-    chrome.storage.local.get(['domo_live_meeting_roster'], (res) => {
-      sendResponse({ roster: res.domo_live_meeting_roster || null });
+  if (request.type === 'HUSKY_GET_LIVE_MEETING') {
+    chrome.storage.local.get(['husky_live_meeting_roster'], (res) => {
+      sendResponse({ roster: res.husky_live_meeting_roster || null });
     });
     return true;
   }

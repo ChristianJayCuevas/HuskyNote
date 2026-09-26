@@ -52,7 +52,7 @@ function resolveDotPath(obj: any, path: string): string | undefined {
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<LanguageCode>(() => {
     if (typeof window === 'undefined') return 'en';
-    const stored = localStorage.getItem('domonote_language') as LanguageCode;
+    const stored = localStorage.getItem('huskynote_language') as LanguageCode;
     if (stored && ['en', 'zh', 'ja', 'fr'].includes(stored)) {
       return stored;
     }
@@ -62,7 +62,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setLanguage = useCallback((lang: LanguageCode) => {
     setLanguageState(lang);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('domonote_language', lang);
+      localStorage.setItem('huskynote_language', lang);
       document.documentElement.lang = lang;
     }
   }, []);

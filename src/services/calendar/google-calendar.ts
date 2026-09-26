@@ -1,6 +1,6 @@
 import type { ScheduleEvent, GoogleCalendarConfig } from '../../types';
 
-const STORAGE_KEY = 'domonote_google_calendar_config';
+const STORAGE_KEY = 'huskynote_google_calendar_config';
 
 /**
  * Retrieves the stored Google Calendar configuration from localStorage,
@@ -24,7 +24,7 @@ export function getGoogleCalendarConfig(): GoogleCalendarConfig {
       return parsed;
     }
   } catch (err) {
-    console.warn('[DomoNote] Failed to read Google Calendar config:', err);
+    console.warn('[HuskyNote] Failed to read Google Calendar config:', err);
   }
 
   return {
@@ -45,7 +45,7 @@ export function saveGoogleCalendarConfig(updates: Partial<GoogleCalendarConfig>)
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   } catch (err) {
-    console.warn('[DomoNote] Failed to save Google Calendar config:', err);
+    console.warn('[HuskyNote] Failed to save Google Calendar config:', err);
   }
   return next;
 }
@@ -90,7 +90,7 @@ export function getGoogleCalendarWebTemplateUrl(event: ScheduleEvent): string {
 
   const text = encodeURIComponent(event.title || 'Event');
   const details = encodeURIComponent(
-    `${event.notes || ''}\n\nCategory: ${event.category}\nScheduled via DomoNote Offline Intelligence`
+    `${event.notes || ''}\n\nCategory: ${event.category}\nScheduled via HuskyNote Offline Intelligence`
   );
 
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${startStr}/${endStr}&details=${details}`;
@@ -165,7 +165,7 @@ export async function authenticateGoogleCalendar(customClientId?: string): Promi
     if (!popup) {
       resolve({
         success: false,
-        error: 'Popup was blocked by browser. Please allow popups for DomoNote.',
+        error: 'Popup was blocked by browser. Please allow popups for HuskyNote.',
       });
       return;
     }
@@ -289,7 +289,7 @@ export async function createGoogleCalendarEvent(event: ScheduleEvent): Promise<{
 
   const payload = {
     summary: event.title,
-    description: `${event.notes || ''}\n\nCategory: ${event.category}\nAdded via DomoNote`,
+    description: `${event.notes || ''}\n\nCategory: ${event.category}\nAdded via HuskyNote`,
     start: {
       dateTime: startDate.toISOString(),
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -330,7 +330,7 @@ export async function createGoogleCalendarEvent(event: ScheduleEvent): Promise<{
       htmlLink: data.htmlLink,
     };
   } catch (err: any) {
-    console.warn('[DomoNote] Google Calendar API error:', err);
+    console.warn('[HuskyNote] Google Calendar API error:', err);
     return {
       success: false,
       error: err.message || 'Failed to sync to Google Calendar.',

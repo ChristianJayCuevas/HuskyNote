@@ -116,7 +116,7 @@ export const StickyStorySection: React.FC = () => {
           </h2>
 
           <p className="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed max-w-md">
-            {t('landing.howItWorks.description', 'Most meeting conversations are forgotten once the call ends. DomoNote preserves what was said, highlights key decisions, and turns them into lasting notes right on your computer.')}
+            {t('landing.howItWorks.description', 'Most meeting conversations are forgotten once the call ends. HuskyNote preserves what was said, highlights key decisions, and turns them into lasting notes right on your computer.')}
           </p>
 
           {/* Interactive Step Selection Cards */}

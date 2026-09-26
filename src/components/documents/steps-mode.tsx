@@ -71,7 +71,7 @@ Respond ONLY with valid JSON in this exact structure, with no additional text:
           }
         }
       } catch (err: any) {
-        console.warn('[DomoNote] AI step generation error:', err?.message);
+        console.warn('[HuskyNote] AI step generation error:', err?.message);
       }
     }
 

@@ -5,7 +5,7 @@ export const TechnicalGrid: React.FC<{
   coords?: string;
   className?: string;
   children?: React.ReactNode;
-}> = ({ label = 'DOMONOTE / SYSTEM', coords = 'SEC-01 // 40.7128° N', className = '', children }) => {
+}> = ({ label = 'HUSKYNOTE / SYSTEM', coords = 'SEC-01 // 40.7128° N', className = '', children }) => {
   return (
     <div className={`relative border border-zinc-850/80 bg-zinc-950/40 p-6 sm:p-8 bg-tech-grid ${className}`}>
       {/* Corner crosshairs */}

@@ -128,7 +128,7 @@ export const ScreenHudLauncher: React.FC = () => {
           throw new Error('Could not obtain PiP container.');
         }
       } catch (err: any) {
-        console.warn('[DomoNote] PiP error, falling back to overlay:', err);
+        console.warn('[HuskyNote] PiP error, falling back to overlay:', err);
         setIsOverlayFallback(true);
         setIsActive(true);
         addToast('🖥️ Quick Bar activated.', 'success');
@@ -145,8 +145,8 @@ export const ScreenHudLauncher: React.FC = () => {
     const onToggleEvent = () => {
       handleToggleScreenHud();
     };
-    window.addEventListener('domonote:toggle-hud', onToggleEvent);
-    return () => window.removeEventListener('domonote:toggle-hud', onToggleEvent);
+    window.addEventListener('huskynote:toggle-hud', onToggleEvent);
+    return () => window.removeEventListener('huskynote:toggle-hud', onToggleEvent);
   }, [isActive]);
 
   return (
@@ -179,7 +179,7 @@ export const ScreenHudLauncher: React.FC = () => {
         pipContainer
       )}
 
-      {/* Fallback Draggable Overlay inside DomoNote (mounted to document.body) */}
+      {/* Fallback Draggable Overlay inside HuskyNote (mounted to document.body) */}
       {isActive && isOverlayFallback && !pipContainer && typeof document !== 'undefined' && createPortal(
         <DraggableOverlay
           onClose={() => {

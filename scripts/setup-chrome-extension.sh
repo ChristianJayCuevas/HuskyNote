@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# DomoNote - 1-Click Chrome Extension Auto-Launcher
-# Loads the DomoNote companion extension directly into Google Chrome/Chromium without manual Developer Mode steps.
+# HuskyNote - 1-Click Chrome Extension Auto-Launcher
+# Loads the HuskyNote companion extension directly into Google Chrome/Chromium without manual Developer Mode steps.
 
 set -e
 
@@ -9,7 +9,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 EXT_DIR="$DIR/browser-extension"
 
 echo "========================================================"
-echo "  DomoNote - Automated 1-Click Chrome Extension Setup"
+echo "  HuskyNote - Automated 1-Click Chrome Extension Setup"
 echo "  Loading: $EXT_DIR"
 echo "========================================================"
 
@@ -23,16 +23,16 @@ case "$(uname -s)" in
   Darwin*)
     # macOS
     if [ -d "/Applications/Google Chrome.app" ]; then
-      echo "[DomoNote] Launching Google Chrome with DomoNote extension loaded..."
+      echo "[HuskyNote] Launching Google Chrome with HuskyNote extension loaded..."
       open -a "Google Chrome" --args --load-extension="$EXT_DIR"
     elif [ -d "/Applications/Chromium.app" ]; then
-      echo "[DomoNote] Launching Chromium with DomoNote extension loaded..."
+      echo "[HuskyNote] Launching Chromium with HuskyNote extension loaded..."
       open -a "Chromium" --args --load-extension="$EXT_DIR"
     elif [ -d "/Applications/Brave Browser.app" ]; then
-      echo "[DomoNote] Launching Brave Browser with DomoNote extension loaded..."
+      echo "[HuskyNote] Launching Brave Browser with HuskyNote extension loaded..."
       open -a "Brave Browser" --args --load-extension="$EXT_DIR"
     elif [ -d "/Applications/Microsoft Edge.app" ]; then
-      echo "[DomoNote] Launching Microsoft Edge with DomoNote extension loaded..."
+      echo "[HuskyNote] Launching Microsoft Edge with HuskyNote extension loaded..."
       open -a "Microsoft Edge" --args --load-extension="$EXT_DIR"
     else
       echo "[Notice] No default Chromium app found in /Applications."
@@ -51,7 +51,7 @@ case "$(uname -s)" in
     done
 
     if [ -n "$CHROME_BIN" ]; then
-      echo "[DomoNote] Launching $CHROME_BIN with DomoNote extension loaded..."
+      echo "[HuskyNote] Launching $CHROME_BIN with HuskyNote extension loaded..."
       "$CHROME_BIN" --load-extension="$EXT_DIR" &
     else
       echo "[Notice] Chromium browser not found in PATH."
@@ -73,4 +73,4 @@ case "$(uname -s)" in
     ;;
 esac
 
-echo "[DomoNote] Extension loaded successfully! Access all features via the extension icon or Side Panel."
+echo "[HuskyNote] Extension loaded successfully! Access all features via the extension icon or Side Panel."

@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace DomoNote.Setup
+namespace HuskyNote.Setup
 {
     internal static class Program
     {
@@ -20,17 +20,17 @@ namespace DomoNote.Setup
             {
                 try
                 {
-                    Console.WriteLine("[DomoNote Setup] Starting silent installation...");
+                    Console.WriteLine("[HuskyNote Setup] Starting silent installation...");
                     InstallerEngine.ExecuteInstall(null, (msg, pct) =>
                     {
                         Console.WriteLine($"[{pct}%] {msg}");
                     });
-                    Console.WriteLine("[DomoNote Setup] Installation complete.");
+                    Console.WriteLine("[HuskyNote Setup] Installation complete.");
                     Environment.Exit(0);
                 }
                 catch (Exception ex)
                 {
-                    Console.Error.WriteLine("[DomoNote Setup Error] " + ex.Message);
+                    Console.Error.WriteLine("[HuskyNote Setup Error] " + ex.Message);
                     Environment.Exit(1);
                 }
                 return;

@@ -124,7 +124,7 @@ export const FeatureMap: React.FC = () => {
               <span className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Screen Capture</span>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-400 leading-relaxed max-w-2xl">
-              Record your screen during complex computer tasks. DomoNote extracts screenshots, captures steps, and builds standard operating manuals.
+              Record your screen during complex computer tasks. HuskyNote extracts screenshots, captures steps, and builds standard operating manuals.
             </p>
             <div className="p-4 rounded-xl border border-slate-200 dark:border-zinc-850 bg-slate-50 dark:bg-zinc-900/60 text-xs space-y-2 text-slate-700 dark:text-zinc-300">
               <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 text-xs">

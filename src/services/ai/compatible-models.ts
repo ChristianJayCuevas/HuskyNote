@@ -68,7 +68,7 @@ export interface CompatibleModel {
 }
 
 /**
- * Curated catalog of models compatible with DomoNote,
+ * Curated catalog of models compatible with HuskyNote,
  * strictly ordered from Minimum Tier (1B) to Higher Tiers (14B).
  */
 export const COMPATIBLE_MODELS: CompatibleModel[] = [

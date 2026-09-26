@@ -19,7 +19,7 @@ const ThemeContext = createContext<ThemeContextType | null>(null);
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<ThemeMode>(() => {
     if (typeof window === 'undefined') return 'dark';
-    const stored = localStorage.getItem('domonote_theme') as ThemeMode;
+    const stored = localStorage.getItem('huskynote_theme') as ThemeMode;
     if (stored === 'light' || stored === 'dark') {
       return stored;
     }
@@ -44,7 +44,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const apply = () => {
         setThemeState(newTheme);
         if (typeof window !== 'undefined') {
-          localStorage.setItem('domonote_theme', newTheme);
+          localStorage.setItem('huskynote_theme', newTheme);
           applyThemeToDOM(newTheme);
         }
       };

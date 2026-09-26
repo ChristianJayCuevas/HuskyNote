@@ -4,7 +4,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DomoNote
+namespace HuskyNote
 {
     public class StaticServer : IDisposable
     {

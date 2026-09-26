@@ -38,7 +38,7 @@ export const ModeSwitcher: React.FC = () => {
     },
     {
       id: 'zen',
-      label: 'Domo Notes',
+      label: 'Husky Notes',
       desc: 'Distraction-free focus with companion',
       icon: Feather,
       hotkey: `${modKey}+Shift+N`,

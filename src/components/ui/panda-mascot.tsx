@@ -67,7 +67,7 @@ export const PandaMascot: React.FC<PandaMascotProps> = ({
       >
         <img
           src={pandaImg}
-          alt="DomoNote Panda Mascot"
+          alt="HuskyNote Panda Mascot"
           className="w-full h-full object-contain rounded-3xl filter drop-shadow-[0_12px_24px_rgba(255,255,255,0.06)] animate-[float_4s_ease-in-out_infinite]"
           style={{ mixBlendMode: 'screen' }}
         />

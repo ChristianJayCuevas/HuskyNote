@@ -67,32 +67,32 @@ jobs:
 
       - name: Verify Installer Artifacts Exist
         run: |
-          if (-not (Test-Path "public\downloads\DomoNote-Setup-x64.exe")) {
-            throw "DomoNote-Setup-x64.exe was not generated"
+          if (-not (Test-Path "public\downloads\HuskyNote-Setup-x64.exe")) {
+            throw "HuskyNote-Setup-x64.exe was not generated"
           }
-          if (-not (Test-Path "public\downloads\DomoNote-Windows-Portable.zip")) {
-            throw "DomoNote-Windows-Portable.zip was not generated"
+          if (-not (Test-Path "public\downloads\HuskyNote-Windows-Portable.zip")) {
+            throw "HuskyNote-Windows-Portable.zip was not generated"
           }
           Write-Host "All Windows binaries successfully verified." -ForegroundColor Green
 
       - name: Test Silent Installation on Windows Runner
         run: |
-          $proc = Start-Process -FilePath "public\downloads\DomoNote-Setup-x64.exe" -ArgumentList "/S" -Wait -PassThru -NoNewWindow
+          $proc = Start-Process -FilePath "public\downloads\HuskyNote-Setup-x64.exe" -ArgumentList "/S" -Wait -PassThru -NoNewWindow
           if ($proc.ExitCode -ne 0) {
             throw "Silent installation failed with exit code $($proc.ExitCode)"
           }
-          $instDir = "$env:LOCALAPPDATA\Programs\DomoNote"
-          if (-not (Test-Path "$instDir\DomoNote.exe")) {
-            throw "DomoNote.exe was not found in $instDir"
+          $instDir = "$env:LOCALAPPDATA\Programs\HuskyNote"
+          if (-not (Test-Path "$instDir\HuskyNote.exe")) {
+            throw "HuskyNote.exe was not found in $instDir"
           }
           Write-Host "Windows installation verified successfully." -ForegroundColor Green
 
       - name: Upload Windows Binaries
         uses: actions/upload-artifact@v4
         with:
-          name: domonote-windows-binaries
+          name: huskynote-windows-binaries
           path: |
-            public/downloads/DomoNote-Setup-x64.exe
-            public/downloads/DomoNote-Windows-Portable.zip
-            public/downloads/DomoNote-Setup.bat
+            public/downloads/HuskyNote-Setup-x64.exe
+            public/downloads/HuskyNote-Windows-Portable.zip
+            public/downloads/HuskyNote-Setup.bat
           retention-days: 14

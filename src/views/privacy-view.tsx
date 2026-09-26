@@ -23,7 +23,7 @@ export const PrivacyView: React.FC = () => {
             and custom templates reside strictly inside your browser's IndexedDB database.
           </p>
           <p className="text-slate-600 dark:text-zinc-400 leading-relaxed">
-            DomoNote has no remote cloud databases, no user accounts on external servers, and no
+            HuskyNote has no remote cloud databases, no user accounts on external servers, and no
             background synchronization unless you explicitly configure an external endpoint.
           </p>
         </div>
@@ -62,7 +62,7 @@ export const PrivacyView: React.FC = () => {
               Capture" in the Operation Manual section. You choose which window or screen to share.
             </li>
             <li>
-              <strong className="text-slate-900 dark:text-zinc-200">No Silent Recording:</strong> DomoNote does not and cannot bypass browser
+              <strong className="text-slate-900 dark:text-zinc-200">No Silent Recording:</strong> HuskyNote does not and cannot bypass browser
               permission systems to secretly capture desktop audio or screens.
             </li>
           </ul>
@@ -75,7 +75,7 @@ export const PrivacyView: React.FC = () => {
             <span>Zero Third-Party Tracking</span>
           </div>
           <p className="text-slate-600 dark:text-zinc-400 leading-relaxed">
-            DomoNote includes no Google Analytics, no tracking pixels, no advertising scripts, and no
+            HuskyNote includes no Google Analytics, no tracking pixels, no advertising scripts, and no
             data collectors. Your notes, recordings, and files remain solely your own.
           </p>
         </div>

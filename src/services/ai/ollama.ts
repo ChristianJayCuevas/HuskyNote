@@ -41,7 +41,7 @@ export class OllamaProvider implements AIProvider {
       const data = await res.json();
       return (data.models || []) as OllamaModel[];
     } catch (err: any) {
-      console.warn('[DomoNote] Failed to query Ollama models:', err?.message);
+      console.warn('[HuskyNote] Failed to query Ollama models:', err?.message);
       return [];
     }
   }

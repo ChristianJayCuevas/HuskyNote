@@ -46,7 +46,7 @@ import { BrandCarouselBelts } from '../components/landing/brand-carousel-belts';
 import { TiltCard } from '../components/ui/tilt-card';
 import { useGitHubStars } from '../services/github/stars';
 import pandaImg from '../assets/panda-mascot.png';
-import logoImg from '../assets/official_domonote.png';
+import logoImg from '../assets/official_huskynote.png';
 
 const TYPEWRITER_PHRASES: Record<string, string[]> = {
   en: [
@@ -167,7 +167,7 @@ export const LandingPage: React.FC = () => {
         title: t('landing.features.panelOperationsTitle', 'Screen Recording & Step Manuals'),
         description: t(
           'landing.features.panelOperationsDesc',
-          'Record your screen during complex workflows. DomoNote extracts screenshots, captures steps, and builds a standard operating manual.'
+          'Record your screen during complex workflows. HuskyNote extracts screenshots, captures steps, and builds a standard operating manual.'
         ),
         meta: 'Step Manuals',
         previewContent: (
@@ -253,12 +253,12 @@ export const LandingPage: React.FC = () => {
       {
         id: 'zen',
         tag: 'WRITING',
-        title: t('landing.features.panelZenTitle', 'Distraction-Free Domo Notes'),
+        title: t('landing.features.panelZenTitle', 'Distraction-Free Husky Notes'),
         description: t(
           'landing.features.panelZenDesc',
           'A calm, distraction-free space for focused writing with full markdown support, version history, and soothing sounds.'
         ),
-        meta: 'Domo Notes',
+        meta: 'Husky Notes',
         previewContent: (
           <div className="space-y-2 text-slate-700 dark:text-zinc-300">
             <div className="flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-zinc-850 pb-1.5">
@@ -290,8 +290,8 @@ export const LandingPage: React.FC = () => {
             className="flex items-center gap-2.5 cursor-pointer select-none"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           >
-            <img src={logoImg} alt="DomoNote" className="w-7 h-7 rounded-lg object-contain shadow-xs" />
-            <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white">DomoNote</span>
+            <img src={logoImg} alt="HuskyNote" className="w-7 h-7 rounded-lg object-contain shadow-xs" />
+            <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white">HuskyNote</span>
           </div>
 
           {/* Desktop Navigation Items (Hidden on Mobile) */}
@@ -300,7 +300,7 @@ export const LandingPage: React.FC = () => {
             <button
               onClick={() => setIsExtensionModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800/80 transition-colors group"
-              title="DomoNote Chrome Extension (1-Click Automated Setup)"
+              title="HuskyNote Chrome Extension (1-Click Automated Setup)"
             >
               <ChromeIcon className="w-3.5 h-3.5 shrink-0 transition-transform group-hover:scale-110" />
               <span className="font-medium">Chrome Extension</span>
@@ -316,14 +316,14 @@ export const LandingPage: React.FC = () => {
 
             {/* GitHub Star Count Button */}
             <a
-              href="https://github.com/darknecrocities/DomoNote"
+              href="https://github.com/ChristianJayCuevas/HuskyNote"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => {
                 setTimeout(refreshStars, 3000);
               }}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-zinc-900/90 hover:bg-slate-200 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-850 text-xs text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm group"
-              title="Star DomoNote on GitHub"
+              title="Star HuskyNote on GitHub"
             >
               <GithubIcon className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
               <span className="font-medium">{t('landing.hero.star', 'Star')}</span>
@@ -449,7 +449,7 @@ export const LandingPage: React.FC = () => {
 
           <div className="pt-2 border-t border-slate-100 dark:border-zinc-900 flex items-center justify-between gap-3">
             <a
-              href="https://github.com/darknecrocities/DomoNote"
+              href="https://github.com/ChristianJayCuevas/HuskyNote"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => {
@@ -627,7 +627,7 @@ export const LandingPage: React.FC = () => {
                 onMouseEnter={() => {
                   playThock(1.2);
                 }}
-                title="DomoNote Mascot"
+                title="HuskyNote Mascot"
               >
                 {/* Inner bezel — always dark */}
                 <div
@@ -641,8 +641,8 @@ export const LandingPage: React.FC = () => {
                 >
                   {/* Mascot GIF — always shows fully */}
                   <img
-                    src="/domoreading.gif"
-                    alt="DomoNote Mascot Reading"
+                    src="/mascot-reading.gif"
+                    alt="HuskyNote Mascot Reading"
                     className="max-w-none h-auto object-contain relative z-10 drop-shadow-[0_12px_32px_rgba(0,0,0,0.8)] animate-float transition-all duration-500"
                     style={{
                       width: theme === 'light' ? '125%' : '112%',
@@ -675,10 +675,10 @@ export const LandingPage: React.FC = () => {
                     {t('landing.demo.badge', 'Interactive Live Demo')}
                   </span>
                   <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mt-1">
-                    {t('landing.demo.title', 'See DomoNote in action')}
+                    {t('landing.demo.title', 'See HuskyNote in action')}
                   </h2>
                   <p className="text-sm text-slate-600 dark:text-zinc-400 mt-2 max-w-2xl leading-relaxed">
-                    {t('landing.demo.description', 'Try DomoNote right now: see how it listens to your voice, gives you instant easy summaries, and draws bright red boxes on your papers so you can find answers fast.')}
+                    {t('landing.demo.description', 'Try HuskyNote right now: see how it listens to your voice, gives you instant easy summaries, and draws bright red boxes on your papers so you can find answers fast.')}
                   </p>
                 </div>
 
@@ -717,7 +717,7 @@ export const LandingPage: React.FC = () => {
                       <span className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-zinc-600" />
                       <span className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-zinc-600" />
                       <span className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-zinc-600" />
-                      <span className="ml-2 font-medium text-slate-800 dark:text-zinc-300">DomoNote Product Walkthrough</span>
+                      <span className="ml-2 font-medium text-slate-800 dark:text-zinc-300">HuskyNote Product Walkthrough</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
@@ -726,7 +726,7 @@ export const LandingPage: React.FC = () => {
                         className="text-xs h-7 px-2"
                         onClick={() => {
                           const img = document.getElementById('demo-video-img') as HTMLImageElement;
-                          if (img) img.src = `/domonote-demo.webp?t=${Date.now()}`;
+                          if (img) img.src = `/huskynote-demo.webp?t=${Date.now()}`;
                         }}
                       >
                         <RotateCcw className="w-3 h-3 mr-1" />
@@ -738,8 +738,8 @@ export const LandingPage: React.FC = () => {
                   <div className="relative bg-slate-950 flex items-center justify-center p-2 min-h-[400px]">
                     <img
                       id="demo-video-img"
-                      src="/domonote-demo.webp"
-                      alt="DomoNote Product Walkthrough"
+                      src="/huskynote-demo.webp"
+                      alt="HuskyNote Product Walkthrough"
                       className="w-full max-h-[640px] object-contain rounded-lg shadow-inner"
                     />
                   </div>
@@ -851,7 +851,7 @@ export const LandingPage: React.FC = () => {
                   {t('landing.setup.title', 'One command to initialize everything.')}
                 </h2>
                 <p className="text-sm text-slate-600 dark:text-zinc-400 mt-2 max-w-2xl leading-relaxed">
-                  {t('landing.setup.description', 'DomoNote includes an automated launcher that checks your local Ollama setup, enables browser permissions, pulls recommended models, and opens your workspace.')}
+                  {t('landing.setup.description', 'HuskyNote includes an automated launcher that checks your local Ollama setup, enables browser permissions, pulls recommended models, and opens your workspace.')}
                 </p>
               </div>
 
@@ -860,8 +860,8 @@ export const LandingPage: React.FC = () => {
                   <CodeBlock
                     title={t('landing.setup.oneClickInit', 'ONE-CLICK INITIALIZATION')}
                     code={`# Clone the repository
-git clone https://github.com/darknecrocities/DomoNote.git
-cd DomoNote
+git clone https://github.com/ChristianJayCuevas/HuskyNote.git
+cd HuskyNote
 
 # Run automated launcher
 ./start.sh`}
@@ -934,12 +934,12 @@ cd DomoNote
           </div>
         </ScrollReveal>
 
-        {/* Why DomoNote / Foundations */}
+        {/* Why HuskyNote / Foundations */}
         <ScrollReveal direction="up" delayMs={60}>
           <div className="w-full py-10 sm:py-16 border-t border-slate-200 dark:border-zinc-850 text-left mb-16 sm:mb-20 px-2 sm:px-0">
             <div className="mb-10 text-center">
               <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
-                {t('landing.why.badge', 'Why DomoNote')}
+                {t('landing.why.badge', 'Why HuskyNote')}
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mt-1">
                 {t('landing.why.title', 'Built for privacy, speed, and ownership')}
@@ -1012,7 +1012,7 @@ cd DomoNote
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto shrink-0">
               <Button variant="primary" size="lg" className="w-full sm:w-auto justify-center" onClick={handleOpenWorkspace}>
-                <span>{isCloudHost ? t('landing.hero.downloadApp', 'Download Desktop App') : t('landing.cta.openApp', 'Open DomoNote')}</span>
+                <span>{isCloudHost ? t('landing.hero.downloadApp', 'Download Desktop App') : t('landing.cta.openApp', 'Open HuskyNote')}</span>
                 {isCloudHost ? <Download className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
               </Button>
               <Button
@@ -1034,8 +1034,8 @@ cd DomoNote
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <img src={logoImg} alt="DomoNote" className="w-6 h-6 rounded-md object-contain shadow-xs" />
-              <span className="font-bold text-sm text-slate-900 dark:text-white tracking-tight">DomoNote</span>
+              <img src={logoImg} alt="HuskyNote" className="w-6 h-6 rounded-md object-contain shadow-xs" />
+              <span className="font-bold text-sm text-slate-900 dark:text-white tracking-tight">HuskyNote</span>
               <span className="text-xs text-slate-500 dark:text-zinc-500">• {t('app.tagline', 'Your Personal AI Secretary')}</span>
             </div>
             <p className="text-slate-500 dark:text-zinc-500 text-xs max-w-sm">
@@ -1075,7 +1075,7 @@ cd DomoNote
               {t('nav.settings', 'Settings')}
             </button>
             <a
-              href="https://github.com/darknecrocities/DomoNote"
+              href="https://github.com/ChristianJayCuevas/HuskyNote"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 hover:text-slate-900 dark:hover:text-white transition-colors"

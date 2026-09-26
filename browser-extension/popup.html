@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DomoNote - Personal AI Secretary</title>
+  <title>HuskyNote - Personal AI Secretary</title>
   <style>
     :root {
       --bg-base: #121318;
@@ -556,8 +556,8 @@
   <!-- Top Glass Bar -->
   <header class="topbar">
     <div class="brand">
-      <img src="icon.png" alt="DomoNote" class="brand-logo">
-      <span class="brand-name">DomoNote</span>
+      <img src="icon.png" alt="HuskyNote" class="brand-logo">
+      <span class="brand-name">HuskyNote</span>
       <div id="ai-status-pill" class="status-pill" title="Local Ollama AI Status (http://localhost:11434)">
         <span id="ai-status-dot" class="status-dot"></span>
         <span id="ai-status-text">AI: Connecting...</span>
@@ -569,7 +569,7 @@
         <option value="mistral">mistral</option>
         <option value="gemma">gemma</option>
       </select>
-      <button id="open-full-app-btn" class="icon-btn" title="Open DomoNote in Full Desktop / Web Tab">
+      <button id="open-full-app-btn" class="icon-btn" title="Open HuskyNote in Full Desktop / Web Tab">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
           <polyline points="15 3 21 3 21 9"></polyline>
@@ -761,17 +761,17 @@
           <span>Refresh</span>
         </button>
       </div>
-      <div id="domo-meetings-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 150px; overflow-y: auto;">
-        <div id="domo-meetings-empty" style="font-size: 10px; color: var(--text-dim); text-align: center; padding: 14px 0;">
+      <div id="husky-meetings-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 150px; overflow-y: auto;">
+        <div id="husky-meetings-empty" style="font-size: 10px; color: var(--text-dim); text-align: center; padding: 14px 0;">
           No saved meetings yet. Click Launch HUD above to record.
         </div>
       </div>
     </div>
 
     <!-- Meeting Doc Viewer -->
-    <div id="domo-meeting-doc-viewer" class="card" style="display: none; flex-direction: column; gap: 8px;">
+    <div id="husky-meeting-doc-viewer" class="card" style="display: none; flex-direction: column; gap: 8px;">
       <div style="display: flex; align-items: center; justify-content: space-between;">
-        <span id="domo-meeting-doc-title" style="font-size: 11.5px; font-weight: 600; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 240px;"></span>
+        <span id="husky-meeting-doc-title" style="font-size: 11.5px; font-weight: 600; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 240px;"></span>
         <div style="display: flex; gap: 5px; flex-shrink: 0;">
           <button id="btn-copy-meeting-doc" class="icon-btn" style="padding: 3px 7px; font-size: 10px;">Copy</button>
           <button id="btn-close-meeting-doc" class="icon-btn" style="padding: 3px 6px;">
@@ -782,7 +782,7 @@
           </button>
         </div>
       </div>
-      <div id="domo-meeting-doc-content" style="background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 10px; font-family: ui-monospace, monospace; font-size: 10px; color: #d4d4d8; line-height: 1.5; white-space: pre-wrap; word-break: break-word; max-height: 180px; overflow-y: auto;"></div>
+      <div id="husky-meeting-doc-content" style="background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 10px; font-family: ui-monospace, monospace; font-size: 10px; color: #d4d4d8; line-height: 1.5; white-space: pre-wrap; word-break: break-word; max-height: 180px; overflow-y: auto;"></div>
     </div>
 
     <!-- Quick Standalone Mic Recorder (Legacy Fallback) -->
@@ -859,7 +859,7 @@
 
     <!-- Chat Messages Window -->
     <div id="chat-window" class="chat-container">
-      <div class="chat-msg assistant">Hello! I am your DomoNote AI Secretary running 100% locally via Ollama. Ask me anything or tap "Summarize Page" to extract takeaways from your current tab.</div>
+      <div class="chat-msg assistant">Hello! I am your HuskyNote AI Secretary running 100% locally via Ollama. Ask me anything or tap "Summarize Page" to extract takeaways from your current tab.</div>
     </div>
 
     <!-- Chat Input Form -->

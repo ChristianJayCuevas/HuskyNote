@@ -1,13 +1,13 @@
 {
   "app": {
-    "name": "DomoNote",
+    "name": "HuskyNote",
     "tagline": "Votre secrétaire IA personnelle"
   },
   "nav": {
     "home": "Accueil",
     "overview": "Aperçu",
     "notes": "Notes",
-    "zen": "Notes Domo",
+    "zen": "Notes Husky",
     "meetings": "Réunions",
     "schedule": "Planning",
     "documents": "Documents",
@@ -18,7 +18,7 @@
     "landing": "Page d'accueil",
     "download": "Télécharger l'application",
     "settings": "Paramètres",
-    "about": "À propos de DomoNote",
+    "about": "À propos de HuskyNote",
     "changelog": "Journal des modifications",
     "privacy": "Confidentialité",
     "localAi": "Secrétaire personnelle",
@@ -55,7 +55,7 @@
     },
     "demo": {
       "badge": "DÉMO INTERACTIVE EN DIRECT",
-      "title": "Découvrez DomoNote en action",
+      "title": "Découvrez HuskyNote en action",
       "description": "Explorez la transcription de réunions en temps réel, les synthèses IA locales via Ollama, l'annotation dynamique de documents et la génération de comptes-rendus structurés.",
       "interactiveStudio": "Studio interactif",
       "walkthroughVideo": "Vidéo de présentation",
@@ -65,7 +65,7 @@
     "howItWorks": {
       "badge": "FONCTIONNEMENT",
       "title": "De la conversation orale aux notes structurées.",
-      "description": "La plupart des échanges en réunion sont oubliés sitôt l'appel terminé. DomoNote capture les propos, souligne les décisions clés et les transforme en notes pérennes directement sur votre ordinateur.",
+      "description": "La plupart des échanges en réunion sont oubliés sitôt l'appel terminé. HuskyNote capture les propos, souligne les décisions clés et les transforme en notes pérennes directement sur votre ordinateur.",
       "step1Title": "Enregistrement vocal",
       "step1Desc": "Audio enregistré localement dans votre navigateur. Les paroles s'affichent en temps réel avec des horodatages cliquables.",
       "step2Title": "Décisions clés & Faits marquants",
@@ -94,14 +94,14 @@
       "panelDocumentsTitle": "Lecture & Analyse de documents",
       "panelDocumentsDesc": "Importez PDF, documents Word, présentations et fichiers texte. Interrogez vos documents et extrayez des résumés précis.",
       "panelOperationsTitle": "Enregistrement d'écran & Manuels pas à pas",
-      "panelOperationsDesc": "Enregistrez vos flux de travail à l'écran. DomoNote extrait captures d'écran et étapes pour générer un manuel opératoire standardisé.",
+      "panelOperationsDesc": "Enregistrez vos flux de travail à l'écran. HuskyNote extrait captures d'écran et étapes pour générer un manuel opératoire standardisé.",
       "panelAiTitle": "Assistant IA privé",
       "panelAiDesc": "Exécutez vos modèles d'IA sur votre propre ordinateur via Ollama. Posez des questions sans envoyer vos données à des tiers.",
       "panelAnnotationTitle": "Auto-annotation dynamique pas à pas",
       "panelAnnotationDesc": "Détecte les composants d'interface et les flux d'action en temps réel. Encadre les coordonnées et compile des guides illustrés.",
       "panelVaultTitle": "Coffre de connaissances IndexedDB local",
       "panelVaultDesc": "Notes, transcriptions et documents restent confinés dans la base de données locale du navigateur. Recherche instantanée à zéro latence.",
-      "panelZenTitle": "Espace de rédaction Domo Notes",
+      "panelZenTitle": "Espace de rédaction Husky Notes",
       "panelZenDesc": "Éditeur de texte épuré et immersif. Support complet du Markdown, historique des versions et ambiances sonores apaisantes.",
       "panelExportTitle": "Export multi-format universel en un clic",
       "panelExportDesc": "Exportez comptes-rendus, manuels opératoires et synthèses en PDF prêt à l'impression, Markdown standard ou JSON."
@@ -109,7 +109,7 @@
     "setup": {
       "badge": "INSTALLATION RAPIDE",
       "title": "Une seule commande pour tout initialiser.",
-      "description": "DomoNote inclut un lanceur automatisé qui vérifie votre installation locale d'Ollama, configure les autorisations du navigateur, télécharge les modèles recommandés et ouvre votre espace de travail.",
+      "description": "HuskyNote inclut un lanceur automatisé qui vérifie votre installation locale d'Ollama, configure les autorisations du navigateur, télécharge les modèles recommandés et ouvre votre espace de travail.",
       "oneClickInit": "INITIALISATION EN UN CLIC",
       "whatLauncherAutomates": "Ce que le script automatise :",
       "checkOllama": "Vérifie la présence d'Ollama (propose l'installation si manquant)",
@@ -122,7 +122,7 @@
       "privacyBoundariesDesc": "Vos notes et enregistrements ne quittent jamais votre équipement. Les requêtes IA circulent exclusivement entre votre navigateur et http://localhost:11434."
     },
     "why": {
-      "badge": "POURQUOI CHOISIR DOMONOTE",
+      "badge": "POURQUOI CHOISIR HUSKYNOTE",
       "title": "Conçu pour la confidentialité, la rapidité et la souveraineté",
       "card1Tag": "Privé par défaut",
       "card1Title": "Vos données vous appartiennent",
@@ -140,11 +140,11 @@
     "cta": {
       "title": "Organisez vos journées avec votre secrétaire IA personnelle.",
       "description": "Aucune création de compte requise. Aucune carte bancaire. Votre espace de travail s'exécute entièrement dans votre navigateur.",
-      "openApp": "Ouvrir DomoNote",
+      "openApp": "Ouvrir HuskyNote",
       "downloadApp": "Télécharger l'application"
     },
     "footer": {
-      "copyright": "DomoNote. Votre secrétaire IA personnelle.",
+      "copyright": "HuskyNote. Votre secrétaire IA personnelle.",
       "description": "Votre secrétaire IA personnelle pour vos notes, réunions et documents. Tout reste privé sur votre ordinateur — sans compte, sans pistage et sans cloud.",
       "privacyNotice": "Votre secrétaire IA personnelle exécutée en toute confidentialité sur votre appareil. Pas de compte, pas de pistage et aucun serveur cloud.",
       "licenseNotice": "Licence MIT • Open Source • Exécuté sur votre appareil",

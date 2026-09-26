@@ -57,14 +57,14 @@ export async function openPipHudWindow(
   } = {}
 ): Promise<HTMLElement | null> {
   if (!isDocumentPipSupported()) {
-    console.warn('[DomoNote] Document Picture-in-Picture is not supported in this browser.');
+    console.warn('[HuskyNote] Document Picture-in-Picture is not supported in this browser.');
     return null;
   }
 
   // If already open, focus it
   if (pipWindowInstance && !pipWindowInstance.closed) {
     pipWindowInstance.focus();
-    return pipWindowInstance.document.getElementById('domonote-pip-root');
+    return pipWindowInstance.document.getElementById('huskynote-pip-root');
   }
 
   const width = options.width || 420;
@@ -87,14 +87,14 @@ export async function openPipHudWindow(
       'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
     // Set title
-    pipWin.document.title = 'DomoNote Quick Bar';
+    pipWin.document.title = 'HuskyNote Quick Bar';
 
     // Copy styles from main document
     copyStylesToPip(pipWin.document);
 
     // Create root container
     const root = pipWin.document.createElement('div');
-    root.id = 'domonote-pip-root';
+    root.id = 'huskynote-pip-root';
     root.style.width = '100vw';
     root.style.height = '100vh';
     root.style.display = 'flex';
@@ -108,7 +108,7 @@ export async function openPipHudWindow(
 
     return root;
   } catch (err) {
-    console.error('[DomoNote] Failed to open Document Picture-in-Picture window:', err);
+    console.error('[HuskyNote] Failed to open Document Picture-in-Picture window:', err);
     return null;
   }
 }

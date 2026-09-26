@@ -7,18 +7,21 @@ using System.Net.Http;
 using System.Reflection;
 using Microsoft.Win32;
 
-namespace DomoNote.Setup
+namespace HuskyNote.Setup
 {
     public static class InstallerEngine
     {
         public static string DefaultInstallDir => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Programs", "DomoNote"
+            "Programs", "HuskyNote"
         );
 
         public static void ExecuteInstall(string? targetDir, Action<string, int>? progress = null)
         {
             string installDir = string.IsNullOrWhiteSpace(targetDir) ? DefaultInstallDir : targetDir;
+
+            progress?.Invoke("Removing previous DomoNote installation if present...", 5);
+            RemoveLegacyDomoNoteInstall();
 
             progress?.Invoke($"Preparing installation directory: {installDir}", 10);
             Directory.CreateDirectory(installDir);
@@ -40,6 +43,30 @@ namespace DomoNote.Setup
             CheckOllamaStatus();
 
             progress?.Invoke("Installation completed successfully!", 100);
+        }
+
+        /// <summary>
+        /// Removes a pre-rebrand DomoNote install (program files, shortcuts, uninstall entry).
+        /// User data in %LOCALAPPDATA%\DomoNote\WebView2Data is kept; HuskyNote migrates it on first launch.
+        /// </summary>
+        private static void RemoveLegacyDomoNoteInstall()
+        {
+            foreach (var proc in Process.GetProcessesByName("DomoNote"))
+            {
+                try { proc.Kill(); proc.WaitForExit(3000); } catch { }
+            }
+
+            string legacyInstallDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Programs", "DomoNote"
+            );
+            string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "DomoNote.lnk");
+            string startMenuFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", "DomoNote");
+
+            try { if (File.Exists(desktopLnk)) File.Delete(desktopLnk); } catch (Exception ex) { Trace.WriteLine($"[Legacy Cleanup Warning] {ex.Message}"); }
+            try { if (Directory.Exists(startMenuFolder)) Directory.Delete(startMenuFolder, true); } catch (Exception ex) { Trace.WriteLine($"[Legacy Cleanup Warning] {ex.Message}"); }
+            try { Registry.CurrentUser.DeleteSubKeyTree(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\DomoNote", false); } catch (Exception ex) { Trace.WriteLine($"[Legacy Cleanup Warning] {ex.Message}"); }
+            try { if (Directory.Exists(legacyInstallDir)) Directory.Delete(legacyInstallDir, true); } catch (Exception ex) { Trace.WriteLine($"[Legacy Cleanup Warning] {ex.Message}"); }
         }
 
         private static void ExtractBundle(string destDir)
@@ -73,26 +100,26 @@ namespace DomoNote.Setup
         private static void CreateDesktopShortcut(string installDir)
         {
             string desktopDir = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-            string shortcutPath = Path.Combine(desktopDir, "DomoNote.lnk");
-            string targetExe = Path.Combine(installDir, "DomoNote.exe");
+            string shortcutPath = Path.Combine(desktopDir, "HuskyNote.lnk");
+            string targetExe = Path.Combine(installDir, "HuskyNote.exe");
             string iconLocation = Path.Combine(installDir, "favicon.ico");
 
-            CreateShortcut(shortcutPath, targetExe, iconLocation, "DomoNote — Your Personal AI Secretary");
+            CreateShortcut(shortcutPath, targetExe, iconLocation, "HuskyNote — Your Personal AI Secretary");
         }
 
         private static void CreateStartMenuShortcut(string installDir)
         {
             string startMenuDir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.StartMenu),
-                "Programs", "DomoNote"
+                "Programs", "HuskyNote"
             );
             Directory.CreateDirectory(startMenuDir);
 
-            string shortcutPath = Path.Combine(startMenuDir, "DomoNote.lnk");
-            string targetExe = Path.Combine(installDir, "DomoNote.exe");
+            string shortcutPath = Path.Combine(startMenuDir, "HuskyNote.lnk");
+            string targetExe = Path.Combine(installDir, "HuskyNote.exe");
             string iconLocation = Path.Combine(installDir, "favicon.ico");
 
-            CreateShortcut(shortcutPath, targetExe, iconLocation, "DomoNote — Your Personal AI Secretary");
+            CreateShortcut(shortcutPath, targetExe, iconLocation, "HuskyNote — Your Personal AI Secretary");
         }
 
         private static void CreateShortcut(string shortcutPath, string targetPath, string iconPath, string description)
@@ -123,25 +150,25 @@ namespace DomoNote.Setup
         private static void CreateUninstaller(string installDir)
         {
             string uninstallBat = Path.Combine(installDir, "uninstall.bat");
-            string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "DomoNote.lnk");
-            string startMenuLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", "DomoNote", "DomoNote.lnk");
-            string startMenuFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", "DomoNote");
+            string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "HuskyNote.lnk");
+            string startMenuLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", "HuskyNote", "HuskyNote.lnk");
+            string startMenuFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", "HuskyNote");
 
             string uninstallContent = $@"@echo off
-title DomoNote Uninstaller
+title HuskyNote Uninstaller
 echo ========================================================
-echo   Uninstalling DomoNote...
+echo   Uninstalling HuskyNote...
 echo ========================================================
-taskkill /f /im DomoNote.exe >nul 2>nul
+taskkill /f /im HuskyNote.exe >nul 2>nul
 del /f /q ""{desktopLnk}"" 2>nul
 del /f /q ""{startMenuLnk}"" 2>nul
 rmdir /s /q ""{startMenuFolder}"" 2>nul
-reg delete ""HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\DomoNote"" /f >nul 2>nul
-echo DomoNote shortcuts and registry entries removed.
+reg delete ""HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\HuskyNote"" /f >nul 2>nul
+echo HuskyNote shortcuts and registry entries removed.
 echo Removing installation directory...
 cd /d ""%USERPROFILE%""
 rmdir /s /q ""{installDir}"" 2>nul
-echo DomoNote uninstallation complete.
+echo HuskyNote uninstallation complete.
 ";
             File.WriteAllText(uninstallBat, uninstallContent);
         }
@@ -150,15 +177,15 @@ echo DomoNote uninstallation complete.
         {
             try
             {
-                using var key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\DomoNote");
-                key.SetValue("DisplayName", "DomoNote");
+                using var key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\HuskyNote");
+                key.SetValue("DisplayName", "HuskyNote");
                 key.SetValue("DisplayVersion", "1.0.0");
-                key.SetValue("Publisher", "darknecrocities");
+                key.SetValue("Publisher", "ChristianJayCuevas");
                 key.SetValue("InstallLocation", installDir);
                 key.SetValue("DisplayIcon", Path.Combine(installDir, "favicon.ico"));
                 key.SetValue("UninstallString", $"\"{Path.Combine(installDir, "uninstall.bat")}\"");
-                key.SetValue("URLInfoAbout", "https://github.com/darknecrocities/DomoNote");
-                key.SetValue("HelpLink", "https://github.com/darknecrocities/DomoNote");
+                key.SetValue("URLInfoAbout", "https://github.com/ChristianJayCuevas/HuskyNote");
+                key.SetValue("HelpLink", "https://github.com/ChristianJayCuevas/HuskyNote");
             }
             catch (Exception ex)
             {
@@ -182,7 +209,7 @@ echo DomoNote uninstallation complete.
 
         public static void LaunchInstalledApp(string installDir)
         {
-            string exePath = Path.Combine(installDir, "DomoNote.exe");
+            string exePath = Path.Combine(installDir, "HuskyNote.exe");
             if (File.Exists(exePath))
             {
                 Process.Start(new ProcessStartInfo

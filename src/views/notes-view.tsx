@@ -36,8 +36,8 @@ export const NotesView: React.FC = () => {
   // Listen to Topbar trigger
   useEffect(() => {
     const handleNewNoteEvent = () => handleCreateNote();
-    window.addEventListener('domonote:new-note', handleNewNoteEvent);
-    return () => window.removeEventListener('domonote:new-note', handleNewNoteEvent);
+    window.addEventListener('huskynote:new-note', handleNewNoteEvent);
+    return () => window.removeEventListener('huskynote:new-note', handleNewNoteEvent);
   }, []);
 
   return (

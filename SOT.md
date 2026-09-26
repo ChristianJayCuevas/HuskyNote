@@ -6,7 +6,7 @@ Repository: https://github.com/ChristianJayCuevas/HuskyNote
 Upstream: https://github.com/darknecrocities/DomoNote (MIT)  
 Status: Canonical Architecture, Technical Specification, and Operating Manual  
 
-> Brand transition: documentation reflects the HuskyNote brand. Source code, binaries, and assets still carry the DomoNote name until the items in [REBRANDING.md](REBRANDING.md) are completed.
+> Brand transition: documentation and source code reflect the HuskyNote brand, and data saved by DomoNote builds is migrated on first run. Artwork and the prebuilt macOS binaries still carry DomoNote branding; see [REBRANDING.md](REBRANDING.md).
 
 ---
 

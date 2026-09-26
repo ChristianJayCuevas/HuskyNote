@@ -104,7 +104,7 @@ export const HeroLiveWorkspace: React.FC = () => {
 
                 <div className="text-xs text-zinc-400 font-semibold uppercase">Analysis</div>
                 <p className="text-zinc-200 leading-relaxed text-xs">
-                  This guarantees absolute privacy. DomoNote runs entirely on your local computer processor.
+                  This guarantees absolute privacy. HuskyNote runs entirely on your local computer processor.
                 </p>
 
                 {stage >= 4 && (

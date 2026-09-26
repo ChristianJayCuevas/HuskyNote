@@ -1,5 +1,5 @@
 /**
- * DomoNote Visual Participant Scanner
+ * HuskyNote Visual Participant Scanner
  * ─────────────────────────────────────────────────────────────────────────────
  * Works WITHOUT the Chrome extension.
  * Captures frames from the active screen share stream, sends them to the local
@@ -30,7 +30,7 @@ const IGNORE_LABELS = new Set([
   'stop', 'pause', 'resume', 'start', 'record', 'share', 'present',
   'mic', 'camera', 'screen', 'audio', 'video', 'pin', 'unpin',
   'spotlight', 'tile', 'grid', 'speaker view', 'gallery view',
-  'domonote', 'domo', 'note', 'secretary', 'workspace', 'home',
+  'huskynote', 'husky', 'note', 'secretary', 'workspace', 'home',
   'meetings', 'schedule', 'documents', 'settings', 'templates',
 ]);
 
@@ -55,13 +55,13 @@ export async function detectVisionModel(): Promise<string | null> {
     for (const model of VISION_MODELS) {
       if (installed.some(m => m.startsWith(model.split(':')[0]))) {
         availableVisionModel = installed.find(m => m.startsWith(model.split(':')[0])) || model;
-        console.log(`[DomoNote VisualScan] Using vision model: ${availableVisionModel}`);
+        console.log(`[HuskyNote VisualScan] Using vision model: ${availableVisionModel}`);
         return availableVisionModel;
       }
     }
 
     availableVisionModel = null;
-    console.info('[DomoNote VisualScan] No vision model found. Install llava-phi3 with: ollama pull llava-phi3');
+    console.info('[HuskyNote VisualScan] No vision model found. Install llava-phi3 with: ollama pull llava-phi3');
     return null;
   } catch {
     availableVisionModel = null;
@@ -236,18 +236,18 @@ export function startVisualParticipantScanner(
 
           // Feed directly into speakerHookManager (same pipeline as extension)
           speakerHookManager.handleIncomingPayload({
-            type: 'DOMONOTE_MEETING_PARTICIPANTS',
+            type: 'HUSKYNOTE_MEETING_PARTICIPANTS',
             app: appHint,
             participants: names,
             selfParticipant: selfName || undefined,
           });
 
           onParticipantsFound?.(names, appHint);
-          console.log(`[DomoNote VisualScan] Found participants via ${visionModel}:`, names);
+          console.log(`[HuskyNote VisualScan] Found participants via ${visionModel}:`, names);
         }
       }
     } catch (err) {
-      console.warn('[DomoNote VisualScan] Scan error:', err);
+      console.warn('[HuskyNote VisualScan] Scan error:', err);
     }
 
     if (!stopped) scanTimer = setTimeout(scan, SCAN_INTERVAL_MS);
@@ -267,7 +267,7 @@ export function startVisualParticipantScanner(
  * Used to label discovered participants with the correct source.
  */
 function detectAppFromTab(): string {
-  // In a tab capture, the document title or URL usually reflects DomoNote's page
+  // In a tab capture, the document title or URL usually reflects HuskyNote's page
   // but we can sniff from the label of the video track or stored appName
   const title = document.title.toLowerCase();
   if (title.includes('meet') || title.includes('google')) return 'Google Meet';

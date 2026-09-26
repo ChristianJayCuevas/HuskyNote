@@ -4,7 +4,7 @@ import { GithubIcon } from '../components/ui/github-icon';
 import { PandaMascot } from '../components/ui/panda-mascot';
 import { TiltCard } from '../components/ui/tilt-card';
 import { useGitHubStars } from '../services/github/stars';
-import logoImg from '../assets/official_domonote.png';
+import logoImg from '../assets/official_huskynote.png';
 
 export const AboutView: React.FC = () => {
   const { starCount } = useGitHubStars();
@@ -13,9 +13,9 @@ export const AboutView: React.FC = () => {
       {/* Brand Header */}
       <div className="border-b border-slate-200 dark:border-zinc-850 pb-6 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <img src={logoImg} alt="DomoNote" className="w-12 h-12 rounded-xl object-contain shadow-sm" />
+          <img src={logoImg} alt="HuskyNote" className="w-12 h-12 rounded-xl object-contain shadow-sm" />
           <div>
-            <h1 className="text-2xl font-bold text-slate-950 dark:text-white tracking-tight">About DomoNote</h1>
+            <h1 className="text-2xl font-bold text-slate-950 dark:text-white tracking-tight">About HuskyNote</h1>
             <p className="text-xs text-slate-600 dark:text-zinc-400 mt-0.5">
               Your Personal AI Secretary for meetings, notes, and documents.
             </p>
@@ -24,7 +24,7 @@ export const AboutView: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <a
-            href="https://github.com/darknecrocities/DomoNote"
+            href="https://github.com/ChristianJayCuevas/HuskyNote"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-xs text-slate-900 dark:text-white bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-850 px-3 py-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors font-medium shadow-xs group"
@@ -51,14 +51,14 @@ export const AboutView: React.FC = () => {
               <span>Focus Companion</span>
             </div>
             <h3 className="text-lg font-bold text-slate-950 dark:text-white tracking-tight">
-              Meet DomoNote's Panda Companion
+              Meet HuskyNote's Panda Companion
             </h3>
             <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
               Designed in a clean, minimal black-and-white style. The panda sits quietly taking notes in
-              your Domo Notes workspace, reacting as you type and keeping track of your session without distractions.
+              your Husky Notes workspace, reacting as you type and keeping track of your session without distractions.
             </p>
             <div className="text-xs text-slate-500 dark:text-zinc-500">
-              Your distraction-free companion. Open Domo Notes with Cmd/Ctrl + Shift + N.
+              Your distraction-free companion. Open Husky Notes with Cmd/Ctrl + Shift + N.
             </div>
           </div>
 
@@ -70,51 +70,39 @@ export const AboutView: React.FC = () => {
         {/* Concept & Purpose */}
         <section className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-2xl p-6 space-y-4 shadow-xs dark:shadow-none transition-colors duration-500">
           <h3 className="text-sm font-bold text-slate-950 dark:text-white tracking-tight uppercase tracking-wider">
-            What is DomoNote?
+            What is HuskyNote?
           </h3>
           <p className="leading-relaxed text-slate-800 dark:text-zinc-300">
-            DomoNote is an open-source, local-first workspace designed to capture, organize, and synthesize
+            HuskyNote is an open-source, local-first workspace designed to capture, organize, and synthesize
             what happens across your meetings, documents, and notes.
           </p>
           <p className="text-slate-600 dark:text-zinc-400 leading-relaxed">
-            Instead of storing your information on third-party cloud servers, DomoNote operates
+            Instead of storing your information on third-party cloud servers, HuskyNote operates
             entirely inside your browser and local machine. It combines a distraction-free markdown notes editor,
             an automated meeting secretary, a multi-format document reader (PDF, DOCX, PPTX, TXT), and a step-by-step
             guide generator.
           </p>
         </section>
 
-        {/* Domo Open Source Ecosystem */}
+        {/* Open Source Credits */}
         <section className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-2xl p-6 space-y-4 shadow-xs dark:shadow-none transition-colors duration-500">
           <h3 className="text-sm font-bold text-slate-950 dark:text-white tracking-tight uppercase tracking-wider">
-            Domo Open Source Ecosystem
+            Open Source Credits
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <TiltCard maxTilt={5} scale={1.02} className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800">
-              <div className="font-bold text-slate-950 dark:text-zinc-100 text-sm">DomoNote</div>
-              <p className="text-slate-600 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
-                Local-first AI note-taking, meetings, documents, and operational memory.
-              </p>
-            </TiltCard>
-            <TiltCard maxTilt={5} scale={1.02} className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800">
-              <div className="font-bold text-slate-950 dark:text-zinc-100 text-sm">DomoDomo</div>
-              <p className="text-slate-600 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
-                General local-first developer toolbox and utilities.
-              </p>
-            </TiltCard>
-            <TiltCard maxTilt={5} scale={1.02} className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800">
-              <div className="font-bold text-slate-950 dark:text-zinc-100 text-sm">DomoSkills</div>
-              <p className="text-slate-600 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
-                Autonomous agent skills, capabilities, and system cheatsheets.
-              </p>
-            </TiltCard>
-            <TiltCard maxTilt={5} scale={1.02} className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800">
-              <div className="font-bold text-slate-950 dark:text-zinc-100 text-sm">Codepyne</div>
-              <p className="text-slate-600 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
-                AI engineering education and hands-on learning resources.
-              </p>
-            </TiltCard>
-          </div>
+          <TiltCard maxTilt={5} scale={1.02} className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800">
+            <a
+              href="https://github.com/darknecrocities/DomoNote"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 font-bold text-slate-950 dark:text-zinc-100 text-sm hover:underline"
+            >
+              DomoNote by darknecrocities
+              <ExternalLink className="w-3 h-3" />
+            </a>
+            <p className="text-slate-600 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
+              HuskyNote is built on DomoNote, used under the MIT License. The original copyright notice is retained in the LICENSE file.
+            </p>
+          </TiltCard>
         </section>
 
         {/* Technology Foundation */}

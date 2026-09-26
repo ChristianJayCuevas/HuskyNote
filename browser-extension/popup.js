@@ -1,5 +1,5 @@
-// DomoNote Extension Standalone Workspace Controller
-// Enables full DomoNote features (Notes, Meetings, Ollama AI, Screen Capture, Docs) without opening the main app.
+// HuskyNote Extension Standalone Workspace Controller
+// Enables full HuskyNote features (Notes, Meetings, Ollama AI, Screen Capture, Docs) without opening the main app.
 
 document.addEventListener('DOMContentLoaded', () => {
   // Safe Storage wrapper (chrome.storage.local with localStorage fallback)
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const res = {};
         const keyList = Array.isArray(keys) ? keys : [keys];
         keyList.forEach(k => {
-          const val = localStorage.getItem('domonote_' + k);
+          const val = localStorage.getItem('huskynote_' + k);
           if (val) {
             try { res[k] = JSON.parse(val); } catch { res[k] = val; }
           }
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.storage.local.set(items, cb);
       } else {
         Object.entries(items).forEach(([k, v]) => {
-          localStorage.setItem('domonote_' + k, JSON.stringify(v));
+          localStorage.setItem('huskynote_' + k, JSON.stringify(v));
         });
         if (cb) cb();
       }
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
   storage.get(['notes'], (res) => {
     notes = res.notes || [];
     if (notes.length === 0) {
-      createNewNote('Welcome to DomoNote', '# DomoNote AI Secretary\n\nYour notes, voice transcripts, and summaries are saved completely offline in local storage.\n\n- Powered by local Ollama AI\n- Real-time dictation\n- Tab screen capture');
+      createNewNote('Welcome to HuskyNote', '# HuskyNote AI Secretary\n\nYour notes, voice transcripts, and summaries are saved completely offline in local storage.\n\n- Powered by local Ollama AI\n- Real-time dictation\n- Tab screen capture');
     } else {
       selectNote(notes[0].id);
     }
@@ -526,7 +526,7 @@ ${text}`,
   });
 
   document.getElementById('chip-polish-text')?.addEventListener('click', () => {
-    sendChatMessage('Please polish my writing, correct grammar, and improve conciseness for: ' + (noteContentEl?.value.substring(0, 300) || 'DomoNote private local secretary'));
+    sendChatMessage('Please polish my writing, correct grammar, and improve conciseness for: ' + (noteContentEl?.value.substring(0, 300) || 'HuskyNote private local secretary'));
   });
 
   document.getElementById('chip-clear-chat')?.addEventListener('click', () => {
@@ -562,7 +562,7 @@ ${text}`,
       mctx.fillRect(0, 0, 640, 360);
       mctx.fillStyle = '#ffffff';
       mctx.font = '20px monospace';
-      mctx.fillText('DomoNote Studio Preview', 40, 180);
+      mctx.fillText('HuskyNote Studio Preview', 40, 180);
       loadScreenshotImage(mockCanvas.toDataURL());
     }
   });
@@ -676,7 +676,7 @@ ${text}`,
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `domonote-extension-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `huskynote-extension-backup-${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -704,7 +704,7 @@ ${text}`,
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const tab = tabs[0];
         if (!tab?.id) return;
-        chrome.tabs.sendMessage(tab.id, { type: 'DOMO_OPEN_MEETING_HUD' }, (resp) => {
+        chrome.tabs.sendMessage(tab.id, { type: 'HUSKY_OPEN_MEETING_HUD' }, (resp) => {
           if (chrome.runtime.lastError) {
             // Content script may not be injected yet — inject it first
             chrome.scripting.executeScript({
@@ -712,7 +712,7 @@ ${text}`,
               files: ['content.js'],
             }).then(() => {
               setTimeout(() => {
-                chrome.tabs.sendMessage(tab.id, { type: 'DOMO_OPEN_MEETING_HUD' });
+                chrome.tabs.sendMessage(tab.id, { type: 'HUSKY_OPEN_MEETING_HUD' });
               }, 600);
             }).catch(() => {
               showToast('Could not inject HUD. Try refreshing the tab.');
@@ -731,15 +731,15 @@ ${text}`,
   let viewingMeetingId = null;
 
   function renderMeetingsList() {
-    const listEl = document.getElementById('domo-meetings-list');
-    const emptyEl = document.getElementById('domo-meetings-empty');
+    const listEl = document.getElementById('husky-meetings-list');
+    const emptyEl = document.getElementById('husky-meetings-empty');
     if (!listEl) return;
 
     // Clear existing items (keep empty div)
     listEl.innerHTML = '';
 
     if (savedMeetings.length === 0) {
-      listEl.innerHTML = `<div id="domo-meetings-empty" style="font-size:10px; color:#52525b; text-align:center; padding:16px 0;">
+      listEl.innerHTML = `<div id="husky-meetings-empty" style="font-size:10px; color:#52525b; text-align:center; padding:16px 0;">
         No saved meetings yet &mdash; launch the HUD above to start recording.
       </div>`;
       return;
@@ -794,9 +794,9 @@ ${text}`,
 
   function viewMeeting(meeting) {
     viewingMeetingId = meeting.id;
-    const viewer = document.getElementById('domo-meeting-doc-viewer');
-    const titleEl = document.getElementById('domo-meeting-doc-title');
-    const contentEl = document.getElementById('domo-meeting-doc-content');
+    const viewer = document.getElementById('husky-meeting-doc-viewer');
+    const titleEl = document.getElementById('husky-meeting-doc-title');
+    const contentEl = document.getElementById('husky-meeting-doc-content');
     if (!viewer || !titleEl || !contentEl) return;
 
     titleEl.textContent = meeting.title || 'Meeting Document';
@@ -814,8 +814,8 @@ ${text}`,
 
   function loadSavedMeetings() {
     if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-      chrome.storage.local.get(['domo_meetings'], (res) => {
-        savedMeetings = res.domo_meetings || [];
+      chrome.storage.local.get(['husky_meetings'], (res) => {
+        savedMeetings = res.husky_meetings || [];
         renderMeetingsList();
       });
     } else {
@@ -825,13 +825,13 @@ ${text}`,
 
   // Copy meeting doc
   document.getElementById('btn-copy-meeting-doc')?.addEventListener('click', () => {
-    const content = document.getElementById('domo-meeting-doc-content')?.textContent || '';
+    const content = document.getElementById('husky-meeting-doc-content')?.textContent || '';
     navigator.clipboard.writeText(content).then(() => showToast('Meeting document copied!'));
   });
 
   // Close viewer
   document.getElementById('btn-close-meeting-doc')?.addEventListener('click', () => {
-    const viewer = document.getElementById('domo-meeting-doc-viewer');
+    const viewer = document.getElementById('husky-meeting-doc-viewer');
     if (viewer) viewer.style.display = 'none';
   });
 

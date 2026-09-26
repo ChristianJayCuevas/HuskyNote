@@ -311,7 +311,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
             }
             return;
           } catch (pdfErr) {
-            console.warn('[DomoNote] PDF parse fallback to digital paper:', pdfErr);
+            console.warn('[HuskyNote] PDF parse fallback to digital paper:', pdfErr);
           }
         }
 
@@ -321,7 +321,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
           setIsTextDocument(true);
         }
       } catch (err: any) {
-        console.warn('[DomoNote] Document load fallback:', err);
+        console.warn('[HuskyNote] Document load fallback:', err);
         if (isMounted) {
           setIsTextDocument(true);
         }
@@ -385,7 +385,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         await renderTaskRef.current.promise;
       } catch (err: any) {
         if (err?.name !== 'RenderingCancelledException') {
-          console.warn('[DomoNote] Page render error:', err);
+          console.warn('[HuskyNote] Page render error:', err);
         }
       }
     },
@@ -677,7 +677,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
       setIsDeleteModalOpen(false);
       if (onDeleted) onDeleted();
     } catch (err: any) {
-      console.error('[DomoNote] Failed to delete document:', err);
+      console.error('[HuskyNote] Failed to delete document:', err);
       addToast(`Failed to delete document: ${err?.message || 'Unknown error'}`, 'error');
     }
   };
@@ -688,7 +688,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
       setAnnotations([]);
       addToast('Cleared all annotations for this document.', 'info');
     } catch (err: any) {
-      console.error('[DomoNote] Failed to clear annotations:', err);
+      console.error('[HuskyNote] Failed to clear annotations:', err);
     }
   };
 
@@ -909,7 +909,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
               {/* Footer */}
               <div className="pt-6 border-t border-zinc-200 flex items-center justify-between text-[10px] font-mono text-zinc-400">
                 <span>LOCAL INDEXEDDB PERSISTED</span>
-                <span>DOMONOTE INTELLIGENCE</span>
+                <span>HUSKYNOTE INTELLIGENCE</span>
               </div>
 
               <AnnotationLayer

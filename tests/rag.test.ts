@@ -7,7 +7,7 @@ describe('Document RAG Engine', () => {
     const pages: ExtractedPage[] = [
       {
         pageNumber: 1,
-        text: 'This is the first page introducing the DomoNote architecture.',
+        text: 'This is the first page introducing the HuskyNote architecture.',
       },
       {
         pageNumber: 2,

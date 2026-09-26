@@ -7,17 +7,17 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>favicon.ico</ApplicationIcon>
-    <AssemblyName>DomoNote-Setup-x64</AssemblyName>
-    <RootNamespace>DomoNote.Setup</RootNamespace>
+    <AssemblyName>HuskyNote</AssemblyName>
+    <RootNamespace>HuskyNote</RootNamespace>
     <Version>1.0.0</Version>
-    <Authors>darknecrocities</Authors>
-    <Company>DomoNote</Company>
-    <Product>DomoNote Desktop Installer</Product>
-    <Description>Automated Windows Installer for DomoNote</Description>
+    <Authors>ChristianJayCuevas</Authors>
+    <Company>HuskyNote</Company>
+    <Product>HuskyNote — Your Personal AI Secretary</Product>
+    <Description>HuskyNote Desktop for Windows</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="bundle.zip" Condition="Exists('bundle.zip')" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
   </ItemGroup>
 
   <ItemGroup>

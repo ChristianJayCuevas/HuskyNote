@@ -1,4 +1,4 @@
-// DomoNote Content Script — In-Page Meeting HUD
+// HuskyNote Content Script — In-Page Meeting HUD
 // ─────────────────────────────────────────────
 // Fully local, zero external API.
 // • Detects Google Meet / Zoom / Teams participant name chips from the DOM
@@ -7,26 +7,26 @@
 // • On stop: sends to local Ollama (localhost:11434) for full meeting documentation
 
 (function () {
-  if (window.__domonote_injected) return;
-  window.__domonote_injected = true;
+  if (window.__huskynote_injected) return;
+  window.__huskynote_injected = true;
 
   // ─── Extension connection marker ───────────────────────────────────────────
   const marker = document.createElement('div');
-  marker.id = 'domonote-extension-marker';
+  marker.id = 'huskynote-extension-marker';
   marker.style.display = 'none';
   document.documentElement.appendChild(marker);
 
-  // Respond to pings from DomoNote web app
+  // Respond to pings from HuskyNote web app
   window.addEventListener('message', (event) => {
-    if (event.data?.type === 'DOMONOTE_PING') {
-      window.postMessage({ type: 'DOMONOTE_PONG', source: 'domonote-extension', version: '2.0.0' }, '*');
+    if (event.data?.type === 'HUSKYNOTE_PING') {
+      window.postMessage({ type: 'HUSKYNOTE_PONG', source: 'huskynote-extension', version: '2.0.0' }, '*');
     }
   });
 
   // ─── Constants ─────────────────────────────────────────────────────────────
   const OLLAMA_URL = 'http://localhost:11434/api/generate';
   const DEFAULT_MODEL = 'llama3.2';
-  const HUD_ID = 'domo-meeting-hud';
+  const HUD_ID = 'husky-meeting-hud';
 
   // ─── State ──────────────────────────────────────────────────────────────────
   let isRecording = false;
@@ -54,34 +54,34 @@
   }
 
   function uid() {
-    return `domo-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    return `husky-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   }
 
   // Relay messages from background script or storage to web page
   if (typeof chrome !== 'undefined') {
     if (chrome.runtime?.onMessage) {
       chrome.runtime.onMessage.addListener((msg) => {
-        if (msg.type === 'DOMONOTE_MEETING_PARTICIPANTS' || msg.type === 'DOMONOTE_ACTIVE_SPEAKER') {
+        if (msg.type === 'HUSKYNOTE_MEETING_PARTICIPANTS' || msg.type === 'HUSKYNOTE_ACTIVE_SPEAKER') {
           window.postMessage(msg, '*');
         }
       });
     }
 
     if (chrome.storage?.local) {
-      chrome.storage.local.get(['domo_live_meeting_roster'], (res) => {
-        if (res.domo_live_meeting_roster) {
+      chrome.storage.local.get(['husky_live_meeting_roster'], (res) => {
+        if (res.husky_live_meeting_roster) {
           window.postMessage({
-            type: 'DOMONOTE_MEETING_PARTICIPANTS',
-            ...res.domo_live_meeting_roster,
+            type: 'HUSKYNOTE_MEETING_PARTICIPANTS',
+            ...res.husky_live_meeting_roster,
           }, '*');
         }
       });
 
       chrome.storage.onChanged.addListener((changes, area) => {
-        if (area === 'local' && changes.domo_live_meeting_roster?.newValue) {
+        if (area === 'local' && changes.husky_live_meeting_roster?.newValue) {
           window.postMessage({
-            type: 'DOMONOTE_MEETING_PARTICIPANTS',
-            ...changes.domo_live_meeting_roster.newValue,
+            type: 'HUSKYNOTE_MEETING_PARTICIPANTS',
+            ...changes.husky_live_meeting_roster.newValue,
           }, '*');
         }
       });
@@ -365,11 +365,11 @@
   let liveBroadcastChannel = null;
   try {
     if (typeof BroadcastChannel !== 'undefined') {
-      liveBroadcastChannel = new BroadcastChannel('domonote_meeting_sync');
+      liveBroadcastChannel = new BroadcastChannel('huskynote_meeting_sync');
     }
   } catch {}
 
-  // Broadcast sync to DomoNote web app and other tabs
+  // Broadcast sync to HuskyNote web app and other tabs
   function broadcastMeetingSync() {
     const app = detectCurrentMeetingApp();
     const participants = scrapeParticipantNames();
@@ -422,7 +422,7 @@
     }
 
     const payload = {
-      type: 'DOMONOTE_MEETING_PARTICIPANTS',
+      type: 'HUSKYNOTE_MEETING_PARTICIPANTS',
       app: app || 'Meeting',
       participants,
       activeSpeaker: active || domActiveSpeaker || undefined,
@@ -440,12 +440,12 @@
 
     if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
       chrome.runtime.sendMessage({
-        type: 'DOMO_MEETING_SYNC',
+        type: 'HUSKY_MEETING_SYNC',
         data: payload,
       }).catch(() => {});
     }
 
-    // Direct HTTP bridge to DomoNote local server (ports 5174, 5173, 5175, 8765)
+    // Direct HTTP bridge to HuskyNote local server (ports 5174, 5173, 5175, 8765)
     // Ensures seamless cross-origin participant synchronization
     [5174, 5173, 5175, 8765].forEach((port) => {
       fetch(`http://127.0.0.1:${port}/api/meeting-sync`, {
@@ -458,7 +458,7 @@
   }
 
   // Always run sync — even if we don't recognise the app, the extension could be on any page
-  // with an open meeting app in another tab. The HTTP bridge posts to DomoNote regardless.
+  // with an open meeting app in another tab. The HTTP bridge posts to HuskyNote regardless.
   setInterval(broadcastMeetingSync, 1500);
   setTimeout(broadcastMeetingSync, 300);
 
@@ -535,7 +535,7 @@
   function startRecognition(onSegment, onInterim) {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
-      console.warn('[DomoNote] Web Speech API not supported in this browser.');
+      console.warn('[HuskyNote] Web Speech API not supported in this browser.');
       return null;
     }
 
@@ -651,7 +651,7 @@ Generate a FULL meeting document in clean Markdown with these EXACT sections:
 [Reproduce the full transcript formatted as clean dialogue with speaker labels]
 
 ---
-*Generated locally by DomoNote AI — 100% private, no data leaves your device.*`;
+*Generated locally by HuskyNote AI — 100% private, no data leaves your device.*`;
 
     try {
       // Try streaming first
@@ -689,7 +689,7 @@ Generate a FULL meeting document in clean Markdown with these EXACT sections:
       }
       return fullDoc;
     } catch (err) {
-      console.error('[DomoNote] Ollama error:', err);
+      console.error('[HuskyNote] Ollama error:', err);
       // Graceful fallback: structured local doc
       const fallback = buildFallbackDoc(participants, transcriptText, bookmarkText, notesText);
       onChunk('', fallback);
@@ -722,128 +722,128 @@ ${bookmarkText || '(None)'}
 ${notesText || '(None)'}
 
 ---
-*Generated by DomoNote — 100% private, local-first.*`;
+*Generated by HuskyNote — 100% private, local-first.*`;
   }
 
   // ─── HUD Styles ─────────────────────────────────────────────────────────────
   function injectStyles() {
-    if (document.getElementById('domo-hud-styles')) return;
+    if (document.getElementById('husky-hud-styles')) return;
     const style = document.createElement('style');
-    style.id = 'domo-hud-styles';
+    style.id = 'husky-hud-styles';
     style.textContent = `
       #${HUD_ID} * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
       #${HUD_ID} { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 2147483647; user-select: none; display: flex; flex-direction: column; align-items: center; gap: 8px; }
       
-      .domo-bar {
+      .husky-bar {
         display: flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 16px;
         background: rgba(10, 10, 14, 0.92); border: 1px solid rgba(255,255,255,0.18);
         box-shadow: 0 20px 50px -10px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08);
         backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
         cursor: grab; white-space: nowrap;
       }
-      .domo-bar:active { cursor: grabbing; }
+      .husky-bar:active { cursor: grabbing; }
       
-      .domo-grip { color: rgba(255,255,255,0.3); padding: 0 4px; font-size: 14px; cursor: grab; }
+      .husky-grip { color: rgba(255,255,255,0.3); padding: 0 4px; font-size: 14px; cursor: grab; }
       
-      .domo-status {
+      .husky-status {
         display: flex; align-items: center; gap: 8px; padding: 5px 10px;
         background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
         border-radius: 10px;
       }
-      .domo-dot { width: 9px; height: 9px; border-radius: 50%; background: white; position: relative; flex-shrink: 0; }
-      .domo-dot.paused { background: #71717a; }
-      .domo-dot.pulse::after {
+      .husky-dot { width: 9px; height: 9px; border-radius: 50%; background: white; position: relative; flex-shrink: 0; }
+      .husky-dot.paused { background: #71717a; }
+      .husky-dot.pulse::after {
         content: ''; position: absolute; inset: -4px; border-radius: 50%;
-        border: 1px solid rgba(255,255,255,0.5); animation: domo-ping 1.4s infinite;
+        border: 1px solid rgba(255,255,255,0.5); animation: husky-ping 1.4s infinite;
       }
-      @keyframes domo-ping { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(2.2); opacity: 0; } }
+      @keyframes husky-ping { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(2.2); opacity: 0; } }
       
-      .domo-timer { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; font-weight: 700; color: white; letter-spacing: 0.5px; }
-      .domo-status-text { font-size: 9px; color: #71717a; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+      .husky-timer { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; font-weight: 700; color: white; letter-spacing: 0.5px; }
+      .husky-status-text { font-size: 9px; color: #71717a; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
       
-      .domo-waves { display: flex; align-items: flex-end; gap: 2px; height: 14px; }
-      .domo-wave-bar { width: 2px; background: #e4e4e7; border-radius: 1px; transition: height 80ms ease; }
+      .husky-waves { display: flex; align-items: flex-end; gap: 2px; height: 14px; }
+      .husky-wave-bar { width: 2px; background: #e4e4e7; border-radius: 1px; transition: height 80ms ease; }
       
-      .domo-div { width: 1px; height: 20px; background: rgba(255,255,255,0.12); }
+      .husky-div { width: 1px; height: 20px; background: rgba(255,255,255,0.12); }
       
-      .domo-btn {
+      .husky-btn {
         display: flex; align-items: center; gap: 5px; padding: 6px 10px; border-radius: 10px;
         border: 1px solid transparent; background: transparent; color: #d4d4d8; font-size: 11px;
         font-weight: 600; cursor: pointer; transition: all 0.15s ease; white-space: nowrap;
       }
-      .domo-btn:hover { background: rgba(255,255,255,0.12); color: white; }
-      .domo-btn:active { transform: scale(0.95); }
-      .domo-btn.active { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white; }
-      .domo-btn.primary { background: white; color: black; border-color: white; }
-      .domo-btn.primary:hover { background: #e4e4e7; }
-      .domo-btn.danger { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: #fca5a5; }
-      .domo-btn.danger:hover { background: rgba(239,68,68,0.25); color: #fecaca; }
-      .domo-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
-      .domo-badge { font-size: 9px; font-weight: 700; font-family: monospace; padding: 1px 5px; background: rgba(255,255,255,0.2); border-radius: 4px; color: white; }
+      .husky-btn:hover { background: rgba(255,255,255,0.12); color: white; }
+      .husky-btn:active { transform: scale(0.95); }
+      .husky-btn.active { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white; }
+      .husky-btn.primary { background: white; color: black; border-color: white; }
+      .husky-btn.primary:hover { background: #e4e4e7; }
+      .husky-btn.danger { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: #fca5a5; }
+      .husky-btn.danger:hover { background: rgba(239,68,68,0.25); color: #fecaca; }
+      .husky-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+      .husky-badge { font-size: 9px; font-weight: 700; font-family: monospace; padding: 1px 5px; background: rgba(255,255,255,0.2); border-radius: 4px; color: white; }
       
       /* Drawer */
-      .domo-drawer {
+      .husky-drawer {
         width: 400px; max-width: 95vw; border-radius: 16px; padding: 14px;
         background: rgba(10, 10, 14, 0.95); border: 1px solid rgba(255,255,255,0.18);
         box-shadow: 0 24px 60px -12px rgba(0,0,0,0.9); backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px); overflow: hidden;
-        animation: domo-fade-in 0.2s ease;
+        animation: husky-fade-in 0.2s ease;
       }
-      @keyframes domo-fade-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-      .domo-drawer-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-      .domo-drawer-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: white; display: flex; align-items: center; gap: 6px; }
-      .domo-close-btn { padding: 4px; border-radius: 6px; border: none; background: transparent; color: #71717a; cursor: pointer; display: flex; }
-      .domo-close-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+      @keyframes husky-fade-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+      .husky-drawer-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+      .husky-drawer-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: white; display: flex; align-items: center; gap: 6px; }
+      .husky-close-btn { padding: 4px; border-radius: 6px; border: none; background: transparent; color: #71717a; cursor: pointer; display: flex; }
+      .husky-close-btn:hover { background: rgba(255,255,255,0.1); color: white; }
       
-      .domo-transcript-list { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-      .domo-transcript-list::-webkit-scrollbar { width: 4px; }
-      .domo-transcript-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
-      .domo-seg { padding: 8px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; }
-      .domo-seg-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
-      .domo-speaker { font-size: 10px; font-weight: 700; color: #a1a1aa; }
-      .domo-ts { font-family: monospace; font-size: 10px; color: #52525b; }
-      .domo-seg-text { font-size: 12px; color: #e4e4e7; line-height: 1.5; }
-      .domo-interim { font-size: 11px; color: #52525b; font-style: italic; padding: 4px 0 0 0; }
+      .husky-transcript-list { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+      .husky-transcript-list::-webkit-scrollbar { width: 4px; }
+      .husky-transcript-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+      .husky-seg { padding: 8px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; }
+      .husky-seg-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
+      .husky-speaker { font-size: 10px; font-weight: 700; color: #a1a1aa; }
+      .husky-ts { font-family: monospace; font-size: 10px; color: #52525b; }
+      .husky-seg-text { font-size: 12px; color: #e4e4e7; line-height: 1.5; }
+      .husky-interim { font-size: 11px; color: #52525b; font-style: italic; padding: 4px 0 0 0; }
       
-      .domo-report-area { width: 100%; min-height: 200px; max-height: 400px; overflow-y: auto; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; color: #d4d4d8; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
-      .domo-report-area::-webkit-scrollbar { width: 4px; }
-      .domo-report-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+      .husky-report-area { width: 100%; min-height: 200px; max-height: 400px; overflow-y: auto; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; color: #d4d4d8; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+      .husky-report-area::-webkit-scrollbar { width: 4px; }
+      .husky-report-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
       
-      .domo-generating { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #a1a1aa; padding: 8px 0; }
-      .domo-spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.15); border-top-color: white; border-radius: 50%; animation: domo-spin 0.7s linear infinite; }
-      @keyframes domo-spin { to { transform: rotate(360deg); } }
+      .husky-generating { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #a1a1aa; padding: 8px 0; }
+      .husky-spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.15); border-top-color: white; border-radius: 50%; animation: husky-spin 0.7s linear infinite; }
+      @keyframes husky-spin { to { transform: rotate(360deg); } }
       
-      .domo-participants-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
-      .domo-participant-chip { padding: 3px 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; font-size: 10px; color: #a1a1aa; font-weight: 600; }
+      .husky-participants-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+      .husky-participant-chip { padding: 3px 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; font-size: 10px; color: #a1a1aa; font-weight: 600; }
       
-      .domo-bookmark-row { display: flex; gap: 6px; margin-bottom: 10px; }
-      .domo-bm-btn { flex: 1; padding: 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: white; font-size: 11px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.15s; }
-      .domo-bm-btn:hover { background: rgba(255,255,255,0.15); transform: translateY(-1px); }
+      .husky-bookmark-row { display: flex; gap: 6px; margin-bottom: 10px; }
+      .husky-bm-btn { flex: 1; padding: 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: white; font-size: 11px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.15s; }
+      .husky-bm-btn:hover { background: rgba(255,255,255,0.15); transform: translateY(-1px); }
       
-      .domo-note-form { display: flex; gap: 6px; }
-      .domo-note-input { flex: 1; padding: 7px 10px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.07); color: white; font-size: 11px; outline: none; }
-      .domo-note-input:focus { border-color: rgba(255,255,255,0.4); }
-      .domo-note-input::placeholder { color: #52525b; }
+      .husky-note-form { display: flex; gap: 6px; }
+      .husky-note-input { flex: 1; padding: 7px 10px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.07); color: white; font-size: 11px; outline: none; }
+      .husky-note-input:focus { border-color: rgba(255,255,255,0.4); }
+      .husky-note-input::placeholder { color: #52525b; }
       
-      .domo-action-row { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
-      .domo-copy-btn { padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: transparent; color: #a1a1aa; font-size: 10px; font-weight: 600; cursor: pointer; }
-      .domo-copy-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+      .husky-action-row { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+      .husky-copy-btn { padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: transparent; color: #a1a1aa; font-size: 10px; font-weight: 600; cursor: pointer; }
+      .husky-copy-btn:hover { background: rgba(255,255,255,0.1); color: white; }
       
-      .domo-toast {
+      .husky-toast {
         position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
         z-index: 2147483647; padding: 8px 16px; border-radius: 20px;
         background: rgba(10,10,14,0.95); border: 1px solid rgba(255,255,255,0.2);
         color: white; font-size: 12px; font-weight: 600; white-space: nowrap;
-        animation: domo-fade-in 0.2s ease; pointer-events: none;
+        animation: husky-fade-in 0.2s ease; pointer-events: none;
       }
-      .domo-toast.error { border-color: rgba(239,68,68,0.4); color: #fca5a5; }
+      .husky-toast.error { border-color: rgba(239,68,68,0.4); color: #fca5a5; }
       
-      .domo-speaker-color-0 { color: #93c5fd; } /* blue */
-      .domo-speaker-color-1 { color: #86efac; } /* green */
-      .domo-speaker-color-2 { color: #fcd34d; } /* yellow */
-      .domo-speaker-color-3 { color: #f9a8d4; } /* pink */
-      .domo-speaker-color-4 { color: #c4b5fd; } /* violet */
-      .domo-speaker-color-5 { color: #6ee7b7; } /* emerald */
+      .husky-speaker-color-0 { color: #93c5fd; } /* blue */
+      .husky-speaker-color-1 { color: #86efac; } /* green */
+      .husky-speaker-color-2 { color: #fcd34d; } /* yellow */
+      .husky-speaker-color-3 { color: #f9a8d4; } /* pink */
+      .husky-speaker-color-4 { color: #c4b5fd; } /* violet */
+      .husky-speaker-color-5 { color: #6ee7b7; } /* emerald */
     `;
     document.head.appendChild(style);
   }
@@ -857,61 +857,61 @@ ${notesText || '(None)'}
     hud.id = HUD_ID;
     hud.innerHTML = `
       <!-- Main bar -->
-      <div class="domo-bar" id="domo-main-bar">
-        <span class="domo-grip" title="Drag to move">⠿</span>
+      <div class="husky-bar" id="husky-main-bar">
+        <span class="husky-grip" title="Drag to move">⠿</span>
 
         <!-- Status & timer -->
-        <div class="domo-status" id="domo-status-block">
-          <span class="domo-dot" id="domo-dot"></span>
+        <div class="husky-status" id="husky-status-block">
+          <span class="husky-dot" id="husky-dot"></span>
           <div>
-            <div class="domo-timer" id="domo-timer">00:00</div>
-            <div class="domo-status-text" id="domo-status-text">Ready</div>
+            <div class="husky-timer" id="husky-timer">00:00</div>
+            <div class="husky-status-text" id="husky-status-text">Ready</div>
           </div>
-          <div class="domo-waves" id="domo-waves" style="display:none">
-            ${[0.4,0.7,0.5,1,0.6,0.8,0.45].map((h,i) => `<div class="domo-wave-bar" id="domo-wb-${i}" style="height:3px"></div>`).join('')}
+          <div class="husky-waves" id="husky-waves" style="display:none">
+            ${[0.4,0.7,0.5,1,0.6,0.8,0.45].map((h,i) => `<div class="husky-wave-bar" id="husky-wb-${i}" style="height:3px"></div>`).join('')}
           </div>
         </div>
 
-        <div class="domo-div"></div>
+        <div class="husky-div"></div>
 
         <!-- Record / Stop -->
-        <button class="domo-btn primary" id="domo-rec-btn" title="Start recording meeting">
+        <button class="husky-btn primary" id="husky-rec-btn" title="Start recording meeting">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/></svg>
           Record
         </button>
 
         <!-- Pause -->
-        <button class="domo-btn" id="domo-pause-btn" style="display:none" title="Pause / Resume">
-          <svg id="domo-pause-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+        <button class="husky-btn" id="husky-pause-btn" style="display:none" title="Pause / Resume">
+          <svg id="husky-pause-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
         </button>
 
         <!-- Bookmark -->
-        <button class="domo-btn" id="domo-bm-btn" style="display:none" title="Bookmark moment">
+        <button class="husky-btn" id="husky-bm-btn" style="display:none" title="Bookmark moment">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
         </button>
 
         <!-- Transcript drawer -->
-        <button class="domo-btn" id="domo-tr-btn" style="display:none" title="Live transcript">
+        <button class="husky-btn" id="husky-tr-btn" style="display:none" title="Live transcript">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          <span id="domo-tr-count" class="domo-badge" style="display:none">0</span>
+          <span id="husky-tr-count" class="husky-badge" style="display:none">0</span>
         </button>
 
-        <div class="domo-div" id="domo-stop-div" style="display:none"></div>
+        <div class="husky-div" id="husky-stop-div" style="display:none"></div>
 
         <!-- Stop & Generate -->
-        <button class="domo-btn danger" id="domo-stop-btn" style="display:none" title="Stop and generate full meeting document">
+        <button class="husky-btn danger" id="husky-stop-btn" style="display:none" title="Stop and generate full meeting document">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
           Stop & Generate Doc
         </button>
 
         <!-- Close HUD -->
-        <button class="domo-btn" id="domo-close-btn" title="Close DomoNote HUD" style="padding:6px 7px">
+        <button class="husky-btn" id="husky-close-btn" title="Close HuskyNote HUD" style="padding:6px 7px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
 
       <!-- Drawer area (injected dynamically) -->
-      <div id="domo-drawer-area"></div>
+      <div id="husky-drawer-area"></div>
     `;
 
     document.body.appendChild(hud);
@@ -921,7 +921,7 @@ ${notesText || '(None)'}
   // ─── HUD Events ─────────────────────────────────────────────────────────────
   function setupHUDEvents(hud) {
     // Dragging
-    const bar = hud.querySelector('#domo-main-bar');
+    const bar = hud.querySelector('#husky-main-bar');
     let drag = false, ox = 0, oy = 0, sx = 0, sy = 0;
 
     bar.addEventListener('mousedown', (e) => {
@@ -947,32 +947,32 @@ ${notesText || '(None)'}
     document.addEventListener('mouseup', () => { drag = false; });
 
     // Record button
-    hud.querySelector('#domo-rec-btn').addEventListener('click', startMeeting);
+    hud.querySelector('#husky-rec-btn').addEventListener('click', startMeeting);
 
     // Pause button
-    hud.querySelector('#domo-pause-btn').addEventListener('click', togglePause);
+    hud.querySelector('#husky-pause-btn').addEventListener('click', togglePause);
 
     // Bookmark button
-    hud.querySelector('#domo-bm-btn').addEventListener('click', () => openDrawer('bookmark'));
+    hud.querySelector('#husky-bm-btn').addEventListener('click', () => openDrawer('bookmark'));
 
     // Transcript button
-    hud.querySelector('#domo-tr-btn').addEventListener('click', () => {
+    hud.querySelector('#husky-tr-btn').addEventListener('click', () => {
       if (currentDrawer === 'transcript') closeDrawer();
       else openDrawer('transcript');
     });
 
     // Stop button
-    hud.querySelector('#domo-stop-btn').addEventListener('click', stopAndGenerate);
+    hud.querySelector('#husky-stop-btn').addEventListener('click', stopAndGenerate);
 
     // Close button
-    hud.querySelector('#domo-close-btn').addEventListener('click', () => {
+    hud.querySelector('#husky-close-btn').addEventListener('click', () => {
       if (isRecording) {
-        if (!confirm('Stop recording and close DomoNote HUD?')) return;
+        if (!confirm('Stop recording and close HuskyNote HUD?')) return;
         stopRecognition();
       }
       hud.remove();
-      document.getElementById('domo-hud-styles')?.remove();
-      window.__domonote_injected = false;
+      document.getElementById('husky-hud-styles')?.remove();
+      window.__huskynote_injected = false;
     });
   }
 
@@ -993,7 +993,7 @@ ${notesText || '(None)'}
     elapsedTimer = setInterval(() => {
       if (!isPaused) {
         const s = Math.floor((Date.now() - startTime) / 1000);
-        const el = document.getElementById('domo-timer');
+        const el = document.getElementById('husky-timer');
         if (el) el.textContent = fmt(s);
       }
     }, 1000);
@@ -1007,7 +1007,7 @@ ${notesText || '(None)'}
       },
       (interim) => {
         currentInterim = interim;
-        const iEl = document.getElementById('domo-interim-text');
+        const iEl = document.getElementById('husky-interim-text');
         if (iEl) iEl.textContent = interim ? `…${interim}` : '';
       }
     );
@@ -1024,10 +1024,10 @@ ${notesText || '(None)'}
   function togglePause() {
     if (!isRecording) return;
     isPaused = !isPaused;
-    const btn = document.getElementById('domo-pause-btn');
-    const icon = document.getElementById('domo-pause-icon');
-    const statusText = document.getElementById('domo-status-text');
-    const dot = document.getElementById('domo-dot');
+    const btn = document.getElementById('husky-pause-btn');
+    const icon = document.getElementById('husky-pause-icon');
+    const statusText = document.getElementById('husky-status-text');
+    const dot = document.getElementById('husky-dot');
 
     if (isPaused) {
       recognition?.stop();
@@ -1035,17 +1035,17 @@ ${notesText || '(None)'}
       dot?.classList.remove('pulse');
       if (statusText) statusText.textContent = 'Paused';
       if (icon) icon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"/>';
-      document.getElementById('domo-waves').style.display = 'none';
+      document.getElementById('husky-waves').style.display = 'none';
     } else {
       recognition = startRecognition(
         (seg) => { transcript.push(seg); updateTranscriptCount(); if (currentDrawer === 'transcript') renderTranscriptDrawer(); },
-        (interim) => { currentInterim = interim; const iEl = document.getElementById('domo-interim-text'); if (iEl) iEl.textContent = interim ? `…${interim}` : ''; }
+        (interim) => { currentInterim = interim; const iEl = document.getElementById('husky-interim-text'); if (iEl) iEl.textContent = interim ? `…${interim}` : ''; }
       );
       dot?.classList.remove('paused');
       dot?.classList.add('pulse');
       if (statusText) statusText.textContent = 'Recording';
       if (icon) icon.innerHTML = '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>';
-      document.getElementById('domo-waves').style.display = 'flex';
+      document.getElementById('husky-waves').style.display = 'flex';
     }
   }
 
@@ -1063,8 +1063,8 @@ ${notesText || '(None)'}
     openDrawer('report');
     isGenerating = true;
 
-    const reportArea = document.getElementById('domo-report-area');
-    const genRow = document.getElementById('domo-gen-row');
+    const reportArea = document.getElementById('husky-report-area');
+    const genRow = document.getElementById('husky-gen-row');
     if (reportArea) reportArea.textContent = '';
     if (genRow) genRow.style.display = 'flex';
 
@@ -1092,10 +1092,10 @@ ${notesText || '(None)'}
     };
 
     try {
-      chrome.storage.local.get(['domo_meetings'], (res) => {
-        const meetings = res.domo_meetings || [];
+      chrome.storage.local.get(['husky_meetings'], (res) => {
+        const meetings = res.husky_meetings || [];
         meetings.unshift(meetingData);
-        chrome.storage.local.set({ domo_meetings: meetings.slice(0, 50) });
+        chrome.storage.local.set({ husky_meetings: meetings.slice(0, 50) });
       });
     } catch {}
 
@@ -1104,15 +1104,15 @@ ${notesText || '(None)'}
 
   // ─── UI helpers ─────────────────────────────────────────────────────────────
   function setRecordingUI(active) {
-    const recBtn = document.getElementById('domo-rec-btn');
-    const pauseBtn = document.getElementById('domo-pause-btn');
-    const bmBtn = document.getElementById('domo-bm-btn');
-    const trBtn = document.getElementById('domo-tr-btn');
-    const stopBtn = document.getElementById('domo-stop-btn');
-    const stopDiv = document.getElementById('domo-stop-div');
-    const dot = document.getElementById('domo-dot');
-    const statusText = document.getElementById('domo-status-text');
-    const waves = document.getElementById('domo-waves');
+    const recBtn = document.getElementById('husky-rec-btn');
+    const pauseBtn = document.getElementById('husky-pause-btn');
+    const bmBtn = document.getElementById('husky-bm-btn');
+    const trBtn = document.getElementById('husky-tr-btn');
+    const stopBtn = document.getElementById('husky-stop-btn');
+    const stopDiv = document.getElementById('husky-stop-div');
+    const dot = document.getElementById('husky-dot');
+    const statusText = document.getElementById('husky-status-text');
+    const waves = document.getElementById('husky-waves');
 
     if (active) {
       recBtn.style.display = 'none';
@@ -1130,7 +1130,7 @@ ${notesText || '(None)'}
   }
 
   function updateTranscriptCount() {
-    const badge = document.getElementById('domo-tr-count');
+    const badge = document.getElementById('husky-tr-count');
     if (badge) {
       badge.textContent = transcript.length.toString();
       badge.style.display = transcript.length > 0 ? 'inline' : 'none';
@@ -1139,7 +1139,7 @@ ${notesText || '(None)'}
 
   let waveAnimFrame = null;
   function animateWaves() {
-    const bars = document.querySelectorAll('.domo-wave-bar');
+    const bars = document.querySelectorAll('.husky-wave-bar');
     const scales = [0.4, 0.7, 0.5, 1, 0.6, 0.8, 0.45];
     function step() {
       if (!isRecording || isPaused) return;
@@ -1155,32 +1155,32 @@ ${notesText || '(None)'}
   // ─── Drawers ────────────────────────────────────────────────────────────────
   function openDrawer(type) {
     currentDrawer = type;
-    const area = document.getElementById('domo-drawer-area');
+    const area = document.getElementById('husky-drawer-area');
     if (!area) return;
 
     if (type === 'transcript') {
       area.innerHTML = buildTranscriptDrawer();
       renderTranscriptDrawer();
-      area.querySelector('#domo-drawer-close')?.addEventListener('click', closeDrawer);
-      const noteForm = area.querySelector('#domo-note-form');
+      area.querySelector('#husky-drawer-close')?.addEventListener('click', closeDrawer);
+      const noteForm = area.querySelector('#husky-note-form');
       if (noteForm) {
         noteForm.addEventListener('submit', (e) => {
           e.preventDefault();
-          const input = area.querySelector('#domo-note-inp');
+          const input = area.querySelector('#husky-note-inp');
           if (!input?.value.trim()) return;
           quickNotes.push({ timestampSeconds: Math.floor((Date.now() - startTime) / 1000), text: input.value.trim() });
           input.value = '';
           showHUDToast('Note saved');
         });
       }
-      area.querySelector('#domo-copy-transcript')?.addEventListener('click', () => {
+      area.querySelector('#husky-copy-transcript')?.addEventListener('click', () => {
         const text = transcript.map(s => `[${fmt(s.timestampSeconds)}] ${s.speaker}: ${s.text}`).join('\n');
         navigator.clipboard.writeText(text).then(() => showHUDToast('Transcript copied!'));
       });
     } else if (type === 'bookmark') {
       area.innerHTML = buildBookmarkDrawer();
-      area.querySelector('#domo-drawer-close')?.addEventListener('click', closeDrawer);
-      area.querySelectorAll('.domo-bm-btn').forEach(btn => {
+      area.querySelector('#husky-drawer-close')?.addEventListener('click', closeDrawer);
+      area.querySelectorAll('.husky-bm-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const btype = btn.dataset.type;
           bookmarks.push({ timestampSeconds: Math.floor((Date.now() - startTime) / 1000), type: btype, note: '' });
@@ -1190,9 +1190,9 @@ ${notesText || '(None)'}
       });
     } else if (type === 'report') {
       area.innerHTML = buildReportDrawer();
-      area.querySelector('#domo-drawer-close')?.addEventListener('click', closeDrawer);
-      area.querySelector('#domo-copy-report')?.addEventListener('click', () => {
-        const text = document.getElementById('domo-report-area')?.textContent || '';
+      area.querySelector('#husky-drawer-close')?.addEventListener('click', closeDrawer);
+      area.querySelector('#husky-copy-report')?.addEventListener('click', () => {
+        const text = document.getElementById('husky-report-area')?.textContent || '';
         navigator.clipboard.writeText(text).then(() => showHUDToast('Document copied!'));
       });
     }
@@ -1200,40 +1200,40 @@ ${notesText || '(None)'}
 
   function closeDrawer() {
     currentDrawer = null;
-    const area = document.getElementById('domo-drawer-area');
+    const area = document.getElementById('husky-drawer-area');
     if (area) area.innerHTML = '';
   }
 
   function buildTranscriptDrawer() {
     const participants = scrapeParticipantNames();
     return `
-      <div class="domo-drawer">
-        <div class="domo-drawer-header">
-          <div class="domo-drawer-title">
+      <div class="husky-drawer">
+        <div class="husky-drawer-header">
+          <div class="husky-drawer-title">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             Live Transcript
           </div>
           <div style="display:flex;gap:6px;align-items:center">
-            <button class="domo-copy-btn" id="domo-copy-transcript">Copy</button>
-            <button class="domo-close-btn" id="domo-drawer-close"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            <button class="husky-copy-btn" id="husky-copy-transcript">Copy</button>
+            <button class="husky-close-btn" id="husky-drawer-close"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
           </div>
         </div>
-        <div class="domo-participants-row" id="domo-participants-row">
-          ${participants.map(p => `<span class="domo-participant-chip">${p}</span>`).join('')}
+        <div class="husky-participants-row" id="husky-participants-row">
+          ${participants.map(p => `<span class="husky-participant-chip">${p}</span>`).join('')}
         </div>
-        <div class="domo-transcript-list" id="domo-tr-list">
+        <div class="husky-transcript-list" id="husky-tr-list">
           <div style="font-size:11px;color:#52525b;text-align:center;padding:16px 0">Listening… transcribed speech will appear here.</div>
         </div>
-        <div class="domo-interim" id="domo-interim-text"></div>
-        <form class="domo-note-form" id="domo-note-form" style="margin-top:10px">
-          <input class="domo-note-input" id="domo-note-inp" placeholder="Quick note (Enter to save)…" autocomplete="off" />
-          <button type="submit" class="domo-btn primary" style="padding:6px 10px;border-radius:9px">Save</button>
+        <div class="husky-interim" id="husky-interim-text"></div>
+        <form class="husky-note-form" id="husky-note-form" style="margin-top:10px">
+          <input class="husky-note-input" id="husky-note-inp" placeholder="Quick note (Enter to save)…" autocomplete="off" />
+          <button type="submit" class="husky-btn primary" style="padding:6px 10px;border-radius:9px">Save</button>
         </form>
       </div>`;
   }
 
   function renderTranscriptDrawer() {
-    const list = document.getElementById('domo-tr-list');
+    const list = document.getElementById('husky-tr-list');
     if (!list) return;
     if (transcript.length === 0) {
       list.innerHTML = '<div style="font-size:11px;color:#52525b;text-align:center;padding:16px 0">Listening… transcribed speech will appear here.</div>';
@@ -1243,12 +1243,12 @@ ${notesText || '(None)'}
     list.innerHTML = transcript.map(seg => {
       const colorIdx = speakerNames.indexOf(seg.speaker) % 6;
       return `
-        <div class="domo-seg">
-          <div class="domo-seg-header">
-            <span class="domo-speaker domo-speaker-color-${colorIdx}">${seg.speaker}</span>
-            <span class="domo-ts">${fmt(seg.timestampSeconds)}</span>
+        <div class="husky-seg">
+          <div class="husky-seg-header">
+            <span class="husky-speaker husky-speaker-color-${colorIdx}">${seg.speaker}</span>
+            <span class="husky-ts">${fmt(seg.timestampSeconds)}</span>
           </div>
-          <div class="domo-seg-text">${seg.text}</div>
+          <div class="husky-seg-text">${seg.text}</div>
         </div>`;
     }).join('');
     list.scrollTop = list.scrollHeight;
@@ -1257,27 +1257,27 @@ ${notesText || '(None)'}
   function buildBookmarkDrawer() {
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
     return `
-      <div class="domo-drawer" style="width:320px">
-        <div class="domo-drawer-header">
-          <div class="domo-drawer-title">Mark Moment [${fmt(elapsed)}]</div>
-          <button class="domo-close-btn" id="domo-drawer-close"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <div class="husky-drawer" style="width:320px">
+        <div class="husky-drawer-header">
+          <div class="husky-drawer-title">Mark Moment [${fmt(elapsed)}]</div>
+          <button class="husky-close-btn" id="husky-drawer-close"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
-        <div class="domo-bookmark-row">
-          <button class="domo-bm-btn" data-type="decision">
+        <div class="husky-bookmark-row">
+          <button class="husky-bm-btn" data-type="decision">
             <div style="display:flex;justify-content:center;margin-bottom:4px">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
             </div>
             <div>Decision</div>
             <div style="font-size:9px;color:#71717a;margin-top:2px">Agreed point</div>
           </button>
-          <button class="domo-bm-btn" data-type="action">
+          <button class="husky-bm-btn" data-type="action">
             <div style="display:flex;justify-content:center;margin-bottom:4px">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
             </div>
             <div>Action Item</div>
             <div style="font-size:9px;color:#71717a;margin-top:2px">Todo / task</div>
           </button>
-          <button class="domo-bm-btn" data-type="highlight">
+          <button class="husky-bm-btn" data-type="highlight">
             <div style="display:flex;justify-content:center;margin-bottom:4px">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"/></svg>
             </div>
@@ -1290,22 +1290,22 @@ ${notesText || '(None)'}
 
   function buildReportDrawer() {
     return `
-      <div class="domo-drawer" style="width:480px">
-        <div class="domo-drawer-header">
-          <div class="domo-drawer-title">
+      <div class="husky-drawer" style="width:480px">
+        <div class="husky-drawer-header">
+          <div class="husky-drawer-title">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
             AI Meeting Document
           </div>
           <div style="display:flex;gap:6px;align-items:center">
-            <button class="domo-copy-btn" id="domo-copy-report">Copy</button>
-            <button class="domo-close-btn" id="domo-drawer-close"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            <button class="husky-copy-btn" id="husky-copy-report">Copy</button>
+            <button class="husky-close-btn" id="husky-drawer-close"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
           </div>
         </div>
-        <div class="domo-generating" id="domo-gen-row" style="display:flex">
-          <div class="domo-spinner"></div>
+        <div class="husky-generating" id="husky-gen-row" style="display:flex">
+          <div class="husky-spinner"></div>
           <span>Generating full meeting document with local Ollama AI…</span>
         </div>
-        <div class="domo-report-area" id="domo-report-area"></div>
+        <div class="husky-report-area" id="husky-report-area"></div>
         <div style="margin-top:8px;font-size:10px;color:#52525b">100% local — no data sent anywhere. Powered by Ollama on your device.</div>
       </div>`;
   }
@@ -1313,14 +1313,14 @@ ${notesText || '(None)'}
   // ─── Toast ──────────────────────────────────────────────────────────────────
   let toastTimeout = null;
   function showHUDToast(msg, isError = false) {
-    let toast = document.getElementById('domo-toast');
+    let toast = document.getElementById('husky-toast');
     if (!toast) {
       toast = document.createElement('div');
-      toast.id = 'domo-toast';
-      toast.className = 'domo-toast' + (isError ? ' error' : '');
+      toast.id = 'husky-toast';
+      toast.className = 'husky-toast' + (isError ? ' error' : '');
       document.body.appendChild(toast);
     }
-    toast.className = 'domo-toast' + (isError ? ' error' : '');
+    toast.className = 'husky-toast' + (isError ? ' error' : '');
     toast.textContent = msg;
     toast.style.display = 'block';
     clearTimeout(toastTimeout);
@@ -1344,7 +1344,7 @@ ${notesText || '(None)'}
 
   // On any page: also respond to manual trigger from popup/background
   chrome.runtime.onMessage.addListener((msg) => {
-    if (msg.type === 'DOMO_OPEN_MEETING_HUD') buildHUD();
+    if (msg.type === 'HUSKY_OPEN_MEETING_HUD') buildHUD();
   });
 
   if (document.readyState === 'loading') {

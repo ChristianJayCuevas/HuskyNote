@@ -226,7 +226,7 @@ export const SettingsView: React.FC = () => {
     try {
       const json = await exportWorkspaceToJson();
       const dateStr = new Date().toISOString().split('T')[0];
-      downloadJsonFile(`domonote_workspace_${dateStr}.json`, json);
+      downloadJsonFile(`huskynote_workspace_${dateStr}.json`, json);
       addToast('Exported complete workspace backup to JSON.', 'success');
     } catch {
       addToast('Failed to export workspace.', 'error');
@@ -523,7 +523,7 @@ export const SettingsView: React.FC = () => {
           <div className="space-y-3 pt-1">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-semibold text-slate-950 dark:text-zinc-200">
-                Active Model (Compatible with DomoNote)
+                Active Model (Compatible with HuskyNote)
               </label>
               <span className="text-[11px] text-slate-600 dark:text-zinc-400 font-medium">
                 {models.length} model(s) installed on Ollama
@@ -555,7 +555,7 @@ export const SettingsView: React.FC = () => {
                 })}
               </optgroup>
 
-              <optgroup label="─── Tier 2: Balanced / Standard (3B – 4B) • DomoNote Recommended ───">
+              <optgroup label="─── Tier 2: Balanced / Standard (3B – 4B) • HuskyNote Recommended ───">
                 {COMPATIBLE_MODELS.filter((m) => m.tier === 'standard').map((m) => {
                   const isInst = isModelInstalled(m, models);
                   const isRec = m.id === hardwareProfile.recommendedModelId;
@@ -691,7 +691,7 @@ export const SettingsView: React.FC = () => {
                   <span>Compatible Models Catalog (Min to Higher Tiers)</span>
                 </h4>
                 <p className="text-[11px] text-slate-600 dark:text-zinc-400 mt-0.5 font-medium">
-                  Pre-screened models optimized for DomoNote. Click "Pull Model" on any tier to install directly.
+                  Pre-screened models optimized for HuskyNote. Click "Pull Model" on any tier to install directly.
                 </p>
               </div>
 
@@ -938,14 +938,14 @@ export const SettingsView: React.FC = () => {
               <div className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed space-y-1">
                 <span className="font-bold text-slate-950 dark:text-white">How Google Calendar Sync Works:</span>
                 <p className="text-slate-600 dark:text-zinc-400">
-                  Google Calendar offers two flexible integration tiers in DomoNote:
+                  Google Calendar offers two flexible integration tiers in HuskyNote:
                 </p>
                 <ul className="list-disc list-inside space-y-1 mt-1 text-slate-600 dark:text-zinc-400">
                   <li>
-                    <strong className="text-slate-950 dark:text-white">1-Click Web Event Creation (Zero Config):</strong> Works immediately with no Client ID, API keys, or OAuth setup required. DomoNote pre-populates your event in Google Calendar in your default browser.
+                    <strong className="text-slate-950 dark:text-white">1-Click Web Event Creation (Zero Config):</strong> Works immediately with no Client ID, API keys, or OAuth setup required. HuskyNote pre-populates your event in Google Calendar in your default browser.
                   </li>
                   <li>
-                    <strong className="text-slate-950 dark:text-white">Two-Way Background Sync (OAuth 2.0):</strong> To pull events into DomoNote or push them silently, Google's Cloud security policy requires an OAuth 2.0 Client ID. DomoNote keeps this <em>100% dynamic</em> — you can paste your own Client ID below or provide <code>VITE_GOOGLE_CLIENT_ID</code> in <code>.env</code> without any hardcoded credentials.
+                    <strong className="text-slate-950 dark:text-white">Two-Way Background Sync (OAuth 2.0):</strong> To pull events into HuskyNote or push them silently, Google's Cloud security policy requires an OAuth 2.0 Client ID. HuskyNote keeps this <em>100% dynamic</em> — you can paste your own Client ID below or provide <code>VITE_GOOGLE_CLIENT_ID</code> in <code>.env</code> without any hardcoded credentials.
                   </li>
                 </ul>
               </div>
@@ -1010,7 +1010,7 @@ export const SettingsView: React.FC = () => {
                   <span className="font-bold text-slate-950 dark:text-white">Consent Screen</span>
                 </div>
                 <p className="text-slate-600 dark:text-zinc-400 leading-relaxed text-[11px]">
-                  Under <strong>OAuth consent screen</strong>, select <strong>External</strong>, enter your app name (e.g. <em>DomoNote</em>) and email, and save.
+                  Under <strong>OAuth consent screen</strong>, select <strong>External</strong>, enter your app name (e.g. <em>HuskyNote</em>) and email, and save.
                 </p>
               </div>
 
@@ -1072,7 +1072,7 @@ export const SettingsView: React.FC = () => {
             <div className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed space-y-1">
               <span className="font-bold text-slate-950 dark:text-white">Direct Tab Audio Streaming:</span>
               <p className="text-slate-600 dark:text-zinc-400 font-medium">
-                The Chrome extension connects Google Meet sessions directly to your local DomoNote workspace.
+                The Chrome extension connects Google Meet sessions directly to your local HuskyNote workspace.
                 All audio is captured via Chrome's native <code>tabCapture</code> API with zero external servers.
               </p>
             </div>
@@ -1099,7 +1099,7 @@ export const SettingsView: React.FC = () => {
               {/* Download ZIP */}
               <a
                 href="/api/chrome-extension/download-zip"
-                download="DomoNote-Chrome-Extension.zip"
+                download="HuskyNote-Chrome-Extension.zip"
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white dark:bg-zinc-100 text-slate-900 text-xs font-bold hover:bg-slate-100 transition-colors shadow-sm whitespace-nowrap"
               >
                 <Download className="w-3.5 h-3.5 shrink-0" />
@@ -1186,7 +1186,7 @@ export const SettingsView: React.FC = () => {
                   Click the <strong className="text-slate-900 dark:text-zinc-200">Load unpacked</strong> button on the top-left toolbar and select this repository's extension folder:
                 </p>
                 <div className="flex items-center justify-between p-2 rounded bg-slate-100 dark:bg-black border border-slate-200 dark:border-zinc-800 font-mono text-xs text-slate-900 dark:text-zinc-200">
-                  <span className="truncate">domonote/browser-extension</span>
+                  <span className="truncate">huskynote/browser-extension</span>
                   <button
                     onClick={() => copyToClipboard('browser-extension', 'path')}
                     className="flex items-center gap-1 text-[10px] text-slate-900 dark:text-zinc-200 hover:text-slate-950 dark:hover:text-white px-1.5 py-0.5 rounded bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors shrink-0 ml-2 font-medium"
@@ -1207,7 +1207,7 @@ export const SettingsView: React.FC = () => {
                 </div>
                 <h4 className="text-xs font-bold text-slate-950 dark:text-white">Start Meeting or Tab Audio</h4>
                 <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed font-medium">
-                  Open Google Meet or any browser tab. Click the DomoNote puzzle piece icon or floating badge to stream audio directly into your Meeting Secretary note!
+                  Open Google Meet or any browser tab. Click the HuskyNote puzzle piece icon or floating badge to stream audio directly into your Meeting Secretary note!
                 </p>
                 <div className="p-2 rounded bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-[11px] text-slate-600 dark:text-zinc-400 flex items-center gap-2 font-medium">
                   <span className="w-2 h-2 rounded-full bg-slate-900 dark:bg-white animate-pulse" />

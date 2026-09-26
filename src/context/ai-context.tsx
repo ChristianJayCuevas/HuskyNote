@@ -24,7 +24,7 @@ interface AIContextType {
 
 const AIContext = createContext<AIContextType | null>(null);
 
-const STORAGE_KEY_SELECTED_MODEL = 'domonote_user_selected_model';
+const STORAGE_KEY_SELECTED_MODEL = 'huskynote_user_selected_model';
 
 export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
@@ -62,7 +62,7 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
           ollama.setBaseUrl(settings.ollamaBaseUrl || 'http://localhost:11434');
         }
       } catch (err) {
-        console.warn('[DomoNote] Could not read settings:', err);
+        console.warn('[HuskyNote] Could not read settings:', err);
       }
     }
 
@@ -151,7 +151,7 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
         await db.settings.put({ ...DEFAULT_SETTINGS, selectedModel: cleanModel });
       }
     } catch (err) {
-      console.warn('[DomoNote] Failed to persist selected model:', err);
+      console.warn('[HuskyNote] Failed to persist selected model:', err);
     }
   };
 
@@ -162,7 +162,7 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
       await db.settings.update('current', { ollamaBaseUrl: url });
       await checkConnection();
     } catch (err) {
-      console.warn('[DomoNote] Failed to persist base URL:', err);
+      console.warn('[HuskyNote] Failed to persist base URL:', err);
     }
   };
 

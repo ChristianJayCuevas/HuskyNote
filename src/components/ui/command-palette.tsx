@@ -115,7 +115,7 @@ export const CommandPalette: React.FC = () => {
           try {
             const jsonStr = await exportWorkspaceToJson();
             const dateStr = new Date().toISOString().split('T')[0];
-            downloadJsonFile(`domonote_backup_${dateStr}.json`, jsonStr);
+            downloadJsonFile(`huskynote_backup_${dateStr}.json`, jsonStr);
             addToast('Workspace successfully exported to JSON.', 'success');
           } catch {
             addToast('Failed to export workspace.', 'error');
@@ -124,7 +124,7 @@ export const CommandPalette: React.FC = () => {
       },
       {
         id: 'zen-notes',
-        title: 'Domo Notes Focus Mode',
+        title: 'Husky Notes Focus Mode',
         description: 'Distraction-free writing with companion',
         icon: FileText,
         shortcut: 'Cmd+Shift+N',

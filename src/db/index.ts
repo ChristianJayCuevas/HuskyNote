@@ -12,7 +12,7 @@ import type {
   ScheduleEvent,
 } from '../types';
 
-export class DomoNoteDatabase extends Dexie {
+export class HuskyNoteDatabase extends Dexie {
   notes!: Table<Note, string>;
   meetings!: Table<Meeting, string>;
   documents!: Table<DocumentEntity, string>;
@@ -25,7 +25,7 @@ export class DomoNoteDatabase extends Dexie {
   schedule!: Table<ScheduleEvent, string>;
 
   constructor() {
-    super('DomoNoteDB');
+    super('HuskyNoteDB');
     this.version(1).stores({
       notes: 'id, title, folderId, createdAt, updatedAt, *tags',
       meetings: 'id, title, startTime, createdAt',
@@ -43,7 +43,7 @@ export class DomoNoteDatabase extends Dexie {
   }
 }
 
-export const db = new DomoNoteDatabase();
+export const db = new HuskyNoteDatabase();
 
 // Default Application Settings
 export const DEFAULT_SETTINGS: AppSettings = {

@@ -29,7 +29,7 @@ export const GoogleMeetGuideModal: React.FC<GoogleMeetGuideModalProps> = ({
             <div className="font-semibold text-zinc-100 mb-1">Browser Security Standard</div>
             <p className="text-zinc-400">
               Web browsers intentionally prevent websites from silently capturing other browser tabs
-              or system audio without explicit user permission. DomoNote honors this privacy standard.
+              or system audio without explicit user permission. HuskyNote honors this privacy standard.
             </p>
           </div>
         </div>
@@ -53,7 +53,7 @@ export const GoogleMeetGuideModal: React.FC<GoogleMeetGuideModalProps> = ({
         </div>
 
         <div className="pt-2 border-t border-zinc-850">
-          <h4 className="font-semibold text-zinc-200 mb-1">Option 2: DomoNote Browser Extension</h4>
+          <h4 className="font-semibold text-zinc-200 mb-1">Option 2: HuskyNote Browser Extension</h4>
           <p className="text-zinc-400 mb-2">
             Load the included Manifest V3 extension located at <code>/browser-extension</code> in <code>chrome://extensions</code> to display a one-click launcher directly inside your Google Meet calls.
           </p>

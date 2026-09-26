@@ -108,7 +108,7 @@ export const OllamaPermissionModal: React.FC<OllamaPermissionModalProps> = ({
 
   /**
    * Detect the user's operating system from navigator hints.
-   * Falls back to 'macos' since DomoNote targets Mac-first.
+   * Falls back to 'macos' since HuskyNote targets Mac-first.
    */
   const detectedOS = React.useMemo<'macos' | 'windows' | 'linux'>(() => {
     if (typeof navigator === 'undefined') return 'macos';
@@ -459,7 +459,7 @@ export const OllamaPermissionModal: React.FC<OllamaPermissionModalProps> = ({
             <span>100% Offline & Private AI Guarantee</span>
           </div>
           <p className="leading-relaxed text-zinc-400">
-            DomoNote never sends your voice recordings, notes, or uploaded PDFs to third-party
+            HuskyNote never sends your voice recordings, notes, or uploaded PDFs to third-party
             cloud servers. All AI operations run directly on your hardware using the open-source
             Ollama engine — no API key, no subscription, no data leaving your machine.
           </p>
@@ -513,7 +513,7 @@ export const OllamaPermissionModal: React.FC<OllamaPermissionModalProps> = ({
             <ol className="text-xs text-zinc-400 leading-relaxed space-y-1 list-none pl-0">
               <li className="flex items-start gap-1.5">
                 <span className="text-zinc-600 font-mono shrink-0">1.</span>
-                DomoNote checks if Ollama is already running on your machine
+                HuskyNote checks if Ollama is already running on your machine
               </li>
               <li className="flex items-start gap-1.5">
                 <span className="text-zinc-600 font-mono shrink-0">2.</span>
@@ -577,7 +577,7 @@ export const OllamaPermissionModal: React.FC<OllamaPermissionModalProps> = ({
           <button
             onClick={onClose}
             className="px-4 py-2 text-xs text-zinc-400 hover:text-white transition-colors"
-            aria-label="Continue using DomoNote without AI features"
+            aria-label="Continue using HuskyNote without AI features"
           >
             Continue Without AI
           </button>

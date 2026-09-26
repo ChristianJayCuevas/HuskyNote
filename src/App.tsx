@@ -40,7 +40,7 @@ export const App: React.FC = () => {
     }
 
     initializeDatabase().catch((err) => {
-      console.warn('[DomoNote] DB initialization warning:', err);
+      console.warn('[HuskyNote] DB initialization warning:', err);
     });
 
     const handleNavigate = (e: any) => {
@@ -49,14 +49,14 @@ export const App: React.FC = () => {
         setActiveView(view);
       }
       if (e.detail?.action === 'new') {
-        window.dispatchEvent(new CustomEvent('domonote:new-note'));
+        window.dispatchEvent(new CustomEvent('huskynote:new-note'));
       } else if (e.detail?.action === 'record') {
-        window.dispatchEvent(new CustomEvent('domonote:start-meeting'));
+        window.dispatchEvent(new CustomEvent('huskynote:start-meeting'));
       }
     };
 
-    window.addEventListener('domonote:navigate', handleNavigate);
-    return () => window.removeEventListener('domonote:navigate', handleNavigate);
+    window.addEventListener('huskynote:navigate', handleNavigate);
+    return () => window.removeEventListener('huskynote:navigate', handleNavigate);
   }, [setActiveView]);
 
   const renderActiveView = () => {

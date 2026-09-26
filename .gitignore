@@ -43,7 +43,7 @@ browser-extension/*.zip
 *.app
 *.dmg
 !public/downloads/*.dmg
-desktop/DomoNote
+desktop/HuskyNote
 AppIcon.iconset/
 *.pdf
 **/bin/
