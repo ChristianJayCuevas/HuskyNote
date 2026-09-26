@@ -1,6 +1,6 @@
 # DomoNote to HuskyNote Rebranding
 
-Status: Documentation and source code rebranded. Artwork and prebuilt macOS binaries still pending.
+Status: Documentation, source code, artwork, and macOS disk images rebranded. Windows binaries are rebuilt by the next release.
 
 HuskyNote is a rebranded fork of [DomoNote](https://github.com/darknecrocities/DomoNote) by darknecrocities, used under the MIT License.
 
@@ -43,23 +43,18 @@ Limits: browser storage is per origin, so data only carries over when HuskyNote 
 
 ---
 
-## 2. Remaining
+## 2. Artwork and Binaries
 
-### Artwork (needs new design)
+Completed after the code rebrand:
 
-The files were renamed but still contain DomoNote artwork, including the panda mascot "Domo":
+- New husky artwork: logo (`official_huskynote.png`, `favicon.png`), app icons (`favicon.ico` for web and Windows, `AppIcon.icns` for macOS), the `HuskyMascot` component image (`src/assets/husky-mascot.png`), the landing page reading animation (`public/mascot-reading.gif`), the macOS menu bar icon drawn in `desktop/main.swift`, and a re-recorded walkthrough (`public/huskynote-demo.webp`). Unused panda media was removed.
+- The macOS disk images are built by `.github/workflows/build-macos.yml` (run it from the Actions tab) and committed to `public/downloads/` with their checksums.
 
-- Logo: `public/official_huskynote.png`, `src/assets/official_huskynote.png`
-- App icons: `AppIcon.icns`, `desktop/windows/favicon.ico`, `desktop/installer/favicon.ico`
-- Mascot media: `src/assets/mascot*.{png,gif,webp,webm,mov}`, `src/assets/welcome-mascot.*`, `public/mascot-reading.gif`, `src/assets/huskynote-demo.webp`, `public/huskynote-demo.webp`
-- Mascot code: `src/components/ui/panda-mascot.tsx` (component and its image), the menu bar mascot drawn in `desktop/main.swift`, and the panda references in `src/views/changelog-view.tsx`
+Remaining:
 
-Dropping replacements in at the same paths needs no code changes. Renaming `PandaMascot` is only needed if the component name should match the new mascot.
-
-### Binaries (need rebuilding)
-
-- `public/downloads/HuskyNote-macOS-*.dmg` are the old DomoNote builds under new file names. Rebuild them on a Mac from `desktop/main.swift` and update their lines in `SHA256SUMS.txt`.
 - `HuskyNote-Setup-x64.exe` and `HuskyNote-Windows-Portable.zip` are produced by `npm run build:windows` or the release workflow (requires the .NET 9 SDK). Their `SHA256SUMS.txt` lines are stale until the next release build regenerates them.
+- The macOS app is ad-hoc signed, not notarized, so Gatekeeper warns on first launch; `Open HuskyNote.command` clears the quarantine flag. Notarizing needs an Apple Developer ID.
+- The macOS app serves its bundled files with the system `python3`, which on a fresh Mac prompts to install the Command Line Tools. This behavior predates the rebrand.
 
 ### Other
 

@@ -6,7 +6,7 @@ Repository: https://github.com/ChristianJayCuevas/HuskyNote
 Upstream: https://github.com/darknecrocities/DomoNote (MIT)  
 Status: Canonical Architecture, Technical Specification, and Operating Manual  
 
-> Brand transition: documentation and source code reflect the HuskyNote brand, and data saved by DomoNote builds is migrated on first run. Artwork and the prebuilt macOS binaries still carry DomoNote branding; see [REBRANDING.md](REBRANDING.md).
+> Brand transition: documentation, source code, and artwork reflect the HuskyNote brand, and data saved by DomoNote builds is migrated on first run; see [REBRANDING.md](REBRANDING.md).
 
 ---
 
@@ -49,6 +49,7 @@ HuskyNote integrates five primary knowledge and capture modalities into a unifie
 - **Markdown Engine**: React Markdown, Remark GFM, DOMPurify for HTML sanitization
 - **Export Engines**: jsPDF (for client-side PDF rendering), native Markdown/JSON serializers
 - **Local AI Service**: Ollama REST API (streaming generate, chat, and tag endpoints)
+- **Speech-to-Text**: Whisper (`Xenova/whisper-base`) via transformers.js in a web worker, on WebGPU or WebAssembly. The model downloads once and is cached; audio is transcribed on-device. The Web Speech API is a fallback only.
 
 ### 3.2 Native Desktop Applications
 - **macOS Desktop App (`desktop/main.swift`)**:

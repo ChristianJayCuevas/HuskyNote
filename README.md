@@ -58,7 +58,7 @@ Modern knowledge work is fragmented across meetings, documents, screen procedure
 ### 2. Meeting Assistant and Live Audio
 - High-fidelity microphone capture using browser MediaRecorder and Web Audio API.
 - Real-time live waveform visualizer and elapsed timer.
-- Live speech recognition transcription with progressive timestamping.
+- On-device speech-to-text with Whisper (WebGPU or WebAssembly) for microphone and shared tab audio, with timestamped segments. The speech model downloads once on first use (about 77 MB for CPU, about 206 MB for the faster GPU version).
 - Post-meeting AI synthesis: automatic extraction of key decisions, structured action items, discussion topics, and timeline milestones.
 - Simultaneous manual note-taking during ongoing meetings.
 
