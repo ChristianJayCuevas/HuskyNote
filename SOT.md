@@ -1,19 +1,22 @@
-# DOMONOTE: SOURCE OF TRUTH (SOT)
+# HUSKYNOTE: SOURCE OF TRUTH (SOT)
 
-Document Version: 1.1.0  
-Product: DomoNote  
-Repository: https://github.com/darknecrocities/DomoNote  
+Document Version: 1.2.0  
+Product: HuskyNote (formerly DomoNote)  
+Repository: https://github.com/ChristianJayCuevas/HuskyNote  
+Upstream: https://github.com/darknecrocities/DomoNote (MIT)  
 Status: Canonical Architecture, Technical Specification, and Operating Manual  
+
+> Brand transition: documentation reflects the HuskyNote brand. Source code, binaries, and assets still carry the DomoNote name until the items in [REBRANDING.md](REBRANDING.md) are completed.
 
 ---
 
 ## 1. Product Statement
 
-DomoNote is an open-source, local-first AI secretary and note-taking workspace.
+HuskyNote is an open-source, local-first AI secretary and note-taking workspace.
 - **Tagline**: "Capture it. Understand it. Keep it."
-- **Secondary Description**: "DomoNote — Your Local AI Secretary for meetings, documents, and notes."
+- **Secondary Description**: "HuskyNote — Your Local AI Secretary for meetings, documents, and notes."
 
-DomoNote integrates five primary knowledge and capture modalities into a unified workspace:
+HuskyNote integrates five primary knowledge and capture modalities into a unified workspace:
 1. **Markdown & Structured Notes**: Full Markdown editing with version history and folder organization.
 2. **Meeting Recording, Speaker Detection & Live Timelines**: High-fidelity microphone and tab audio recording, speaker tracking, live speech-to-text, multilingual AI translation, and automatic synthesis of action items and decisions.
 3. **Document / PDF Intelligence**: PDF.js canvas engine with coordinate-anchored annotations, text selection AI actions, and automated "Turn into Steps" conversion.
@@ -51,20 +54,20 @@ DomoNote integrates five primary knowledge and capture modalities into a unified
 - **macOS Desktop App (`desktop/main.swift`)**:
   - Native Cocoa & WebKit (`WKWebView`) shell
   - Menu Bar HUD item with live Ollama health polling (`http://127.0.0.1:11434/api/tags`)
-  - Global shortcuts: Open DomoNote, New Note, Focus Mode, Record Meeting, Schedule, Studio, Settings
+  - Global shortcuts: Open HuskyNote, New Note, Focus Mode, Record Meeting, Schedule, Studio, Settings
   - Bundled local static server (port 5892)
 - **Windows Desktop App (`desktop/windows/`)**:
   - Native C# .NET 9 WinForms shell with Microsoft Edge WebView2 control
   - Centered dark-themed window (`DwmSetWindowAttribute(DWMWA_USE_IMMERSIVE_DARK_MODE)`)
   - Windows System Tray (`NotifyIcon`) with mascot icon and context menu
   - Embedded lightweight static server on `127.0.0.1:5892` with SPA fallback
-  - Single-instance mutex guard (`Global\DomoNote_Desktop_SingleInstance`)
+  - Single-instance mutex guard (`Global\HuskyNote_Desktop_SingleInstance`)
   - Auto-start & live Ollama health monitoring
 - **Windows Standalone Installer (`desktop/installer/`)**:
-  - Self-contained executable: `DomoNote-Setup-x64.exe`
-  - Installs to `%LOCALAPPDATA%\Programs\DomoNote` (no UAC / admin required)
+  - Self-contained executable: `HuskyNote-Setup-x64.exe`
+  - Installs to `%LOCALAPPDATA%\Programs\HuskyNote` (no UAC / admin required)
   - Creates Desktop and Start Menu shortcuts with official icon
-  - Registers in Windows Registry under `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\DomoNote`
+  - Registers in Windows Registry under `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\HuskyNote`
   - Standalone uninstaller script (`uninstall.bat`)
   - Supports silent installation (`/S`, `/silent`, `--quiet`)
 
@@ -147,7 +150,7 @@ All entities are defined with strict TypeScript typing and indexed in IndexedDB:
 
 To guarantee reliable binary distribution:
 1. **GitHub Releases as Canonical Distribution**:
-   - Official release binaries are compiled via CI/CD and hosted on GitHub Releases (`https://github.com/darknecrocities/DomoNote/releases`).
+   - Official release binaries are compiled via CI/CD and hosted on GitHub Releases (`https://github.com/ChristianJayCuevas/HuskyNote/releases`).
 2. **SPA Rewrite Protection**:
    - Static hosting configuration (`vercel.json`) must exclude `/downloads/` from SPA root rewrites.
 3. **Smart Client-side Probe**:
@@ -166,7 +169,7 @@ To guarantee reliable binary distribution:
   - Native Windows desktop app and installer compilation on `windows-latest` with verification of artifact existence and silent install test.
 - **Automated Releases (`.github/workflows/release.yml`)**:
   - Triggers on tag pushes (`v*`) or manual dispatch.
-  - Compiles `DomoNote-Setup-x64.exe`, `DomoNote-Windows-Portable.zip`, and `DomoNote-Setup.bat`.
+  - Compiles `HuskyNote-Setup-x64.exe`, `HuskyNote-Windows-Portable.zip`, and `HuskyNote-Setup.bat`.
   - Generates `SHA256SUMS.txt` cryptographic checksums.
   - Creates a GitHub Release with assets attached.
 - **Git Commit Standards**:

@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Create a report to help us improve DomoNote
+about: Create a report to help us improve HuskyNote
 title: '[BUG] '
 labels: 'bug'
 assignees: ''
@@ -12,7 +12,7 @@ A clear and concise description of the bug.
 ## Operating System & Environment
 - OS: [e.g. Windows 11, macOS Sequoia, Ubuntu 24.04]
 - Architecture: [e.g. x64, ARM64]
-- DomoNote Version / Build: [e.g. 1.0.0, commit hash]
+- HuskyNote Version / Build: [e.g. 1.0.0, commit hash]
 - Local AI Model: [e.g. Llama 3.2 3B, Gemma 2, None/Offline]
 - Browser (if web app): [e.g. Chrome 128, Edge 128]
 

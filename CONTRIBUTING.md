@@ -1,6 +1,6 @@
-# Contributing to DomoNote
+# Contributing to HuskyNote
 
-Welcome to the DomoNote open-source project. We appreciate contributions from the community to help make local-first, privacy-respecting AI note-taking and workspace capture accessible to everyone.
+Welcome to the HuskyNote open-source project. We appreciate contributions from the community to help make local-first, privacy-respecting AI note-taking and workspace capture accessible to everyone.
 
 Please review this document thoroughly before opening an issue or submitting a Pull Request.
 
@@ -8,7 +8,7 @@ Please review this document thoroughly before opening an issue or submitting a P
 
 ## 1. Guiding Architectural Principles
 
-All contributions must strictly respect DomoNote's core design rules:
+All contributions must strictly respect HuskyNote's core design rules:
 
 1. **Local-First Data Ownership**: All user notes, meetings, audio recordings, uploaded PDFs, annotations, and generated manuals are persisted client-side in IndexedDB via Dexie. No core feature may depend on a mandatory external cloud database or telemetry service.
 2. **Grayscale Visual Discipline**: All user interfaces must adhere to the black and white design system. Accent colors are reserved strictly for semantic feedback (recording active, connection status, alerts). **Emojis are strictly prohibited across all UI icons, components, code comments, and documentation.**
@@ -31,8 +31,8 @@ All contributions must strictly respect DomoNote's core design rules:
 #### macOS / Linux
 ```bash
 # Clone the repository
-git clone https://github.com/darknecrocities/DomoNote.git
-cd DomoNote
+git clone https://github.com/ChristianJayCuevas/HuskyNote.git
+cd HuskyNote
 
 # Install dependencies and start the development server
 npm install
@@ -41,8 +41,8 @@ npm run dev
 
 #### Windows
 ```cmd
-git clone https://github.com/darknecrocities/DomoNote.git
-cd DomoNote
+git clone https://github.com/ChristianJayCuevas/HuskyNote.git
+cd HuskyNote
 
 # Automated developer setup
 scripts\setup-windows.bat
@@ -59,18 +59,18 @@ npm run dev
 ## 3. Project Structure
 
 ```
-DomoNote/
+HuskyNote/
 ├── .github/
 │   ├── workflows/            # GitHub Actions CI & Release pipelines
 │   └── ISSUE_TEMPLATE/       # Bug report and feature request templates
 ├── desktop/
 │   ├── main.swift            # Native macOS Cocoa + WebKit shell
 │   ├── windows/              # Native Windows C# WebView2 desktop application
-│   │   ├── DomoNote.csproj   # Project file targeting net9.0-windows
+│   │   ├── HuskyNote.csproj   # Project file targeting net9.0-windows
 │   │   ├── MainWindow.cs     # Window, System Tray HUD, and event dispatch
 │   │   └── StaticServer.cs   # Embedded lightweight local static server
-│   └── installer/            # Standalone Windows installer (DomoNote-Setup-x64.exe)
-│       ├── DomoNoteSetup.csproj
+│   └── installer/            # Standalone Windows installer (HuskyNote-Setup-x64.exe)
+│       ├── HuskyNoteSetup.csproj
 │       ├── InstallerEngine.cs
 │       └── SetupForm.cs
 ├── local-companion/          # Python FastAPI companion (Faster-Whisper, Screen Capture)
@@ -136,4 +136,4 @@ Before opening a PR:
 3. If modifying Windows desktop code, verify that `scripts/build-windows.ps1` completes successfully.
 4. Fill out the Pull Request template completely.
 
-Thank you for helping build DomoNote!
+Thank you for helping build HuskyNote!

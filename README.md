@@ -1,16 +1,16 @@
-# DomoNote — Your Local AI Secretary
+# HuskyNote — Your Local AI Secretary
 
 > Capture it. Understand it. Keep it.
 
-DomoNote is a production-quality, local AI secretary for note-taking, meetings, documents, and operations. It captures what happens across meetings, documents, computer operations, and notes, organizing and synthesizing them using local AI models without sacrificing user privacy.
+HuskyNote is a production-quality, local AI secretary for note-taking, meetings, documents, and operations. It captures what happens across meetings, documents, computer operations, and notes, organizing and synthesizing them using local AI models without sacrificing user privacy.
 
-Repository: https://github.com/darknecrocities/DomoNote
+Repository: https://github.com/ChristianJayCuevas/HuskyNote
 
 ---
 
 ## Overview
 
-Modern knowledge work is fragmented across meetings, documents, screen procedures, and ad-hoc notes. DomoNote unifies these workflows into a cohesive, privacy-centric workspace:
+Modern knowledge work is fragmented across meetings, documents, screen procedures, and ad-hoc notes. HuskyNote unifies these workflows into a cohesive, privacy-centric workspace:
 
 - Meeting Secretary: Real browser audio recording, live transcripts, clickable milestone timelines, and local AI synthesis of decisions and action items.
 - Document Intelligence: Built-in PDF reader powered by PDF.js, coordinate-anchored annotations, text selection contextual AI actions, and automated "Turn into Steps" conversion.
@@ -24,7 +24,7 @@ Modern knowledge work is fragmented across meetings, documents, screen procedure
 
 ```
 +-------------------------------------------------------------------+
-|                            DOMONOTE                               |
+|                            HUSKYNOTE                               |
 +---------------------------------+---------------------------------+
 |         Vercel Web App          |         Local Companion         |
 |      (React 18 + Vite + TS)     |        (FastAPI / Python)       |
@@ -89,28 +89,28 @@ Modern knowledge work is fragmented across meetings, documents, screen procedure
 
 ## Single-Click Automated Ollama Setup
 
-DomoNote includes fully automated local AI setup scripts that require zero manual terminal configuration.
+HuskyNote includes fully automated local AI setup scripts that require zero manual terminal configuration.
 
 ### Quick Start (Single Command)
 
 #### macOS / Linux
 ```bash
-git clone https://github.com/darknecrocities/DomoNote.git
-cd DomoNote
+git clone https://github.com/ChristianJayCuevas/HuskyNote.git
+cd HuskyNote
 ./start.sh
 ```
 
 #### Windows
-You can run DomoNote on Windows in multiple ways:
+You can run HuskyNote on Windows in multiple ways:
 
 1. **Native Windows Desktop Installer (.EXE)**:
-   - Download and run `DomoNote-Setup-x64.exe`.
-   - Automatically installs DomoNote to your local programs directory, creates Desktop and Start Menu shortcuts with the official icon, configures the Windows uninstaller, and connects to your local Ollama instance.
+   - Download and run `HuskyNote-Setup-x64.exe`.
+   - Automatically installs HuskyNote to your local programs directory, creates Desktop and Start Menu shortcuts with the official icon, configures the Windows uninstaller, and connects to your local Ollama instance.
 
 2. **Automated Developer Setup Script (.BAT)**:
    ```cmd
-   git clone https://github.com/darknecrocities/DomoNote.git
-   cd DomoNote
+   git clone https://github.com/ChristianJayCuevas/HuskyNote.git
+   cd HuskyNote
    scripts\setup-windows.bat
    ```
 
@@ -150,7 +150,7 @@ npm run build:windows
 
 ## Vercel Deployment
 
-DomoNote is built to run as a 100% independent web application without requiring a persistent backend.
+HuskyNote is built to run as a 100% independent web application without requiring a persistent backend.
 
 1. Push your repository to GitHub.
 2. Import the project in Vercel (`vercel.json` is included for SPA route rewrites).
@@ -183,7 +183,7 @@ For capturing Google Meet audio and screen sessions:
 1. Open Google Chrome and navigate to `chrome://extensions`.
 2. Enable "Developer mode" (top right).
 3. Click "Load unpacked" and select the `/browser-extension` folder.
-4. When joining a Google Meet call, click the DomoNote extension icon to start capture.
+4. When joining a Google Meet call, click the HuskyNote extension icon to start capture.
 
 ---
 
@@ -198,3 +198,5 @@ For capturing Google Meet audio and screen sessions:
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+HuskyNote is a rebranded fork of [DomoNote](https://github.com/darknecrocities/DomoNote) by darknecrocities, used under the MIT License. The original copyright notice is retained in [LICENSE](LICENSE). Rebranding progress for the codebase is tracked in [REBRANDING.md](REBRANDING.md).

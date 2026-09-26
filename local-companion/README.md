@@ -1,6 +1,6 @@
-# DomoNote Local Companion
+# HuskyNote Local Companion
 
-The DomoNote Local Companion is an optional Python FastAPI service that enables advanced desktop features:
+The HuskyNote Local Companion is an optional Python FastAPI service that enables advanced desktop features:
 - Automated single-click Ollama service launch and model pulling
 - Native desktop screen capture for operation manual recording
 - Native Whisper automatic speech recognition (via faster-whisper)
