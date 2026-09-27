@@ -30,6 +30,8 @@ export interface ParakeetEngine extends EngineBase {
   runtime: 'parakeet';
   /** parakeet.js model key */
   model: string;
+  /** Hugging Face repository parakeet.js downloads the model key from (names its cached files) */
+  cacheRepo: string;
   quant: {
     webgpu: { encoderQuant: 'fp16' | 'fp32'; decoderQuant: 'int8' | 'fp32' };
     wasm: { encoderQuant: 'int8' | 'fp32'; decoderQuant: 'int8' | 'fp32' };
@@ -51,6 +53,7 @@ export const TRANSCRIPTION_ENGINES: TranscriptionEngine[] = [
     name: 'Parakeet TDT v3',
     description: 'Fastest and most accurate. English and 24 other European languages.',
     model: 'parakeet-tdt-0.6b-v3',
+    cacheRepo: 'ysdede/parakeet-tdt-0.6b-v3-onnx',
     languages: PARAKEET_V3_LANGUAGES,
     downloadMb: { webgpu: 1215, wasm: 640 },
     quant: {

@@ -3,6 +3,14 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { exec } from 'child_process';
 import fs from 'fs';
+import { createRequire } from 'module';
+
+// parakeet.js pins its own onnxruntime-web (it may be nested under parakeet.js
+// rather than hoisted), and its runtime files must match that exact version
+const requireFromHere = createRequire(import.meta.url);
+const parakeetOrtDist = path.dirname(
+  requireFromHere.resolve('onnxruntime-web', { paths: [path.dirname(requireFromHere.resolve('parakeet.js'))] })
+);
 
 function chromeExtensionInstallerPlugin() {
   return {
@@ -187,6 +195,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'parakeet-ort-dist': parakeetOrtDist,
     },
   },
   server: {
@@ -211,6 +220,8 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['pdfjs-dist'],
-    exclude: ['@huggingface/transformers'],
+    // Served as-is: the Parakeet worker sets the runtime path on the same onnxruntime-web
+    // instance parakeet.js imports, which pre-bundling would split into separate copies
+    exclude: ['@huggingface/transformers', 'parakeet.js', 'parakeet-ort-dist'],
   },
 });

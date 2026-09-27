@@ -13,7 +13,8 @@ export type WorkerRequest =
 
 export type WorkerResponse =
   | { type: 'progress'; file: string; loaded: number; total: number }
-  | { type: 'ready'; engineId: string; device: 'webgpu' | 'wasm' }
+  /** `gpuError` explains why a GPU-capable device ended up on the CPU */
+  | { type: 'ready'; engineId: string; device: 'webgpu' | 'wasm'; gpuError?: string }
   | { type: 'result'; id: number; chunks: TimedText[] }
   | { type: 'error'; id?: number; message: string };
 
