@@ -22,15 +22,39 @@ export function postToClient(msg: WorkerResponse): void {
   (self as unknown as { postMessage: (m: WorkerResponse) => void }).postMessage(msg);
 }
 
+export interface WebGpuSupport {
+  available: boolean;
+  fp16: boolean;
+  /** GPU vendor reported by the browser, when available */
+  vendor?: string;
+  /** Why the GPU cannot be used, when it cannot */
+  reason?: string;
+}
+
 /** Whether a usable WebGPU adapter exists, optionally with fp16 shader support. */
-export async function detectWebGpu(): Promise<{ available: boolean; fp16: boolean }> {
+export async function detectWebGpu(): Promise<WebGpuSupport> {
   try {
     const gpu = (self.navigator as any).gpu;
-    const adapter = gpu ? await gpu.requestAdapter() : null;
-    if (!adapter) return { available: false, fp16: false };
-    return { available: true, fp16: !!adapter.features?.has?.('shader-f16') };
-  } catch {
-    return { available: false, fp16: false };
+    if (!gpu) return { available: false, fp16: false, reason: 'This browser does not support WebGPU.' };
+    const adapter = await gpu.requestAdapter();
+    if (!adapter) {
+      // Chromium returns no adapter when hardware acceleration is off or the GPU is blocklisted
+      return {
+        available: false,
+        fp16: false,
+        reason:
+          'The browser is not giving the app access to the GPU. Turn on "Use graphics acceleration when available" in the browser settings and restart the browser.',
+      };
+    }
+    const fp16 = !!adapter.features?.has?.('shader-f16');
+    return {
+      available: true,
+      fp16,
+      vendor: adapter.info?.vendor || undefined,
+      reason: fp16 ? undefined : 'This GPU does not support fp16 shaders in the browser.',
+    };
+  } catch (err: any) {
+    return { available: false, fp16: false, reason: err?.message || String(err) };
   }
 }
 

@@ -12,7 +12,7 @@ const RELEASES = [
       'The first phrase of a recording no longer waits several seconds while the GPU warms up.',
       'Parakeet starts without an internet connection once downloaded, because its speech runtime now ships with the app instead of loading from a CDN.',
       'Microphone audio is filtered properly when it is converted for transcription, so hiss and high-pitched noise no longer fold into the speech range.',
-      'Settings shows which speech models are downloaded on this device and how large they are, lets you remove them, and explains why the GPU was not used if it falls back to the CPU.',
+      'Settings shows which speech models are downloaded on this device and how large they are, lets you remove them, and says whether the GPU can be used, including when the browser has graphics acceleration turned off and how to turn it on.',
       "Dark mode uses GitHub's dark palette: #0d1117 pages, a #010409 sidebar and topbar, and #30363d borders. Light mode is unchanged.",
       'Light mode now works on the Notes version history, Manuals, Documents, AI Workspace, Screen Recorder, Templates, and Husky Notes pages, which still showed dark panels and light text.',
       'In dark mode, the Manuals, Documents, AI Workspace, and Husky Notes pages use the same background as the rest of the app instead of pure black.',

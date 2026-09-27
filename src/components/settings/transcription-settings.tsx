@@ -11,6 +11,7 @@ import {
   setPreferredTranscriptionEngine,
 } from '../../services/audio/transcription-engines';
 import { getCachedModel, removeCachedModel, type CachedModelInfo, type CachedModelVariant } from '../../services/audio/model-cache';
+import { detectWebGpu, type WebGpuSupport } from '../../services/audio/asr-protocol';
 import { useSpeechStatus } from '../ui/speech-status-indicator';
 
 function formatSize(mb: number): string {
@@ -44,7 +45,13 @@ export const TranscriptionSettings: React.FC<{ spokenLanguage: string }> = ({ sp
   };
 
   const speech = useSpeechStatus();
+  const [gpu, setGpu] = useState<WebGpuSupport | null>(null);
   const [downloads, setDownloads] = useState<Record<string, CachedModelInfo | null> | null>(null);
+
+  // Whether the GPU versions of the models can run in this browser, before anything is loaded
+  useEffect(() => {
+    detectWebGpu().then(setGpu);
+  }, []);
   const [removing, setRemoving] = useState<string | null>(null);
 
   const refreshDownloads = useCallback(async () => {
@@ -126,6 +133,25 @@ export const TranscriptionSettings: React.FC<{ spokenLanguage: string }> = ({ sp
         <p className="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed">
           {selected.name} does not support your default spoken language, so recordings in that language use{' '}
           {getTranscriptionEngine(MULTILINGUAL_FALLBACK_ENGINE).name} automatically.
+        </p>
+      )}
+
+      {gpu && (
+        <p className="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed">
+          {gpu.available && gpu.fp16 ? (
+            <>
+              GPU acceleration is available{gpu.vendor ? ` (${gpu.vendor.toUpperCase()})` : ''}, so engines download and run their
+              GPU version.
+            </>
+          ) : (
+            <>
+              <span className="font-semibold text-slate-900 dark:text-zinc-200">GPU acceleration is not available.</span>{' '}
+              {gpu.available
+                ? 'Whisper and Moonshine still use the GPU, but Parakeet needs fp16 support and runs its slower CPU version.'
+                : 'Every engine runs its slower CPU version.'}{' '}
+              {gpu.reason}
+            </>
+          )}
         </p>
       )}
 

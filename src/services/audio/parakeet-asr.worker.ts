@@ -49,8 +49,8 @@ async function createEngine(engine: ParakeetEngine): Promise<LoadedModel> {
       gpuError = err?.message || String(err);
       console.warn('[HuskyNote] Parakeet on WebGPU failed, using CPU:', err);
     }
-  } else if (gpu.available) {
-    gpuError = 'This GPU does not support fp16 shaders in the browser.';
+  } else {
+    gpuError = gpu.reason;
   }
   const model = await fromHub(engine.model, { backend: 'wasm', ...engine.quant.wasm, progress });
   return { model, device: 'wasm', gpuError };
