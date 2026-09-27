@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=HuskyNote
+Comment=Local AI secretary for meetings, documents, and notes
+Exec=AppRun %U
+Icon=huskynote
+Categories=Office;AudioVideo;
+Terminal=false
+StartupWMClass=HuskyNote

@@ -1,0 +1,6 @@
+# Scripts that run on Linux and macOS must keep LF line endings, even when
+# checked out on Windows with core.autocrlf
+*.sh text eol=lf
+*.py text eol=lf
+*.command text eol=lf
+desktop/linux/AppRun text eol=lf

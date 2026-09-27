@@ -39,6 +39,16 @@ jobs:
       - name: Typecheck & Build Production Assets
         run: npm run build
 
+  macos-desktop-build:
+    name: macOS App & Disk Images Build
+    needs: [lint-and-test]
+    uses: ./.github/workflows/build-macos.yml
+
+  linux-desktop-build:
+    name: Linux AppImage & Tarball Build
+    needs: [lint-and-test]
+    uses: ./.github/workflows/build-linux.yml
+
   windows-desktop-build:
     name: Windows Native Desktop & Installer Build
     runs-on: windows-latest
