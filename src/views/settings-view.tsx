@@ -54,6 +54,7 @@ import { ChromeIcon } from '../components/ui/chrome-icon';
 import { SUPPORTED_LANGUAGES } from '../services/ai/translation';
 import { AIProviderSettings } from '../components/settings/ai-provider-settings';
 import { TranscriptionSettings } from '../components/settings/transcription-settings';
+import { UpdateSettings } from '../components/settings/update-settings';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -1337,6 +1338,8 @@ export const SettingsView: React.FC = () => {
             </Button>
           </div>
         </div>
+
+        <UpdateSettings />
       </div>
     </div>
   );

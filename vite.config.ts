@@ -190,7 +190,12 @@ function chromeExtensionInstallerPlugin() {
 }
 
 // https://vitejs.dev/config/
+const appVersion: string = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8')).version;
+
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion),
+  },
   plugins: [react(), chromeExtensionInstallerPlugin()],
   resolve: {
     alias: {

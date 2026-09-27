@@ -34,3 +34,6 @@ declare module '*.gif' {
 declare module 'parakeet-ort-dist/ort.bundle.min.mjs' {
   export const env: { wasm: { wasmPaths?: string | { mjs?: string; wasm?: string } } };
 }
+
+/** The app version from package.json, injected by vite.config.ts */
+declare const __APP_VERSION__: string;

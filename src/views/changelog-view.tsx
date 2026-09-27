@@ -10,6 +10,7 @@ const RELEASES = [
     highlights: [
       'Profiles keep separate workspaces for different jobs or projects. Switch from the top of the sidebar; each profile has its own notes, meetings, documents, manuals, and schedule, and a new profile starts with your current AI and transcription settings.',
       'Press F11 in the desktop app to go full screen.',
+      'Optional update check in Settings: once a day, HuskyNote can ask GitHub whether a newer release exists and show a notice. It is off by default and sends nothing from your workspace.',
       'Resize the Notes and Meetings lists by dragging their right edge (double-click to reset), or collapse them to a thin rail. The layout is remembered.',
       'Parakeet TDT v3 now runs on the GPU on computers that support it. A configuration error made it fall back to the slower CPU version every time; on an RTX 4060, phrases now transcribe about 8 times faster.',
       'The first phrase of a recording no longer waits several seconds while the GPU warms up.',

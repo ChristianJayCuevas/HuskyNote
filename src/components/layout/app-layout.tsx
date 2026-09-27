@@ -6,6 +6,7 @@ import { CommandPalette } from '../ui/command-palette';
 import { GlobalMascotDock } from '../ui/global-mascot-dock';
 import { SpeechStatusIndicator } from '../ui/speech-status-indicator';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+import { UpdateBanner } from '../updates/update-banner';
 
 export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { activeView, toasts, removeToast } = useWorkspace();
@@ -18,6 +19,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
 
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {!isFullWidthPage && <Topbar />}
+        <UpdateBanner />
         <main className="flex-1 overflow-y-auto relative">{children}</main>
       </div>
 
