@@ -61,3 +61,13 @@ export function detectEnvironment(): DeploymentEnvironment {
 export function isCloudDeployment(): boolean {
   return detectEnvironment().isCloud;
 }
+
+/**
+ * Running inside the HuskyNote desktop app (Windows WebView2 or macOS
+ * WKWebView), which has no browser controls of its own.
+ */
+export function isDesktopShell(): boolean {
+  if (typeof window === 'undefined') return false;
+  const w = window as any;
+  return !!w.chrome?.webview || !!w.webkit?.messageHandlers;
+}

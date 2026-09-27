@@ -22,6 +22,7 @@ import { DownloadView } from './views/download-view';
 import { CloudEnvironmentModal } from './components/modals/cloud-environment-modal';
 import { ChromeExtensionModal } from './components/modals/chrome-extension-modal';
 import { handleGoogleAuthCallback } from './services/calendar/google-calendar';
+import { isDesktopShell } from './services/environment';
 
 export const App: React.FC = () => {
   const {
@@ -58,6 +59,19 @@ export const App: React.FC = () => {
     window.addEventListener('huskynote:navigate', handleNavigate);
     return () => window.removeEventListener('huskynote:navigate', handleNavigate);
   }, [setActiveView]);
+
+  // The desktop apps have no browser controls, so F11 toggles full screen there. Browsers handle F11 themselves.
+  useEffect(() => {
+    if (!isDesktopShell()) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'F11') return;
+      e.preventDefault();
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      else document.documentElement.requestFullscreen().catch(() => {});
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   const renderActiveView = () => {
     switch (activeView) {
