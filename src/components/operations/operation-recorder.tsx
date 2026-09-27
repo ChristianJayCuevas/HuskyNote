@@ -219,9 +219,9 @@ export const OperationRecorder: React.FC<OperationRecorderProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-black p-8 max-w-5xl mx-auto w-full overflow-y-auto">
+    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas p-8 max-w-5xl mx-auto w-full overflow-y-auto">
       {/* Header Controls Card */}
-      <div className="bg-zinc-950 border dark:border-zinc-850 rounded-xl p-6 mb-6">
+      <div className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-6 mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
           <div className="flex-1 min-w-0">
             <input
@@ -229,10 +229,10 @@ export const OperationRecorder: React.FC<OperationRecorderProps> = ({
               value={sessionTitle}
               onChange={(e) => setSessionTitle(e.target.value)}
               disabled={isRecording}
-              className="bg-transparent text-xl font-bold text-white tracking-tight focus:outline-none placeholder-zinc-600 w-full"
+              className="bg-transparent text-xl font-bold text-slate-950 dark:text-white tracking-tight focus:outline-none placeholder-slate-400 dark:placeholder-zinc-600 w-full"
               placeholder="Operation Session Name..."
             />
-            <div className="flex items-center gap-3 text-xs text-zinc-400 mt-1">
+            <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-zinc-400 mt-1">
               <span className="flex items-center gap-1 font-mono">
                 <Clock className="w-3.5 h-3.5" />
                 {Math.floor(elapsedSeconds / 60)}:{(elapsedSeconds % 60).toString().padStart(2, '0')}
@@ -271,8 +271,8 @@ export const OperationRecorder: React.FC<OperationRecorderProps> = ({
                   onClick={() => setAutoAnnotate(!autoAnnotate)}
                   className={`px-3 py-1.5 rounded text-xs font-mono border transition-all flex items-center gap-1.5 ${
                     autoAnnotate
-                      ? 'bg-zinc-900 border-zinc-700 text-emerald-400'
-                      : 'bg-zinc-950 dark:border-zinc-850 text-zinc-500'
+                      ? 'bg-slate-50 dark:bg-zinc-900 border-slate-300 dark:border-zinc-700 text-emerald-400'
+                      : 'bg-white dark:bg-zinc-950 dark:border-zinc-850 text-slate-500 dark:text-zinc-500'
                   }`}
                 >
                   <Crosshair className="w-3.5 h-3.5" />
@@ -292,7 +292,7 @@ export const OperationRecorder: React.FC<OperationRecorderProps> = ({
         </div>
 
         {isRecording && (
-          <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg text-xs text-zinc-300 flex items-center justify-between">
+          <div className="p-3 bg-slate-50/60 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-lg text-xs text-slate-700 dark:text-zinc-300 flex items-center justify-between">
             <span>
               Perform your operation on the shared window. Click <strong>"Capture Step"</strong> at each meaningful milestone to take a screenshot and generate instructions.
             </span>
@@ -303,7 +303,7 @@ export const OperationRecorder: React.FC<OperationRecorderProps> = ({
       {/* Captured Steps Timeline */}
       <div className="space-y-4 mb-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
+          <h3 className="text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
             Captured Steps ({steps.length})
           </h3>
           {steps.length > 0 && !isRecording && (
@@ -320,7 +320,7 @@ export const OperationRecorder: React.FC<OperationRecorderProps> = ({
         </div>
 
         {steps.length === 0 ? (
-          <div className="p-12 text-center border border-dashed dark:border-zinc-850 rounded-xl text-xs text-zinc-500">
+          <div className="p-12 text-center border border-dashed dark:border-zinc-850 rounded-xl text-xs text-slate-500 dark:text-zinc-500">
             {isRecording
               ? 'Click "Capture Step" whenever you reach a meaningful action or screen state.'
               : 'Start screen capture to begin recording step screenshots.'}
@@ -330,16 +330,16 @@ export const OperationRecorder: React.FC<OperationRecorderProps> = ({
             {steps.map((step) => (
               <div
                 key={step.id}
-                className="bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 flex flex-col md:flex-row items-start gap-5"
+                className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 flex flex-col md:flex-row items-start gap-5"
               >
                 {step.screenshotDataUrl && (
-                  <div className="relative w-full md:w-64 rounded-lg overflow-hidden border border-zinc-800 bg-zinc-900 shrink-0">
+                  <div className="relative w-full md:w-64 rounded-lg overflow-hidden border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 shrink-0">
                     <img
                       src={step.screenshotDataUrl}
                       alt={`Step ${step.stepNumber}`}
                       className="w-full h-auto object-cover"
                     />
-                    <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-white text-black font-bold text-xs flex items-center justify-center shadow border border-black">
+                    <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-slate-900 dark:bg-white text-white dark:text-black font-bold text-xs flex items-center justify-center shadow border border-black">
                       {step.stepNumber}
                     </div>
                   </div>
@@ -347,12 +347,12 @@ export const OperationRecorder: React.FC<OperationRecorderProps> = ({
 
                 <div className="flex-1 min-w-0 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-zinc-100">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
                       Step {step.stepNumber}
                     </span>
                     <button
                       onClick={() => removeStep(step.id)}
-                      className="text-zinc-500 hover:text-red-400 p-1"
+                      className="text-slate-500 dark:text-zinc-500 hover:text-red-400 p-1"
                       title="Delete step"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -368,7 +368,7 @@ export const OperationRecorder: React.FC<OperationRecorderProps> = ({
                       );
                     }}
                     rows={2}
-                    className="w-full bg-zinc-900/60 border border-zinc-800 rounded-md p-2.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 leading-relaxed font-mono resize-none"
+                    className="w-full bg-slate-50/60 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-md p-2.5 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-slate-300 dark:focus:border-zinc-700 leading-relaxed font-mono resize-none"
                   />
                 </div>
               </div>

@@ -137,11 +137,11 @@ Respond ONLY with valid JSON in this exact structure, with no additional text:
     >
       <div className="space-y-4">
         {/* Source Text Preview */}
-        <div className="p-3.5 rounded-lg bg-zinc-900/60 border dark:border-zinc-850 text-xs">
-          <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-1">
+        <div className="p-3.5 rounded-lg bg-slate-50/60 dark:bg-zinc-900/60 border dark:border-zinc-850 text-xs">
+          <div className="text-[10px] font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-1">
             Source Excerpt (Page {sourcePage})
           </div>
-          <p className="text-zinc-300 leading-relaxed max-h-28 overflow-y-auto italic">
+          <p className="text-slate-700 dark:text-zinc-300 leading-relaxed max-h-28 overflow-y-auto italic">
             "{sourceText.slice(0, 300)}..."
           </p>
         </div>
@@ -163,18 +163,18 @@ Respond ONLY with valid JSON in this exact structure, with no additional text:
             {steps.map((step) => (
               <div
                 key={step.stepNumber}
-                className="p-4 rounded-lg bg-zinc-950 border dark:border-zinc-850 text-xs space-y-1.5"
+                className="p-4 rounded-lg bg-white dark:bg-zinc-950 border dark:border-zinc-850 text-xs space-y-1.5"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-white tracking-wide">
+                  <span className="font-bold text-slate-950 dark:text-white tracking-wide">
                     STEP {step.stepNumber}: {step.title}
                   </span>
-                  <span className="text-[10px] font-mono text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
+                  <span className="text-[10px] font-mono text-slate-600 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-900 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-800">
                     Source: Page {step.sourcePage}
                   </span>
                 </div>
-                <p className="text-zinc-300 leading-relaxed">{step.explanation}</p>
-                <div className="text-[11px] text-zinc-400 italic">
+                <p className="text-slate-700 dark:text-zinc-300 leading-relaxed">{step.explanation}</p>
+                <div className="text-[11px] text-slate-600 dark:text-zinc-400 italic">
                   Excerpt: "{step.sourceText}"
                 </div>
               </div>

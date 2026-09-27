@@ -52,7 +52,7 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         className={twMerge(
           clsx(
-            'relative w-full bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl z-10 overflow-hidden flex flex-col max-h-[90vh]',
+            'relative w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-2xl z-10 overflow-hidden flex flex-col max-h-[90vh]',
             maxWidths[maxWidth]
           )
         )}
@@ -62,12 +62,12 @@ export const Modal: React.FC<ModalProps> = ({
         {(title || description) && (
           <div className="px-6 py-4 border-b dark:border-zinc-850 flex items-center justify-between">
             <div>
-              {title && <h2 className="text-base font-semibold text-white tracking-tight">{title}</h2>}
-              {description && <p className="text-xs text-zinc-400 mt-0.5">{description}</p>}
+              {title && <h2 className="text-base font-semibold text-slate-950 dark:text-white tracking-tight">{title}</h2>}
+              {description && <p className="text-xs text-slate-600 dark:text-zinc-400 mt-0.5">{description}</p>}
             </div>
             <button
               onClick={onClose}
-              className="p-1 rounded-md text-zinc-400 hover:text-white dark:hover:bg-zinc-850 transition-colors"
+              className="p-1 rounded-md text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white dark:hover:bg-zinc-850 transition-colors"
               aria-label="Close modal"
             >
               <X className="w-4 h-4" />

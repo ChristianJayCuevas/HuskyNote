@@ -267,7 +267,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({ noteId, onDeleted, onBac
 
   if (!note) {
     return (
-      <div className="flex-1 flex items-center justify-center text-zinc-500 text-xs">
+      <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-zinc-500 text-xs">
         Loading note...
       </div>
     );
@@ -347,7 +347,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({ noteId, onDeleted, onBac
             title={isDictating ? 'Stop Voice Dictation' : 'Start Voice Dictation'}
             className={isDictating ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse' : ''}
           >
-            {isDictating ? <Mic className="w-3.5 h-3.5 text-white" /> : <Mic className="w-3.5 h-3.5" />}
+            {isDictating ? <Mic className="w-3.5 h-3.5 text-slate-950 dark:text-white" /> : <Mic className="w-3.5 h-3.5" />}
             <span className="hidden sm:inline">{isDictating ? 'Listening...' : 'Dictate'}</span>
           </Button>
 

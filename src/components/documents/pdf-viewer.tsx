@@ -697,18 +697,18 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
   return (
     <div
-      className="flex-1 flex h-full bg-black overflow-hidden relative select-text"
+      className="flex-1 flex h-full bg-slate-50 dark:bg-canvas overflow-hidden relative select-text"
       onMouseUp={handleMouseUp}
     >
       {/* Center Main: Document Canvas & Controls */}
       <div className="flex-1 flex flex-col h-full min-w-0 border-r dark:border-zinc-850">
         {/* Top Viewer Controls */}
-        <div className="h-12 border-b dark:border-zinc-850 px-3 sm:px-4 flex items-center justify-between shrink-0 bg-zinc-950/60 gap-2 overflow-x-auto">
+        <div className="h-12 border-b dark:border-zinc-850 px-3 sm:px-4 flex items-center justify-between shrink-0 bg-white/60 dark:bg-zinc-950/60 gap-2 overflow-x-auto">
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {onToggleList && (
               <button
                 onClick={onToggleList}
-                className="p-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+                className="p-1.5 rounded-md text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors"
                 title={isListOpen ? 'Hide document list' : 'Show document list'}
                 aria-label={isListOpen ? 'Hide document list' : 'Show document list'}
               >
@@ -720,15 +720,15 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
               </button>
             )}
 
-            <span className="text-xs font-semibold text-zinc-200 truncate max-w-[120px] sm:max-w-[200px]">
+            <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200 truncate max-w-[120px] sm:max-w-[200px]">
               {docEntity.title}
             </span>
 
-            <div className="flex items-center gap-1 bg-zinc-900 border dark:border-zinc-850 rounded px-1.5 py-0.5 text-xs font-mono text-zinc-400">
+            <div className="flex items-center gap-1 bg-slate-50 dark:bg-zinc-900 border dark:border-zinc-850 rounded px-1.5 py-0.5 text-xs font-mono text-slate-600 dark:text-zinc-400">
               <button
                 disabled={currentPage <= 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className="p-1 hover:text-white disabled:opacity-30"
+                className="p-1 hover:text-slate-950 dark:hover:text-white disabled:opacity-30"
                 title="Previous page"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
@@ -739,7 +739,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
               <button
                 disabled={currentPage >= docEntity.pageCount}
                 onClick={() => setCurrentPage((p) => Math.min(docEntity.pageCount, p + 1))}
-                className="p-1 hover:text-white disabled:opacity-30"
+                className="p-1 hover:text-slate-950 dark:hover:text-white disabled:opacity-30"
                 title="Next page"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -749,27 +749,27 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
           {/* Zoom and Annotation Tools */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <div className="hidden sm:flex items-center bg-zinc-900 border border-zinc-800 rounded px-1">
+            <div className="hidden sm:flex items-center bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded px-1">
               <button
                 onClick={() => setScale((s) => Math.max(0.6, s - 0.2))}
-                className="p-1 text-zinc-400 hover:text-white"
+                className="p-1 text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white"
                 title="Zoom Out"
               >
                 <ZoomOut className="w-3.5 h-3.5" />
               </button>
-              <span className="text-[10px] font-mono text-zinc-400 px-1.5">
+              <span className="text-[10px] font-mono text-slate-600 dark:text-zinc-400 px-1.5">
                 {Math.round(scale * 100)}%
               </span>
               <button
                 onClick={() => setScale((s) => Math.min(2.5, s + 0.2))}
-                className="p-1 text-zinc-400 hover:text-white"
+                className="p-1 text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white"
                 title="Zoom In"
               >
                 <ZoomIn className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="hidden md:block w-px h-4 bg-zinc-800 mx-0.5" />
+            <div className="hidden md:block w-px h-4 bg-slate-100 dark:bg-zinc-800 mx-0.5" />
 
             {/* Quick manual annotation buttons */}
             <Button
@@ -805,7 +805,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
               <span className="hidden xl:inline">Step Badge</span>
             </Button>
 
-            <div className="w-px h-4 bg-zinc-800 mx-0.5" />
+            <div className="w-px h-4 bg-slate-100 dark:bg-zinc-800 mx-0.5" />
 
             {/* AI Action Modals */}
             <Button
@@ -838,9 +838,9 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
               title="View and download compiled document notes"
               className="px-2.5 flex items-center gap-1.5"
             >
-              <FileText className="w-3.5 h-3.5 text-zinc-300" />
+              <FileText className="w-3.5 h-3.5 text-slate-700 dark:text-zinc-300" />
               <span className="hidden sm:inline">Compiled Notes</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-zinc-800 text-[10px] font-mono">
+              <span className="px-1.5 py-0.2 rounded-full bg-slate-100 dark:bg-zinc-800 text-[10px] font-mono">
                 {compiledNotes.length}
               </span>
             </Button>
@@ -853,7 +853,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
               title={isAssistantOpen ? 'Hide Assistant Panel' : 'Show Assistant Panel'}
               className="px-2.5"
             >
-              <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
+              <Sparkles className="w-3.5 h-3.5 text-slate-700 dark:text-zinc-300" />
               <span className="hidden sm:inline">AI Assistant</span>
             </Button>
 
@@ -864,7 +864,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                 variant="ghost"
                 onClick={handleClearAllAnnotations}
                 title="Clear all annotations on this document"
-                className="text-zinc-400 hover:text-zinc-200 text-xs px-2"
+                className="text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 text-xs px-2"
               >
                 Clear Boxes
               </Button>
@@ -877,7 +877,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
               title="Delete document"
               className="hover:bg-red-950/40 hover:text-red-400"
             >
-              <Trash2 className="w-3.5 h-3.5 text-zinc-400 hover:text-red-400" />
+              <Trash2 className="w-3.5 h-3.5 text-slate-600 dark:text-zinc-400 hover:text-red-400" />
             </Button>
           </div>
         </div>
@@ -885,13 +885,13 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         {/* Document Display Area (Canvas for PDF or Digital Reading Sheet for DOCX/PPTX/TXT) */}
         <div
           ref={containerRef}
-          className="flex-1 overflow-auto p-8 flex items-start justify-center bg-zinc-950/40 select-text"
+          className="flex-1 overflow-auto p-8 flex items-start justify-start bg-white/40 dark:bg-zinc-950/40 select-text"
         >
           {isTextDocument ? (
-            <div ref={textDocRef} className="relative paper-desk-shadow border dark:border-zinc-750 bg-white rounded-sm w-full max-w-2xl min-h-[720px] p-10 flex flex-col justify-between text-zinc-900 shadow-2xl select-text">
+            <div ref={textDocRef} className="relative mx-auto paper-desk-shadow border dark:border-zinc-750 bg-white rounded-sm w-full max-w-2xl min-h-[720px] p-10 flex flex-col justify-between text-slate-900 dark:text-zinc-900 shadow-2xl select-text">
               <div>
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-zinc-200 pb-3 mb-6 text-[10px] font-mono text-zinc-500 uppercase">
+                <div className="flex items-center justify-between border-b border-slate-900 dark:border-zinc-200 pb-3 mb-6 text-[10px] font-mono text-slate-500 dark:text-zinc-500 uppercase">
                   <span className="font-bold tracking-wider">
                     {docEntity.fileName.toLowerCase().endsWith('.pptx') || docEntity.fileName.toLowerCase().endsWith('.ppt')
                       ? `SLIDE ${currentPage} OF ${docEntity.pageCount}`
@@ -901,13 +901,13 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                 </div>
 
                 {/* Page Content */}
-                <div ref={textContentRef} className="text-sm font-sans text-zinc-900 leading-relaxed space-y-4 whitespace-pre-wrap font-normal select-text">
+                <div ref={textContentRef} className="text-sm font-sans text-slate-900 dark:text-zinc-900 leading-relaxed space-y-4 whitespace-pre-wrap font-normal select-text">
                   {currentPageText || 'Empty page content.'}
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="pt-6 border-t border-zinc-200 flex items-center justify-between text-[10px] font-mono text-zinc-400">
+              <div className="pt-6 border-t border-slate-900 dark:border-zinc-200 flex items-center justify-between text-[10px] font-mono text-slate-600 dark:text-zinc-400">
                 <span>LOCAL INDEXEDDB PERSISTED</span>
                 <span>HUSKYNOTE INTELLIGENCE</span>
               </div>
@@ -919,7 +919,8 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
               />
             </div>
           ) : (
-            <div className="relative paper-desk-shadow border dark:border-zinc-750 bg-white rounded-sm">
+            // Auto margins center the page but, unlike justify-center, never push a zoomed page past the left edge
+            <div className="relative mx-auto shrink-0 paper-desk-shadow border dark:border-zinc-750 bg-white rounded-sm">
               <canvas ref={canvasRef} className="block rounded-sm" />
               <AnnotationLayer
                 annotations={annotations}
@@ -935,19 +936,19 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
       {/* Right Panel: AI Document Intelligence Assistant */}
       {isAssistantOpen && (
-        <div className="w-80 lg:w-96 bg-zinc-950 flex flex-col h-full shrink-0 select-none border-l dark:border-zinc-850 animate-fade-in">
+        <div className="w-80 lg:w-96 bg-white dark:bg-zinc-950 flex flex-col h-full shrink-0 select-none border-l dark:border-zinc-850 animate-fade-in">
           <div className="p-3.5 border-b dark:border-zinc-850 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-zinc-300" />
-              <span className="text-xs font-semibold text-zinc-200 uppercase tracking-wider">
+              <Sparkles className="w-4 h-4 text-slate-700 dark:text-zinc-300" />
+              <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">
                 Document Assistant
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-zinc-500 font-mono">Page {currentPage}</span>
+              <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-mono">Page {currentPage}</span>
               <button
                 onClick={() => setIsAssistantOpen(false)}
-                className="p-1 text-zinc-500 hover:text-white rounded transition-colors"
+                className="p-1 text-slate-500 dark:text-zinc-500 hover:text-slate-950 dark:hover:text-white rounded transition-colors"
                 title="Close assistant panel"
                 aria-label="Close assistant panel"
               >
@@ -957,9 +958,9 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
           </div>
 
           {/* Quick Question Chips with Auto-Boxout */}
-          <div className="p-3 border-b dark:border-zinc-850 flex flex-col gap-2 bg-zinc-950/60">
+          <div className="p-3 border-b dark:border-zinc-850 flex flex-col gap-2 bg-white/60 dark:bg-zinc-950/60">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Quick Summaries</span>
+              <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-500 uppercase tracking-wider">Quick Summaries</span>
               <button
                 onClick={() => setAutoBoxoutEnabled(!autoBoxoutEnabled)}
                 className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 hover:text-emerald-300 transition-colors"
@@ -967,7 +968,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
               >
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${
-                    autoBoxoutEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-600'
+                    autoBoxoutEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-slate-300 dark:bg-zinc-600'
                   }`}
                 />
                 <span>AUTO-BOXOUT: {autoBoxoutEnabled ? 'ON' : 'OFF'}</span>
@@ -977,25 +978,25 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
             <div className="flex flex-wrap gap-1.5">
               <button
                 onClick={() => askDocumentAI('Summarize this page in 3 concise bullet points.')}
-                className="text-[11px] text-zinc-400 hover:text-white bg-zinc-900 border border-zinc-800 px-2 py-1 rounded transition-colors"
+                className="text-[11px] text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-2 py-1 rounded transition-colors"
               >
                 Summarize Page
               </button>
               <button
                 onClick={() => askDocumentAI('What are the main procedural steps or actions required?')}
-                className="text-[11px] text-zinc-400 hover:text-white bg-zinc-900 border border-zinc-800 px-2 py-1 rounded transition-colors"
+                className="text-[11px] text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-2 py-1 rounded transition-colors"
               >
                 Main Steps
               </button>
               <button
                 onClick={() => askDocumentAI('What are the critical requirements, warnings, or prerequisites?')}
-                className="text-[11px] text-zinc-400 hover:text-white bg-zinc-900 border border-zinc-800 px-2 py-1 rounded transition-colors"
+                className="text-[11px] text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-2 py-1 rounded transition-colors"
               >
                 Requirements
               </button>
               <button
                 onClick={() => askDocumentAI('What are the 3 most important takeaways from this page?')}
-                className="text-[11px] text-zinc-400 hover:text-white bg-zinc-900 border border-zinc-800 px-2 py-1 rounded transition-colors"
+                className="text-[11px] text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-2 py-1 rounded transition-colors"
               >
                 Key Takeaways
               </button>
@@ -1004,7 +1005,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
             {compiledNotes.length > 0 && (
               <button
                 onClick={() => setIsNotesModalOpen(true)}
-                className="mt-0.5 w-full py-1.5 px-2.5 rounded bg-zinc-900 border dark:border-zinc-750 text-xs text-zinc-200 hover:text-white dark:hover:bg-zinc-850 flex items-center justify-between transition-colors shadow-sm"
+                className="mt-0.5 w-full py-1.5 px-2.5 rounded bg-slate-50 dark:bg-zinc-900 border dark:border-zinc-750 text-xs text-slate-800 dark:text-zinc-200 hover:text-slate-950 dark:hover:text-white dark:hover:bg-zinc-850 flex items-center justify-between transition-colors shadow-sm"
               >
                 <span className="flex items-center gap-1.5 font-medium">
                   <FileText className="w-3.5 h-3.5 text-emerald-400" />
@@ -1021,10 +1022,10 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {aiResponse ? (
               <div className="space-y-3">
-                <div className="p-4 rounded-lg bg-zinc-900/70 border dark:border-zinc-850 text-xs text-zinc-200 space-y-2 leading-relaxed">
-                  <div className="font-semibold text-zinc-100 flex items-center justify-between">
+                <div className="p-4 rounded-lg bg-slate-50/70 dark:bg-zinc-900/70 border dark:border-zinc-850 text-xs text-slate-800 dark:text-zinc-200 space-y-2 leading-relaxed">
+                  <div className="font-semibold text-slate-900 dark:text-zinc-100 flex items-center justify-between">
                     <span>AI Response</span>
-                    <span className="text-[10px] text-zinc-500 font-mono">
+                    <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-mono">
                       Sources: p.{currentPage}
                     </span>
                   </div>
@@ -1047,15 +1048,15 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                 </Button>
               </div>
             ) : isAiLoading ? (
-              <div className="flex flex-col items-center justify-center py-12 text-zinc-500 space-y-3 text-xs">
-                <Sparkles className="w-5 h-5 text-zinc-400 animate-spin" />
+              <div className="flex flex-col items-center justify-center py-12 text-slate-500 dark:text-zinc-500 space-y-3 text-xs">
+                <Sparkles className="w-5 h-5 text-slate-600 dark:text-zinc-400 animate-spin" />
                 <span>Reading document chunks and querying local Ollama...</span>
               </div>
             ) : (
-              <div className="py-12 text-center text-zinc-500 space-y-2 text-xs">
-                <MessageSquare className="w-6 h-6 mx-auto text-zinc-600" />
+              <div className="py-12 text-center text-slate-500 dark:text-zinc-500 space-y-2 text-xs">
+                <MessageSquare className="w-6 h-6 mx-auto text-slate-400 dark:text-zinc-600" />
                 <p>Ask any question about this document or click the chips above.</p>
-                <p className="text-[10px] text-zinc-600">
+                <p className="text-[10px] text-slate-400 dark:text-zinc-600">
                   Queries stay strictly local against client-side chunks.
                 </p>
               </div>
@@ -1063,21 +1064,21 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
             {/* Citations Card */}
             {aiSources.length > 0 && (
-              <div className="p-3 rounded-lg bg-zinc-950 border dark:border-zinc-850 space-y-2 text-[11px]">
-                <span className="font-semibold text-zinc-400 uppercase tracking-wider text-[10px]">
+              <div className="p-3 rounded-lg bg-white dark:bg-zinc-950 border dark:border-zinc-850 space-y-2 text-[11px]">
+                <span className="font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider text-[10px]">
                   Citations
                 </span>
                 {aiSources.map((src, idx) => (
                   <div
                     key={idx}
                     onClick={() => setCurrentPage(src.pageNumber)}
-                    className="p-2 rounded bg-zinc-900/60 border border-zinc-800/80 cursor-pointer hover:border-zinc-700 transition-colors"
+                    className="p-2 rounded bg-slate-50/60 dark:bg-zinc-900/60 border border-slate-200/80 dark:border-zinc-800/80 cursor-pointer hover:border-slate-300 dark:hover:border-zinc-700 transition-colors"
                   >
-                    <div className="flex items-center justify-between font-mono text-[10px] text-zinc-400 mb-1">
+                    <div className="flex items-center justify-between font-mono text-[10px] text-slate-600 dark:text-zinc-400 mb-1">
                       <span>Page {src.pageNumber}</span>
                       <span className="text-emerald-400">Click to navigate</span>
                     </div>
-                    <p className="text-zinc-300 line-clamp-2 italic text-[11px]">"{src.text}"</p>
+                    <p className="text-slate-700 dark:text-zinc-300 line-clamp-2 italic text-[11px]">"{src.text}"</p>
                   </div>
                 ))}
               </div>
@@ -1085,8 +1086,8 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
           </div>
 
           {/* AI Question Prompt Input */}
-          <div className="p-3 border-t dark:border-zinc-850 bg-zinc-950/80">
-            <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 focus-within:border-zinc-700">
+          <div className="p-3 border-t dark:border-zinc-850 bg-white/80 dark:bg-zinc-950/80">
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 focus-within:border-slate-300 dark:focus-within:border-zinc-700">
               <input
                 type="text"
                 placeholder="Ask document question..."
@@ -1099,7 +1100,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                   }
                 }}
                 disabled={isAiLoading}
-                className="flex-1 bg-transparent text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none"
+                className="flex-1 bg-transparent text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-500 dark:placeholder-zinc-500 focus:outline-none"
               />
               <button
                 type="button"
@@ -1107,7 +1108,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                 className={`p-1.5 rounded transition-all ${
                   isQuestionDictating
                     ? 'bg-red-950/80 border border-red-700 text-white animate-pulse'
-                    : 'text-zinc-400 hover:text-white'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white'
                 }`}
                 title={isQuestionDictating ? 'Stop speech dictation' : 'Dictate question with mic'}
               >
@@ -1119,7 +1120,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                   setAiQuestion('');
                 }}
                 disabled={isAiLoading || !aiQuestion.trim()}
-                className="p-1 rounded text-zinc-400 hover:text-white disabled:opacity-30 transition-colors"
+                className="p-1 rounded text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white disabled:opacity-30 transition-colors"
               >
                 <Send className="w-3.5 h-3.5" />
               </button>
@@ -1137,30 +1138,30 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
             top: selectionToolbarPos.y,
             transform: 'translateX(-50%)',
           }}
-          className="z-50 flex items-center gap-1 bg-zinc-900 border border-zinc-700 rounded-lg p-1 shadow-2xl animate-fade-in text-xs select-none"
+          className="z-50 flex items-center gap-1 bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-lg p-1 shadow-2xl animate-fade-in text-xs select-none"
         >
           <button
             onClick={() => handleSelectionAction('explain')}
-            className="px-2 py-1 rounded text-zinc-200 hover:bg-zinc-800 transition-colors"
+            className="px-2 py-1 rounded text-slate-800 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
           >
             Explain
           </button>
           <button
             onClick={() => handleSelectionAction('summarize')}
-            className="px-2 py-1 rounded text-zinc-200 hover:bg-zinc-800 transition-colors"
+            className="px-2 py-1 rounded text-slate-800 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
           >
             Summarize
           </button>
           <button
             onClick={() => handleSelectionAction('simplify')}
-            className="px-2 py-1 rounded text-zinc-200 hover:bg-zinc-800 transition-colors"
+            className="px-2 py-1 rounded text-slate-800 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
           >
             Simplify
           </button>
-          <div className="w-px h-3 bg-zinc-700 mx-0.5" />
+          <div className="w-px h-3 bg-slate-200 dark:bg-zinc-700 mx-0.5" />
           <button
             onClick={() => handleSelectionAction('note')}
-            className="px-2 py-1 rounded text-zinc-200 hover:bg-zinc-800 transition-colors"
+            className="px-2 py-1 rounded text-slate-800 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
           >
             Make Note
           </button>
@@ -1169,7 +1170,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
               addAnnotationAtCoords('highlight');
               setSelectionToolbarPos(null);
             }}
-            className="px-2 py-1 rounded text-yellow-300 hover:bg-zinc-800 transition-colors"
+            className="px-2 py-1 rounded text-yellow-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
           >
             Highlight
           </button>
@@ -1223,17 +1224,17 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
           maxWidth="sm"
         >
           <div className="p-6 space-y-4">
-            <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center gap-3">
-              <FileText className="w-5 h-5 text-zinc-300 shrink-0" />
+            <div className="p-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg flex items-center gap-3">
+              <FileText className="w-5 h-5 text-slate-700 dark:text-zinc-300 shrink-0" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-zinc-100 truncate">{docEntity.title}</p>
-                <p className="text-[10px] font-mono text-zinc-400">
+                <p className="text-xs font-semibold text-slate-900 dark:text-zinc-100 truncate">{docEntity.title}</p>
+                <p className="text-[10px] font-mono text-slate-600 dark:text-zinc-400">
                   {docEntity.fileName} • {(docEntity.fileSize / 1024 / 1024).toFixed(2)} MB
                 </p>
               </div>
             </div>
 
-            <p className="text-xs text-zinc-400 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
               This will permanently remove the file, extracted pages, and all associated AI annotations and notes from your local storage.
             </p>
 

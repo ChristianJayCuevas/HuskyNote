@@ -135,18 +135,18 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
-      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden text-zinc-100">
+      <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden text-slate-900 dark:text-zinc-100">
         {/* Header */}
-        <div className="p-4 border-b dark:border-zinc-850 flex items-center justify-between bg-zinc-900/40">
+        <div className="p-4 border-b dark:border-zinc-850 flex items-center justify-between bg-slate-50/40 dark:bg-zinc-900/40">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded dark:bg-zinc-850 flex items-center justify-center text-zinc-300">
+            <div className="w-7 h-7 rounded dark:bg-zinc-850 flex items-center justify-center text-slate-700 dark:text-zinc-300">
               <FileText className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white tracking-tight">
+              <h3 className="text-sm font-bold text-slate-950 dark:text-white tracking-tight">
                 Document Notes
               </h3>
-              <p className="text-[11px] text-zinc-400">
+              <p className="text-[11px] text-slate-600 dark:text-zinc-400">
                 {documentTitle} -- {notes.length} {notes.length === 1 ? 'note' : 'notes'} captured
               </p>
             </div>
@@ -155,29 +155,29 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
           <div className="flex items-center gap-2">
             {notes.length > 1 && (
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="sm" onClick={expandAll} className="text-zinc-500 hover:text-zinc-200 text-[10px] px-2">
+                <Button variant="ghost" size="sm" onClick={expandAll} className="text-slate-500 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-200 text-[10px] px-2">
                   Expand All
                 </Button>
-                <Button variant="ghost" size="sm" onClick={collapseAll} className="text-zinc-500 hover:text-zinc-200 text-[10px] px-2">
+                <Button variant="ghost" size="sm" onClick={collapseAll} className="text-slate-500 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-200 text-[10px] px-2">
                   Collapse
                 </Button>
               </div>
             )}
             <button
               onClick={() => setShowScreenshots(!showScreenshots)}
-              className="p-1.5 rounded text-zinc-400 hover:text-white transition-colors"
+              className="p-1.5 rounded text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white transition-colors"
               title={showScreenshots ? 'Hide screenshots' : 'Show screenshots'}
             >
               {showScreenshots ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
             </button>
             {notes.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={onClearNotes} className="text-zinc-500 hover:text-red-400">
+              <Button variant="ghost" size="sm" onClick={onClearNotes} className="text-slate-500 dark:text-zinc-500 hover:text-red-400">
                 Clear All
               </Button>
             )}
             <button
               onClick={onClose}
-              className="p-1 rounded text-zinc-400 hover:text-white transition-colors"
+              className="p-1 rounded text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -187,10 +187,10 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4 text-left">
           {notes.length === 0 ? (
-            <div className="py-16 text-center text-zinc-500 space-y-3 text-xs">
-              <Sparkles className="w-8 h-8 mx-auto text-zinc-600" />
-              <p className="text-sm font-medium text-zinc-400">No Notes Captured Yet</p>
-              <p className="max-w-md mx-auto text-zinc-500 leading-relaxed">
+            <div className="py-16 text-center text-slate-500 dark:text-zinc-500 space-y-3 text-xs">
+              <Sparkles className="w-8 h-8 mx-auto text-slate-400 dark:text-zinc-600" />
+              <p className="text-sm font-medium text-slate-600 dark:text-zinc-400">No Notes Captured Yet</p>
+              <p className="max-w-md mx-auto text-slate-500 dark:text-zinc-500 leading-relaxed">
                 Click "Summarize Page", "Main Steps", or ask a question.
                 HuskyNote will locate the referenced text, box it out, take a screenshot, and compile it here.
               </p>
@@ -203,24 +203,24 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
               return (
                 <div
                   key={note.id}
-                  className="rounded-xl border dark:border-zinc-850 bg-zinc-900/50 overflow-hidden shadow-lg transition-all duration-200"
+                  className="rounded-xl border dark:border-zinc-850 bg-slate-50/50 dark:bg-zinc-900/50 overflow-hidden shadow-lg transition-all duration-200"
                 >
                   {/* Note Header (always visible, clickable to expand/collapse) */}
                   <button
                     onClick={() => toggleExpanded(note.id)}
-                    className="w-full p-4 flex items-center justify-between text-left hover:bg-zinc-900/80 transition-colors"
+                    className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-50/80 dark:hover:bg-zinc-900/80 transition-colors"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <span className={`w-5 h-5 rounded-full ${colorClass} text-white font-bold text-[10px] flex items-center justify-center shrink-0`}>
+                      <span className={`w-5 h-5 rounded-full ${colorClass} text-slate-950 dark:text-white font-bold text-[10px] flex items-center justify-center shrink-0`}>
                         {idx + 1}
                       </span>
                       <div className="min-w-0">
-                        <h4 className="font-bold text-sm text-white truncate">{note.query}</h4>
+                        <h4 className="font-bold text-sm text-slate-950 dark:text-white truncate">{note.query}</h4>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="px-1.5 py-0.5 rounded bg-zinc-800 text-[10px] font-mono text-zinc-300">
+                          <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-[10px] font-mono text-slate-700 dark:text-zinc-300">
                             PAGE {note.pageNumber}
                           </span>
-                          <span className="text-[10px] text-zinc-500">
+                          <span className="text-[10px] text-slate-500 dark:text-zinc-500">
                             {new Date(note.timestamp).toLocaleTimeString()}
                           </span>
                         </div>
@@ -233,26 +233,26 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
                           e.stopPropagation();
                           onRemoveNote(note.id);
                         }}
-                        className="p-1 text-zinc-500 hover:text-red-400 transition-colors"
+                        className="p-1 text-slate-500 dark:text-zinc-500 hover:text-red-400 transition-colors"
                         title="Remove note"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                       {isExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-zinc-400" />
+                        <ChevronUp className="w-4 h-4 text-slate-600 dark:text-zinc-400" />
                       ) : (
-                        <ChevronDown className="w-4 h-4 text-zinc-400" />
+                        <ChevronDown className="w-4 h-4 text-slate-600 dark:text-zinc-400" />
                       )}
                     </div>
                   </button>
 
                   {/* Expandable Content */}
                   {isExpanded && (
-                    <div className="px-4 pb-4 space-y-3 border-t border-zinc-800/60 pt-3 animate-fade-in">
+                    <div className="px-4 pb-4 space-y-3 border-t border-slate-200/60 dark:border-zinc-800/60 pt-3 animate-fade-in">
                       {/* Referenced Excerpt Quote */}
                       {note.excerpt && (
-                        <div className="p-3 rounded-lg bg-zinc-950/80 border dark:border-zinc-850 text-xs text-zinc-300 space-y-1">
-                          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">
+                        <div className="p-3 rounded-lg bg-white/80 dark:bg-zinc-950/80 border dark:border-zinc-850 text-xs text-slate-700 dark:text-zinc-300 space-y-1">
+                          <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-500 uppercase tracking-wider block">
                             Referenced Excerpt
                           </span>
                           <p className="italic leading-relaxed font-sans">
@@ -262,8 +262,8 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
                       )}
 
                       {/* AI Explanation */}
-                      <div className="text-xs text-zinc-200 leading-relaxed space-y-1">
-                        <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">
+                      <div className="text-xs text-slate-800 dark:text-zinc-200 leading-relaxed space-y-1">
+                        <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-500 uppercase tracking-wider block">
                           Analysis
                         </span>
                         <div className="whitespace-pre-wrap font-sans">{note.aiSummary}</div>
@@ -272,10 +272,10 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
                       {/* Annotated Screenshot Preview */}
                       {showScreenshots && note.screenshotDataUrl && (
                         <div className="space-y-1.5">
-                          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">
+                          <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-500 uppercase tracking-wider block">
                             Annotated Screenshot (Page {note.pageNumber})
                           </span>
-                          <div className="rounded-lg border border-zinc-800 overflow-hidden bg-black max-h-72 flex items-center justify-center">
+                          <div className="rounded-lg border border-slate-200 dark:border-zinc-800 overflow-hidden bg-slate-50 dark:bg-canvas max-h-72 flex items-center justify-center">
                             <img
                               src={note.screenshotDataUrl}
                               alt={`Page ${note.pageNumber} annotation`}
@@ -294,7 +294,7 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
 
         {/* Footer Actions */}
         {notes.length > 0 && (
-          <div className="p-4 border-t dark:border-zinc-850 bg-zinc-900/60 flex flex-wrap items-center justify-between gap-3">
+          <div className="p-4 border-t dark:border-zinc-850 bg-slate-50/60 dark:bg-zinc-900/60 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={handleDownloadMarkdown}>
                 <Download className="w-3.5 h-3.5" />

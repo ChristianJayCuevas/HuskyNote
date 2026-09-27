@@ -275,14 +275,14 @@ CRITICAL RULE:
 
   if (!manual) {
     return (
-      <div className="flex-1 flex items-center justify-center text-zinc-500 text-xs">
+      <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-zinc-500 text-xs">
         Loading manual...
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-black p-8 overflow-y-auto max-w-5xl mx-auto w-full">
+    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas p-8 overflow-y-auto max-w-5xl mx-auto w-full">
       {/* Header with Title & Export Actions */}
       <div className="border-b dark:border-zinc-850 pb-5 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
@@ -291,10 +291,10 @@ CRITICAL RULE:
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onBlur={() => saveManualChanges({ title })}
-            className="bg-transparent text-2xl font-bold text-white tracking-tight focus:outline-none placeholder-zinc-600 w-full"
+            className="bg-transparent text-2xl font-bold text-slate-950 dark:text-white tracking-tight focus:outline-none placeholder-slate-400 dark:placeholder-zinc-600 w-full"
             placeholder="Manual Title..."
           />
-          <div className="text-xs text-zinc-400 mt-1">
+          <div className="text-xs text-slate-600 dark:text-zinc-400 mt-1">
             Version {manual.version} • Updated {new Date(manual.updatedAt).toLocaleDateString()}
           </div>
         </div>
@@ -323,15 +323,15 @@ CRITICAL RULE:
             <span>Export JSON</span>
           </Button>
           <Button size="icon" variant="ghost" onClick={handleDeleteManual} title="Delete Manual">
-            <Trash2 className="w-3.5 h-3.5 text-zinc-400 hover:text-red-400" />
+            <Trash2 className="w-3.5 h-3.5 text-slate-600 dark:text-zinc-400 hover:text-red-400" />
           </Button>
         </div>
       </div>
 
       <div className="space-y-6">
         {/* Purpose */}
-        <div className="bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 space-y-2">
-          <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider block">
+        <div className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 space-y-2">
+          <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase tracking-wider block">
             Purpose & Objective
           </label>
           <textarea
@@ -339,19 +339,19 @@ CRITICAL RULE:
             onChange={(e) => setPurpose(e.target.value)}
             onBlur={() => saveManualChanges({ purpose })}
             rows={2}
-            className="w-full bg-zinc-900/50 border border-zinc-800 rounded-md p-3 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 leading-relaxed resize-none"
+            className="w-full bg-slate-50/50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-md p-3 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-slate-300 dark:focus:border-zinc-700 leading-relaxed resize-none"
             placeholder="State the objective of this operation procedure..."
           />
         </div>
 
         {/* Requirements & Prerequisites */}
-        <div className="bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 space-y-3">
-          <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider block">
+        <div className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 space-y-3">
+          <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase tracking-wider block">
             Prerequisites & Requirements
           </label>
           <ul className="space-y-1.5">
             {requirements.map((req, i) => (
-              <li key={i} className="flex items-center justify-between text-xs text-zinc-200 bg-zinc-900/60 px-3 py-1.5 rounded border dark:border-zinc-850">
+              <li key={i} className="flex items-center justify-between text-xs text-slate-800 dark:text-zinc-200 bg-slate-50/60 dark:bg-zinc-900/60 px-3 py-1.5 rounded border dark:border-zinc-850">
                 <span>• {req}</span>
                 <button
                   onClick={() => {
@@ -359,7 +359,7 @@ CRITICAL RULE:
                     setRequirements(next);
                     saveManualChanges({ requirements: next });
                   }}
-                  className="text-zinc-500 hover:text-zinc-300"
+                  className="text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300"
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
@@ -372,14 +372,14 @@ CRITICAL RULE:
             value={reqInput}
             onChange={(e) => setReqInput(e.target.value)}
             onKeyDown={addRequirement}
-            className="w-full bg-zinc-900/40 border border-zinc-800 rounded-md px-3 py-1.5 text-xs text-zinc-300 placeholder-zinc-600 focus:outline-none"
+            className="w-full bg-slate-50/40 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none"
           />
         </div>
 
         {/* Reorderable Steps */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
+            <h3 className="text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
               Operation Steps ({steps.length})
             </h3>
             <Button size="sm" variant="outline" onClick={addEmptyStep}>
@@ -391,11 +391,11 @@ CRITICAL RULE:
           {steps.map((step, idx) => (
             <div
               key={step.id}
-              className="bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 space-y-4"
+              className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 space-y-4"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="w-7 h-7 rounded-full bg-white text-black font-bold text-xs flex items-center justify-center">
+                  <span className="w-7 h-7 rounded-full bg-slate-900 dark:bg-white text-white dark:text-black font-bold text-xs flex items-center justify-center">
                     {step.stepNumber}
                   </span>
                   <input
@@ -407,7 +407,7 @@ CRITICAL RULE:
                       setSteps(next);
                     }}
                     onBlur={() => saveManualChanges({ steps })}
-                    className="bg-transparent text-sm font-semibold text-white focus:outline-none"
+                    className="bg-transparent text-sm font-semibold text-slate-950 dark:text-white focus:outline-none"
                   />
                 </div>
 
@@ -415,7 +415,7 @@ CRITICAL RULE:
                   <button
                     disabled={idx === 0}
                     onClick={() => moveStep(idx, 'up')}
-                    className="p-1 text-zinc-500 hover:text-zinc-200 disabled:opacity-20"
+                    className="p-1 text-slate-500 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-200 disabled:opacity-20"
                     title="Move Up"
                   >
                     <ChevronUp className="w-4 h-4" />
@@ -423,14 +423,14 @@ CRITICAL RULE:
                   <button
                     disabled={idx === steps.length - 1}
                     onClick={() => moveStep(idx, 'down')}
-                    className="p-1 text-zinc-500 hover:text-zinc-200 disabled:opacity-20"
+                    className="p-1 text-slate-500 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-200 disabled:opacity-20"
                     title="Move Down"
                   >
                     <ChevronDown className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => deleteStep(idx)}
-                    className="p-1 text-zinc-500 hover:text-red-400 ml-2"
+                    className="p-1 text-slate-500 dark:text-zinc-500 hover:text-red-400 ml-2"
                     title="Delete Step"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -439,7 +439,7 @@ CRITICAL RULE:
               </div>
 
               {step.screenshotDataUrl && (
-                <div className="rounded-lg overflow-hidden border border-zinc-800 bg-zinc-900 max-w-md">
+                <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 max-w-md">
                   <img
                     src={step.screenshotDataUrl}
                     alt={`Step ${step.stepNumber}`}
@@ -449,7 +449,7 @@ CRITICAL RULE:
               )}
 
               <div className="space-y-1">
-                <label className="text-[10px] text-zinc-400 uppercase font-semibold">
+                <label className="text-[10px] text-slate-600 dark:text-zinc-400 uppercase font-semibold">
                   Instruction Description
                 </label>
                 <textarea
@@ -461,7 +461,7 @@ CRITICAL RULE:
                   }}
                   onBlur={() => saveManualChanges({ steps })}
                   rows={2}
-                  className="w-full bg-zinc-900/60 border border-zinc-800 rounded-md p-2.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 leading-relaxed font-mono resize-none"
+                  className="w-full bg-slate-50/60 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-md p-2.5 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-slate-300 dark:focus:border-zinc-700 leading-relaxed font-mono resize-none"
                 />
               </div>
             </div>
@@ -469,8 +469,8 @@ CRITICAL RULE:
         </div>
 
         {/* Expected Result */}
-        <div className="bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 space-y-2">
-          <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider block">
+        <div className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 space-y-2">
+          <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase tracking-wider block">
             Verification & Expected Result
           </label>
           <textarea
@@ -478,7 +478,7 @@ CRITICAL RULE:
             onChange={(e) => setExpectedResult(e.target.value)}
             onBlur={() => saveManualChanges({ expectedResult })}
             rows={2}
-            className="w-full bg-zinc-900/50 border border-zinc-800 rounded-md p-3 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 leading-relaxed resize-none"
+            className="w-full bg-slate-50/50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-md p-3 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-slate-300 dark:focus:border-zinc-700 leading-relaxed resize-none"
             placeholder="How to verify the procedure succeeded..."
           />
         </div>
