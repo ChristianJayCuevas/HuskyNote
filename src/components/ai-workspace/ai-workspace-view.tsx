@@ -181,41 +181,41 @@ export const AIWorkspaceView: React.FC = () => {
       />
 
       {/* Context-Aware Command Toolbar */}
-      <div className="px-6 py-2 border-b border-zinc-850 flex items-center gap-1.5 overflow-x-auto bg-zinc-950/60 shrink-0 text-xs">
+      <div className="px-6 py-2 border-b dark:border-zinc-850 flex items-center gap-1.5 overflow-x-auto bg-zinc-950/60 shrink-0 text-xs">
         <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mr-1">
           Commands:
         </span>
         <button
           onClick={() => executeCommand('Provide a comprehensive synthesis and executive summary of the attached context.')}
-          className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-850 transition-colors"
+          className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white dark:hover:bg-zinc-850 transition-colors"
         >
           <FileText className="w-3 h-3 text-zinc-400" />
           <span>Summarize</span>
         </button>
         <button
           onClick={() => executeCommand('Extract all actionable tasks, deliverables, and owners into a structured task list.')}
-          className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-850 transition-colors"
+          className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white dark:hover:bg-zinc-850 transition-colors"
         >
           <CheckSquare className="w-3 h-3 text-zinc-400" />
           <span>Extract Tasks</span>
         </button>
         <button
           onClick={() => executeCommand('Generate a step-by-step Standard Operating Procedure (SOP) based on the procedures described.')}
-          className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-850 transition-colors"
+          className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white dark:hover:bg-zinc-850 transition-colors"
         >
           <ListOrdered className="w-3 h-3 text-zinc-400" />
           <span>Create SOP</span>
         </button>
         <button
           onClick={() => executeCommand('Identify all key decisions and agreements documented in this context.')}
-          className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-850 transition-colors"
+          className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white dark:hover:bg-zinc-850 transition-colors"
         >
           <Lightbulb className="w-3 h-3 text-zinc-400" />
           <span>Find Decisions</span>
         </button>
         <button
           onClick={() => executeCommand('Highlight potential risks, vulnerabilities, or open blockers present in the attached materials.')}
-          className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-850 transition-colors"
+          className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white dark:hover:bg-zinc-850 transition-colors"
         >
           <AlertTriangle className="w-3 h-3 text-zinc-400" />
           <span>Find Risks</span>
@@ -253,7 +253,7 @@ export const AIWorkspaceView: React.FC = () => {
                 className={`rounded-xl p-4 text-xs leading-relaxed max-w-2xl border ${
                   msg.role === 'user'
                     ? 'bg-zinc-900 text-zinc-100 border-zinc-800'
-                    : 'bg-zinc-950 text-zinc-200 border-zinc-850 space-y-3'
+                    : 'bg-zinc-950 text-zinc-200 dark:border-zinc-850 space-y-3'
                 }`}
               >
                 {msg.role === 'assistant' ? (
@@ -265,7 +265,7 @@ export const AIWorkspaceView: React.FC = () => {
                     </div>
 
                     {msg.sources && msg.sources.length > 0 && (
-                      <div className="pt-2 border-t border-zinc-850 flex items-center justify-between text-[10px] text-zinc-400">
+                      <div className="pt-2 border-t dark:border-zinc-850 flex items-center justify-between text-[10px] text-zinc-400">
                         <span>Grounding: {msg.sources.map((s) => s.title).join(', ')}</span>
                         {msg.content && !isStreaming && (
                           <button
@@ -285,7 +285,7 @@ export const AIWorkspaceView: React.FC = () => {
               </div>
 
               {msg.role === 'user' && (
-                <div className="w-7 h-7 rounded-lg bg-zinc-850 border border-zinc-750 flex items-center justify-center text-zinc-300 shrink-0 mt-0.5">
+                <div className="w-7 h-7 rounded-lg dark:bg-zinc-850 border dark:border-zinc-750 flex items-center justify-center text-zinc-300 shrink-0 mt-0.5">
                   <User className="w-4 h-4" />
                 </div>
               )}
@@ -296,7 +296,7 @@ export const AIWorkspaceView: React.FC = () => {
       </div>
 
       {/* Input Form */}
-      <div className="p-4 border-t border-zinc-850 bg-zinc-950">
+      <div className="p-4 border-t dark:border-zinc-850 bg-zinc-950">
         <div className="max-w-4xl mx-auto flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5">
           <input
             type="text"

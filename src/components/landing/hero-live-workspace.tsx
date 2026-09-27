@@ -14,7 +14,7 @@ export const HeroLiveWorkspace: React.FC = () => {
   return (
     <div className="relative w-full rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-8 shadow-2xl overflow-hidden font-sans text-left">
       {/* Top Window Chrome */}
-      <div className="flex items-center justify-between border-b border-zinc-850 pb-4 mb-6">
+      <div className="flex items-center justify-between border-b dark:border-zinc-850 pb-4 mb-6">
         <div className="flex items-center gap-2 text-xs text-zinc-300">
           <FileText className="w-4 h-4 text-zinc-400" />
           <span className="font-medium">Architecture Spec.pdf</span>
@@ -85,7 +85,7 @@ export const HeroLiveWorkspace: React.FC = () => {
         {/* Right: Sliding AI Context & Note Panel */}
         <div className="md:col-span-5 flex flex-col justify-between bg-zinc-900/60 border border-zinc-800 rounded-xl p-3.5 sm:p-5 text-xs text-zinc-300">
           <div>
-            <div className="flex items-center justify-between border-b border-zinc-850 pb-2.5 mb-3">
+            <div className="flex items-center justify-between border-b dark:border-zinc-850 pb-2.5 mb-3">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
                 <span className="font-semibold text-xs text-white">Local AI Assistant</span>
@@ -98,7 +98,7 @@ export const HeroLiveWorkspace: React.FC = () => {
                 <div className="text-xs text-zinc-400 font-semibold uppercase">
                   Selected Excerpt (Page 4)
                 </div>
-                <div className="p-3 rounded bg-zinc-950/80 border border-zinc-850 text-xs text-zinc-400 italic">
+                <div className="p-3 rounded bg-zinc-950/80 border dark:border-zinc-850 text-xs text-zinc-400 italic">
                   "No communication with remote language services is permitted..."
                 </div>
 
@@ -124,7 +124,7 @@ export const HeroLiveWorkspace: React.FC = () => {
             )}
           </div>
 
-          <div className="pt-3 border-t border-zinc-850 flex items-center justify-between text-xs text-zinc-400">
+          <div className="pt-3 border-t dark:border-zinc-850 flex items-center justify-between text-xs text-zinc-400">
             <span>Step {stage + 1} of 5</span>
             <span className="text-zinc-300">Document to note workflow</span>
           </div>

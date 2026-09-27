@@ -276,7 +276,7 @@ export const LandingPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-zinc-100 flex flex-col font-sans selection:bg-slate-200 dark:selection:bg-zinc-800 selection:text-slate-900 dark:selection:text-white relative overflow-x-clip transition-colors duration-500">
+    <div className="min-h-screen bg-slate-50 dark:bg-canvas text-slate-900 dark:text-zinc-100 flex flex-col font-sans selection:bg-slate-200 dark:selection:bg-zinc-800 selection:text-slate-900 dark:selection:text-white relative overflow-x-clip transition-colors duration-500">
       {/* Subtle Noise Texture Overlay */}
       <NoiseTexture opacity={0.035} />
 
@@ -284,7 +284,7 @@ export const LandingPage: React.FC = () => {
       <StarfieldBackground isDark={theme === 'dark'} className="fixed inset-0 pointer-events-none z-0" />
 
       {/* Top Navigation - Sticky Appbar */}
-      <header className="sticky top-0 z-50 relative bg-white/90 dark:bg-black/85 backdrop-blur-md border-b border-slate-200 dark:border-zinc-850/80 px-4 sm:px-6 h-14 flex items-center transition-all shadow-sm dark:shadow-lg">
+      <header className="sticky top-0 z-50 relative bg-white/90 dark:bg-canvas-inset/85 backdrop-blur-md border-b border-slate-200 dark:border-zinc-850/80 px-4 sm:px-6 h-14 flex items-center transition-all shadow-sm dark:shadow-lg">
         <div className="max-w-7xl mx-auto w-full h-full flex items-center justify-between relative">
           <div
             className="flex items-center gap-2.5 cursor-pointer select-none"
@@ -347,7 +347,7 @@ export const LandingPage: React.FC = () => {
 
             {/* Physics Lampcord Toggle Hanging Seamlessly Under Action Bar */}
             <div className="relative flex items-center justify-center w-8 h-full self-stretch">
-              <div className="absolute top-full -mt-[2px] left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
+              <div className="absolute top-full -mt-[2px] left-1/2 -translate-x-1/2 z-50 pointer-events-none">
                 <PhysicsRopeToggle />
               </div>
             </div>
@@ -369,7 +369,7 @@ export const LandingPage: React.FC = () => {
 
       {/* Mobile Drawer Navigation Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden sticky top-14 z-40 bg-white/95 dark:bg-black/95 backdrop-blur-2xl border-b border-slate-200 dark:border-zinc-850 shadow-2xl px-5 py-4 space-y-3.5 animate-fade-in transition-all">
+        <div className="md:hidden sticky top-14 z-40 bg-white/95 dark:bg-canvas-inset/95 backdrop-blur-2xl border-b border-slate-200 dark:border-zinc-850 shadow-2xl px-5 py-4 space-y-3.5 animate-fade-in transition-all">
           <Button
             variant="primary"
             size="md"
@@ -491,7 +491,7 @@ export const LandingPage: React.FC = () => {
             {/* Left Column: Text Content & Actions */}
             <div className="lg:col-span-6 flex flex-col items-start text-left space-y-5 sm:space-y-6 w-full">
               {/* Top Benefit Badge */}
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 text-xs text-slate-700 dark:text-zinc-200 select-none shadow-sm backdrop-blur-sm">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white dark:bg-canvas border border-slate-200 dark:border-zinc-800 text-xs text-slate-700 dark:text-zinc-200 select-none shadow-sm backdrop-blur-sm">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
                 <span className="font-semibold text-slate-900 dark:text-white">Personal AI Secretary</span>
               </div>
@@ -525,7 +525,7 @@ export const LandingPage: React.FC = () => {
                 <Button
                   variant="outline"
                   size="md"
-                  className="w-full sm:w-auto justify-center border-slate-300 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-white/40 text-slate-800 dark:text-white bg-white dark:bg-transparent"
+                  className="w-full sm:w-auto justify-center border-slate-300 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-zinc-600 text-slate-800 dark:text-white bg-white dark:bg-transparent"
                   onClick={() => setIsExtensionModalOpen(true)}
                   title="1-Click Chrome Extension Setup"
                 >
@@ -539,7 +539,7 @@ export const LandingPage: React.FC = () => {
                 <Button
                   variant="outline"
                   size="md"
-                  className="w-full sm:w-auto justify-center border-slate-300 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-white/40 text-slate-800 dark:text-white bg-white dark:bg-transparent"
+                  className="w-full sm:w-auto justify-center border-slate-300 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-zinc-600 text-slate-800 dark:text-white bg-white dark:bg-transparent"
                   onClick={() => setActiveView('download')}
                 >
                   <Download className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-300" />
@@ -1018,7 +1018,7 @@ cd HuskyNote
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full sm:w-auto justify-center border-slate-300 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 hover:border-slate-400 dark:hover:border-white/40 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-transparent"
+                className="w-full sm:w-auto justify-center border-slate-300 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 hover:border-slate-400 dark:hover:border-zinc-600 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-transparent"
                 onClick={() => setActiveView('download')}
               >
                 <Download className="w-4 h-4 text-slate-500 dark:text-zinc-300" />
@@ -1030,7 +1030,7 @@ cd HuskyNote
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 dark:border-zinc-850 py-12 px-6 bg-slate-100 dark:bg-black text-slate-500 dark:text-zinc-500 text-xs">
+      <footer className="border-t border-slate-200 dark:border-zinc-850 py-12 px-6 bg-slate-100 dark:bg-canvas text-slate-500 dark:text-zinc-500 text-xs">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div className="space-y-2">
             <div className="flex items-center gap-3">

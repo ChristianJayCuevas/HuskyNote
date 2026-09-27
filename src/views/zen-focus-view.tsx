@@ -166,7 +166,7 @@ export const ZenFocusView: React.FC = () => {
   return (
     <div className="relative w-full h-full min-h-screen bg-[#050505] text-zinc-100 flex flex-col font-sans select-none overflow-hidden">
       {/* Subtle Top Minimal Navigation Bar */}
-      <header className="h-12 border-b border-zinc-850 px-6 flex items-center justify-between shrink-0 bg-zinc-950/80 backdrop-blur-sm z-20">
+      <header className="h-12 border-b dark:border-zinc-850 px-6 flex items-center justify-between shrink-0 bg-zinc-950/80 backdrop-blur-sm z-20">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-zinc-400 font-mono text-xs">
             <Feather className="w-3.5 h-3.5 text-zinc-200" />
@@ -266,7 +266,7 @@ export const ZenFocusView: React.FC = () => {
 
           {/* Split Markdown Preview (Optional) */}
           {showPreview && (
-            <div className="border-l border-zinc-850 pl-8 overflow-y-auto text-zinc-200 font-sans prose prose-invert max-w-none text-sm leading-relaxed select-text">
+            <div className="border-l dark:border-zinc-850 pl-8 overflow-y-auto text-zinc-200 font-sans prose prose-invert max-w-none text-sm leading-relaxed select-text">
               <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-4">
                 Preview
               </div>

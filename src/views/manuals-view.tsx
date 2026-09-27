@@ -49,7 +49,7 @@ export const ManualsView: React.FC = () => {
   const selectedManual = manuals.find((m) => m.id === activeManualId);
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-slate-50 dark:bg-black transition-colors duration-500 font-sans">
+    <div className="flex h-full w-full overflow-hidden bg-slate-50 dark:bg-canvas transition-colors duration-500 font-sans">
       {/* Left Sidebar: Manuals List */}
       <div className="w-80 border-r border-slate-200 dark:border-zinc-850 flex flex-col h-full bg-white dark:bg-zinc-950 shrink-0 select-none transition-colors duration-500">
         <div className="p-4 border-b border-slate-200 dark:border-zinc-850 flex items-center justify-between">

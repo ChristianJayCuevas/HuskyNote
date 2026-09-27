@@ -18,7 +18,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       secondary:
         'bg-white text-slate-950 border border-slate-300 hover:bg-slate-100 dark:bg-zinc-900 dark:text-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-800 active:bg-slate-200 dark:active:bg-zinc-850',
       outline:
-        'bg-white text-slate-950 border border-slate-300 hover:bg-slate-100 hover:text-black dark:bg-transparent dark:text-zinc-100 dark:border-white/20 dark:hover:bg-white/10 dark:hover:text-white',
+        'bg-white text-slate-950 border border-slate-300 hover:bg-slate-100 hover:text-black dark:bg-transparent dark:text-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-850 dark:hover:text-white',
       ghost:
         'bg-transparent text-slate-900 hover:text-black hover:bg-slate-100 dark:text-zinc-300 dark:hover:text-white dark:hover:bg-zinc-900',
       danger:

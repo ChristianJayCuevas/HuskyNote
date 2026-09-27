@@ -71,7 +71,7 @@ export const AIProviderSettings: React.FC = () => {
               onClick={() => setProvider(p.id)}
               className={`text-left p-4 rounded-lg border transition-colors ${
                 active
-                  ? 'border-slate-900 dark:border-white bg-slate-50 dark:bg-zinc-900'
+                  ? 'border-slate-900 dark:border-zinc-400 bg-slate-50 dark:bg-zinc-900'
                   : 'border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700'
               }`}
             >
@@ -148,7 +148,7 @@ export const AIProviderSettings: React.FC = () => {
                     onClick={() => setSelectedModel(m.id)}
                     className={`text-left p-3 rounded-lg border transition-colors ${
                       active
-                        ? 'border-slate-900 dark:border-white bg-slate-50 dark:bg-zinc-900'
+                        ? 'border-slate-900 dark:border-zinc-400 bg-slate-50 dark:bg-zinc-900'
                         : 'border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700'
                     }`}
                   >

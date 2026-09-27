@@ -52,7 +52,7 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
   );
 
   return (
-    <div className="flex items-center gap-2 flex-wrap py-2 border-b border-zinc-850 bg-zinc-950 px-6">
+    <div className="flex items-center gap-2 flex-wrap py-2 border-b dark:border-zinc-850 bg-zinc-950 px-6">
       <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
         Context:
       </span>
@@ -71,7 +71,7 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
           return (
             <span
               key={chip.id}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-750 text-xs text-zinc-200 font-medium"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900 border dark:border-zinc-750 text-xs text-zinc-200 font-medium"
             >
               <Icon className="w-3.5 h-3.5 text-zinc-400" />
               <span className="truncate max-w-[150px]">{chip.title}</span>
@@ -140,7 +140,7 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
                         onAddChip(item);
                         setIsModalOpen(false);
                       }}
-                      className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/60 border border-zinc-850 hover:bg-zinc-850 hover:border-zinc-700 cursor-pointer transition-colors text-xs"
+                      className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/60 border dark:border-zinc-850 dark:hover:bg-zinc-850 hover:border-zinc-700 cursor-pointer transition-colors text-xs"
                     >
                       <div className="flex items-center gap-2.5">
                         <Icon className="w-4 h-4 text-zinc-400" />

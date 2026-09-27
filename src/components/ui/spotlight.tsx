@@ -50,7 +50,7 @@ export const SpotlightCard: React.FC<SpotlightCardProps> = ({
       style={{ transform, transition: 'transform 0.2s ease-out' }}
       className={twMerge(
         clsx(
-          'relative overflow-hidden bg-zinc-950 border border-zinc-850 rounded-xl p-6 transition-colors duration-150',
+          'relative overflow-hidden bg-zinc-950 border dark:border-zinc-850 rounded-xl p-6 transition-colors duration-150',
           className
         )
       )}

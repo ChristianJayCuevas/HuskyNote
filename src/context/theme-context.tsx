@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 export type ThemeMode = 'dark' | 'light';
 
@@ -26,6 +26,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return 'dark'; // Dark mode is default
   });
 
+  // Tracks the theme being switched to, so rapid toggles don't read a stale render
+  const themeRef = useRef<ThemeMode>(theme);
+
   const applyThemeToDOM = useCallback((newTheme: ThemeMode) => {
     const root = document.documentElement;
     if (newTheme === 'dark') {
@@ -41,6 +44,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const setTheme = useCallback(
     (newTheme: ThemeMode, origin?: Point) => {
+      themeRef.current = newTheme;
       const apply = () => {
         setThemeState(newTheme);
         if (typeof window !== 'undefined') {
@@ -108,10 +112,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const toggleTheme = useCallback(
     (origin?: Point) => {
-      const nextTheme = theme === 'dark' ? 'light' : 'dark';
+      const nextTheme = themeRef.current === 'dark' ? 'light' : 'dark';
       setTheme(nextTheme, origin);
     },
-    [theme, setTheme]
+    [setTheme]
   );
 
   useEffect(() => {

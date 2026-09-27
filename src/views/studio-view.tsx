@@ -578,7 +578,7 @@ CRITICAL RULES:
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-black text-slate-900 dark:text-white p-6 sm:p-8 overflow-y-auto max-w-6xl mx-auto w-full select-none font-sans transition-colors duration-500">
+    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas text-slate-900 dark:text-white p-6 sm:p-8 overflow-y-auto max-w-6xl mx-auto w-full select-none font-sans transition-colors duration-500">
       {/* Top Header Controls Card */}
       <div className="border-b border-slate-200 dark:border-zinc-850 pb-5 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -608,7 +608,7 @@ CRITICAL RULES:
                 className={`px-3 py-1.5 rounded text-xs font-mono border transition-all flex items-center gap-1.5 ${
                   autoAnnotateEnabled
                     ? 'bg-zinc-900 border-zinc-700 text-emerald-400 shadow-sm'
-                    : 'bg-zinc-950 border-zinc-850 text-zinc-500'
+                    : 'bg-zinc-950 dark:border-zinc-850 text-zinc-500'
                 }`}
               >
                 <Crosshair className="w-3.5 h-3.5" />
@@ -621,7 +621,7 @@ CRITICAL RULES:
                 className={`px-3 py-1.5 rounded text-xs font-mono border transition-all flex items-center gap-1.5 ${
                   !isMicMuted
                     ? 'bg-zinc-900 border-zinc-700 text-white shadow-sm'
-                    : 'bg-zinc-950 border-zinc-850 text-zinc-500'
+                    : 'bg-zinc-950 dark:border-zinc-850 text-zinc-500'
                 }`}
                 title={isMicMuted ? 'Unmute microphone narration' : 'Mute microphone narration'}
               >
@@ -667,7 +667,7 @@ CRITICAL RULES:
                 className={`px-2.5 py-1.5 rounded text-xs font-mono border transition-all flex items-center gap-1.5 ${
                   enableMic
                     ? 'bg-zinc-900 border-zinc-700 text-white'
-                    : 'bg-zinc-950 border-zinc-850 text-zinc-500'
+                    : 'bg-zinc-950 dark:border-zinc-850 text-zinc-500'
                 }`}
                 title={enableMic ? 'Microphone audio enabled' : 'Microphone audio disabled'}
               >
@@ -806,14 +806,14 @@ CRITICAL RULES:
                 key={step.id}
                 className="rounded-xl border border-zinc-800 bg-zinc-950 p-2.5 space-y-2 shadow-lg transition-transform hover:scale-[1.01]"
               >
-                <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 border-b border-zinc-850 pb-1">
+                <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 border-b dark:border-zinc-850 pb-1">
                   <span className="font-bold text-white">STEP {step.stepNumber}</span>
                   <span className="text-zinc-500">{formatTimer(step.timestampSeconds)}</span>
                 </div>
                 <img
                   src={step.screenshotDataUrl}
                   alt={`Step ${step.stepNumber}`}
-                  className="w-full h-24 object-cover rounded border border-zinc-850"
+                  className="w-full h-24 object-cover rounded border dark:border-zinc-850"
                 />
                 <input
                   type="text"
@@ -850,7 +850,7 @@ CRITICAL RULES:
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
           <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
             {/* Modal Header */}
-            <div className="p-4 border-b border-zinc-850 flex items-center justify-between">
+            <div className="p-4 border-b dark:border-zinc-850 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-white" />
                 <h3 className="font-bold text-sm text-white">
@@ -875,13 +875,13 @@ CRITICAL RULES:
                 <span className="text-zinc-500 font-mono">Status: Ready to Export</span>
               </div>
 
-              <div className="bg-black border border-zinc-850 rounded-xl p-4 font-mono text-xs text-zinc-300 whitespace-pre-wrap max-h-[420px] overflow-y-auto leading-relaxed">
+              <div className="bg-black border dark:border-zinc-850 rounded-xl p-4 font-mono text-xs text-zinc-300 whitespace-pre-wrap max-h-[420px] overflow-y-auto leading-relaxed">
                 {generatedMarkdown}
               </div>
             </div>
 
             {/* Modal Footer Actions */}
-            <div className="p-4 border-t border-zinc-850 bg-zinc-900/60 flex flex-wrap items-center justify-between gap-3">
+            <div className="p-4 border-t dark:border-zinc-850 bg-zinc-900/60 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={handleCopyMarkdown}>
                   <Copy className="w-3.5 h-3.5" />

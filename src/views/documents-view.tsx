@@ -163,7 +163,7 @@ export const DocumentsView: React.FC = () => {
   };
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-slate-50 dark:bg-black transition-colors duration-500 font-sans">
+    <div className="flex h-full w-full overflow-hidden bg-slate-50 dark:bg-canvas transition-colors duration-500 font-sans">
       <input
         type="file"
         ref={fileInputRef}
@@ -282,7 +282,7 @@ export const DocumentsView: React.FC = () => {
             }}
             className="flex-1 flex items-center justify-center p-8"
           >
-            <div className="max-w-md w-full border-2 border-dashed border-zinc-850 rounded-2xl p-12 text-center bg-zinc-950/40 flex flex-col items-center shadow-2xl">
+            <div className="max-w-md w-full border-2 border-dashed dark:border-zinc-850 rounded-2xl p-12 text-center bg-zinc-950/40 flex flex-col items-center shadow-2xl">
               <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 mb-4">
                 <UploadCloud className="w-6 h-6" />
               </div>

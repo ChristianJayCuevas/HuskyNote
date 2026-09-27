@@ -19,7 +19,7 @@ export const GlobalMascotDock: React.FC = () => {
     <div className="fixed bottom-5 right-5 z-40 select-none font-sans">
       {isExpanded ? (
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-xl p-5 shadow-2xl w-80 space-y-4 animate-fade-in text-xs text-zinc-300">
-          <div className="flex items-center justify-between border-b border-zinc-850 pb-2.5">
+          <div className="flex items-center justify-between border-b dark:border-zinc-850 pb-2.5">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
               <span className="font-bold text-white tracking-tight">HuskyNote Companion</span>
@@ -48,13 +48,13 @@ export const GlobalMascotDock: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-2 border-t border-zinc-850 flex flex-col gap-2">
+          <div className="pt-2 border-t dark:border-zinc-850 flex flex-col gap-2">
             <button
               onClick={() => {
                 playThock();
                 setActiveView('zen');
               }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-850 text-white font-mono text-[11px] transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 dark:hover:bg-zinc-850 text-white font-mono text-[11px] transition-colors"
             >
               <span className="flex items-center gap-2">
                 <Feather className="w-3.5 h-3.5 text-zinc-300" />
@@ -65,7 +65,7 @@ export const GlobalMascotDock: React.FC = () => {
 
             <button
               onClick={toggleMute}
-              className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-zinc-900/60 border border-zinc-850 text-zinc-400 hover:text-zinc-200 font-mono text-[10px] transition-colors"
+              className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-zinc-900/60 border dark:border-zinc-850 text-zinc-400 hover:text-zinc-200 font-mono text-[10px] transition-colors"
             >
               <span className="flex items-center gap-2">
                 {isMuted ? <VolumeX className="w-3 h-3 text-zinc-500" /> : <Volume2 className="w-3 h-3 text-zinc-300" />}

@@ -129,7 +129,7 @@ export const StickyStorySection: React.FC = () => {
                   onClick={() => setActiveStep(idx)}
                   className={`w-full text-left p-3 sm:p-3.5 rounded-xl border transition-all duration-200 flex items-center justify-between ${
                     isActive
-                      ? 'bg-white dark:bg-zinc-900/90 border-slate-400 dark:border-white/40 text-slate-900 dark:text-white shadow-md'
+                      ? 'bg-white dark:bg-zinc-900/90 border-slate-400 dark:border-zinc-400 text-slate-900 dark:text-white shadow-md'
                       : 'bg-slate-50/70 dark:bg-zinc-950/40 border-slate-200 dark:border-zinc-850 text-slate-600 dark:text-zinc-400 hover:border-slate-300 dark:hover:border-zinc-750 hover:text-slate-900 dark:hover:text-zinc-200'
                   }`}
                 >

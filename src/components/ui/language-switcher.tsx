@@ -31,7 +31,7 @@ export const LanguageSwitcher: React.FC<{ className?: string }> = ({ className =
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 ${
           isDark
-            ? 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700 hover:bg-zinc-850 shadow-sm'
+            ? 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700 dark:hover:bg-zinc-850 shadow-sm'
             : 'bg-white border-slate-200 text-slate-700 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 shadow-sm'
         }`}
         title={t('language.select')}
@@ -47,7 +47,7 @@ export const LanguageSwitcher: React.FC<{ className?: string }> = ({ className =
         <div
           className={`absolute right-0 mt-1.5 w-36 rounded-xl border p-1 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 ${
             isDark
-              ? 'bg-zinc-950 border-zinc-800 text-zinc-200 divide-zinc-850'
+              ? 'bg-zinc-950 border-zinc-800 text-zinc-200 dark:divide-zinc-850'
               : 'bg-white border-slate-200 text-slate-800 divide-slate-100 shadow-slate-200/50'
           }`}
         >

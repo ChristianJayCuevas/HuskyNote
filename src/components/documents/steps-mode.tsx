@@ -137,7 +137,7 @@ Respond ONLY with valid JSON in this exact structure, with no additional text:
     >
       <div className="space-y-4">
         {/* Source Text Preview */}
-        <div className="p-3.5 rounded-lg bg-zinc-900/60 border border-zinc-850 text-xs">
+        <div className="p-3.5 rounded-lg bg-zinc-900/60 border dark:border-zinc-850 text-xs">
           <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-1">
             Source Excerpt (Page {sourcePage})
           </div>
@@ -163,7 +163,7 @@ Respond ONLY with valid JSON in this exact structure, with no additional text:
             {steps.map((step) => (
               <div
                 key={step.stepNumber}
-                className="p-4 rounded-lg bg-zinc-950 border border-zinc-850 text-xs space-y-1.5"
+                className="p-4 rounded-lg bg-zinc-950 border dark:border-zinc-850 text-xs space-y-1.5"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-white tracking-wide">
@@ -183,7 +183,7 @@ Respond ONLY with valid JSON in this exact structure, with no additional text:
         )}
 
         {hasGenerated && (
-          <div className="pt-4 border-t border-zinc-850 flex items-center justify-between">
+          <div className="pt-4 border-t dark:border-zinc-850 flex items-center justify-between">
             <Button size="sm" variant="ghost" onClick={onClose}>
               Close
             </Button>

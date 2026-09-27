@@ -64,7 +64,7 @@ export const TemplateGallery: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-full bg-black p-8 overflow-y-auto max-w-5xl mx-auto w-full select-none">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-zinc-850 pb-5 mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b dark:border-zinc-850 pb-5 mb-6">
         <div>
           <h2 className="text-xl font-bold text-white tracking-tight">Templates Gallery</h2>
           <p className="text-xs text-zinc-400 mt-1">
@@ -100,7 +100,7 @@ export const TemplateGallery: React.FC = () => {
         {filtered.map((tmpl) => (
           <div
             key={tmpl.id}
-            className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 flex flex-col justify-between hover:border-zinc-700 transition-colors"
+            className="bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 flex flex-col justify-between hover:border-zinc-700 transition-colors"
           >
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -110,7 +110,7 @@ export const TemplateGallery: React.FC = () => {
                 </span>
               </div>
               <p className="text-xs text-zinc-400 mb-4 leading-relaxed">{tmpl.description}</p>
-              <div className="bg-zinc-900/40 p-3 rounded-lg border border-zinc-850 text-[11px] font-mono text-zinc-400 max-h-24 overflow-hidden line-clamp-3 mb-4">
+              <div className="bg-zinc-900/40 p-3 rounded-lg border dark:border-zinc-850 text-[11px] font-mono text-zinc-400 max-h-24 overflow-hidden line-clamp-3 mb-4">
                 {tmpl.defaultContent}
               </div>
             </div>

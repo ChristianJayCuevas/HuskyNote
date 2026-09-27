@@ -41,7 +41,7 @@ export const NotesView: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-slate-50 dark:bg-black transition-colors duration-500">
+    <div className="flex h-full w-full overflow-hidden bg-slate-50 dark:bg-canvas transition-colors duration-500">
       <div className={`${activeNoteId ? 'hidden md:flex' : 'flex'} w-full md:w-80 shrink-0 h-full`}>
         <NoteList
           selectedNoteId={activeNoteId}

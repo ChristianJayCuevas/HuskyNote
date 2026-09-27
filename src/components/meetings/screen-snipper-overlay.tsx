@@ -101,7 +101,7 @@ export const ScreenSnipperOverlay: React.FC<ScreenSnipperOverlayProps> = ({
       onMouseUp={handleMouseUp}
     >
       {/* Top Floating Instruction Pill in Monochrome Glassmorphism */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-5 py-2.5 rounded-full bg-zinc-950/80 dark:bg-black/85 backdrop-blur-2xl border border-white/25 shadow-2xl text-white pointer-events-auto">
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-5 py-2.5 rounded-full bg-zinc-950/80 dark:bg-canvas-inset/85 backdrop-blur-2xl border border-white/25 shadow-2xl text-white pointer-events-auto">
         <Crop className="w-4 h-4 text-zinc-300 animate-pulse" />
         <span className="text-xs font-semibold tracking-wide text-zinc-100">
           Click and drag to snip a portion of the screen

@@ -137,9 +137,9 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
       <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden text-zinc-100">
         {/* Header */}
-        <div className="p-4 border-b border-zinc-850 flex items-center justify-between bg-zinc-900/40">
+        <div className="p-4 border-b dark:border-zinc-850 flex items-center justify-between bg-zinc-900/40">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded bg-zinc-850 flex items-center justify-center text-zinc-300">
+            <div className="w-7 h-7 rounded dark:bg-zinc-850 flex items-center justify-center text-zinc-300">
               <FileText className="w-4 h-4" />
             </div>
             <div>
@@ -203,7 +203,7 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
               return (
                 <div
                   key={note.id}
-                  className="rounded-xl border border-zinc-850 bg-zinc-900/50 overflow-hidden shadow-lg transition-all duration-200"
+                  className="rounded-xl border dark:border-zinc-850 bg-zinc-900/50 overflow-hidden shadow-lg transition-all duration-200"
                 >
                   {/* Note Header (always visible, clickable to expand/collapse) */}
                   <button
@@ -251,7 +251,7 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
                     <div className="px-4 pb-4 space-y-3 border-t border-zinc-800/60 pt-3 animate-fade-in">
                       {/* Referenced Excerpt Quote */}
                       {note.excerpt && (
-                        <div className="p-3 rounded-lg bg-zinc-950/80 border border-zinc-850 text-xs text-zinc-300 space-y-1">
+                        <div className="p-3 rounded-lg bg-zinc-950/80 border dark:border-zinc-850 text-xs text-zinc-300 space-y-1">
                           <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">
                             Referenced Excerpt
                           </span>
@@ -294,7 +294,7 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
 
         {/* Footer Actions */}
         {notes.length > 0 && (
-          <div className="p-4 border-t border-zinc-850 bg-zinc-900/60 flex flex-wrap items-center justify-between gap-3">
+          <div className="p-4 border-t dark:border-zinc-850 bg-zinc-900/60 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={handleDownloadMarkdown}>
                 <Download className="w-3.5 h-3.5" />

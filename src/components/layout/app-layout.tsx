@@ -13,7 +13,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
   const isFullWidthPage = activeView === 'landing' || activeView === 'download';
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 dark:bg-black text-slate-900 dark:text-zinc-100 antialiased font-sans transition-colors duration-200">
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 dark:bg-canvas text-slate-900 dark:text-zinc-100 antialiased font-sans transition-colors duration-200">
       {!isFullWidthPage && <Sidebar />}
 
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">

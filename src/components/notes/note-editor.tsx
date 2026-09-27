@@ -274,7 +274,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({ noteId, onDeleted, onBac
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-white dark:bg-black text-slate-900 dark:text-white transition-colors duration-500">
+    <div className="flex-1 flex flex-col h-full bg-white dark:bg-canvas text-slate-900 dark:text-white transition-colors duration-500">
       {/* Editor Header */}
       <div className="border-b border-slate-200 dark:border-zinc-850 px-4 sm:px-8 py-3 flex items-center justify-between gap-3 sm:gap-4 shrink-0 bg-slate-50/70 dark:bg-zinc-950/40">
         <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">

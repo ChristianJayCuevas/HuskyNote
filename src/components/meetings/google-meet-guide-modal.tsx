@@ -52,7 +52,7 @@ export const GoogleMeetGuideModal: React.FC<GoogleMeetGuideModalProps> = ({
           </Button>
         </div>
 
-        <div className="pt-2 border-t border-zinc-850">
+        <div className="pt-2 border-t dark:border-zinc-850">
           <h4 className="font-semibold text-zinc-200 mb-1">Option 2: HuskyNote Browser Extension</h4>
           <p className="text-zinc-400 mb-2">
             Load the included Manifest V3 extension located at <code>/browser-extension</code> in <code>chrome://extensions</code> to display a one-click launcher directly inside your Google Meet calls.

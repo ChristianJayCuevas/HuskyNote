@@ -22,7 +22,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
 
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden font-mono text-xs select-text">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-850 bg-zinc-900/60 select-none">
+      <div className="flex items-center justify-between px-4 py-2 border-b dark:border-zinc-850 bg-zinc-900/60 select-none">
         <div className="flex items-center gap-2 text-[10px] text-zinc-400">
           <Terminal className="w-3.5 h-3.5 text-zinc-500" />
           <span>{title}</span>

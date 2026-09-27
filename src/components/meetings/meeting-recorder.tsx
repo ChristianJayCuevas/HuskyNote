@@ -997,7 +997,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
   return (
     <div className="flex-1 flex flex-col h-full bg-black p-8 max-w-5xl mx-auto w-full">
       {/* Top Controls Card */}
-      <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-6 mb-6">
+      <div className="bg-zinc-950 border dark:border-zinc-850 rounded-xl p-6 mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="flex-1 min-w-0">
             <input
@@ -1106,7 +1106,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
 
         {/* Live Audio Meter Waveform */}
         {isRecording && (
-          <div className="pt-4 border-t border-zinc-850 flex items-center justify-between">
+          <div className="pt-4 border-t dark:border-zinc-850 flex items-center justify-between">
             <span className="text-xs text-zinc-400 font-mono">Live Input Level</span>
             <div className="flex items-center gap-1 h-6">
               {[...Array(24)].map((_, i) => {
@@ -1127,7 +1127,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
 
         {/* Screenshot Thumbnail Strip */}
         {screenshots.length > 0 && (
-          <div className="pt-4 border-t border-zinc-850 mt-4">
+          <div className="pt-4 border-t dark:border-zinc-850 mt-4">
             <div className="flex items-center gap-2 mb-3">
               <Camera className="w-3.5 h-3.5 text-zinc-400" />
               <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
@@ -1169,7 +1169,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
         )}
 
         {/* Multilingual Speech Recognition & AI Translation Controls */}
-        <div className="pt-3 border-t border-zinc-850 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="pt-3 border-t dark:border-zinc-850 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-1.5 text-zinc-400 font-mono text-[11px]">
               <Languages className="w-3.5 h-3.5 text-emerald-400" />
@@ -1265,8 +1265,8 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
       {/* Main split: Live Transcript on left, Manual Notes on right */}
       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 min-h-0">
         {/* Live Transcript Pane */}
-        <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 flex flex-col min-h-0">
-          <div className="flex items-center justify-between pb-3 border-b border-zinc-850 mb-3 shrink-0 flex-wrap gap-2">
+        <div className="bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 flex flex-col min-h-0">
+          <div className="flex items-center justify-between pb-3 border-b dark:border-zinc-850 mb-3 shrink-0 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
               <h3 className="text-xs font-semibold text-zinc-200 uppercase tracking-wider">
@@ -1458,8 +1458,8 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
         </div>
 
         {/* Manual Meeting Notes Pane */}
-        <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 flex flex-col min-h-0">
-          <div className="flex items-center justify-between pb-3 border-b border-zinc-850 mb-3 shrink-0">
+        <div className="bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 flex flex-col min-h-0">
+          <div className="flex items-center justify-between pb-3 border-b dark:border-zinc-850 mb-3 shrink-0">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-zinc-400" />
               <h3 className="text-xs font-semibold text-zinc-200 uppercase tracking-wider">

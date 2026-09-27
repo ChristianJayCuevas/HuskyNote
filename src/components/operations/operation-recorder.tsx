@@ -221,7 +221,7 @@ export const OperationRecorder: React.FC<OperationRecorderProps> = ({
   return (
     <div className="flex-1 flex flex-col h-full bg-black p-8 max-w-5xl mx-auto w-full overflow-y-auto">
       {/* Header Controls Card */}
-      <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-6 mb-6">
+      <div className="bg-zinc-950 border dark:border-zinc-850 rounded-xl p-6 mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
           <div className="flex-1 min-w-0">
             <input
@@ -272,7 +272,7 @@ export const OperationRecorder: React.FC<OperationRecorderProps> = ({
                   className={`px-3 py-1.5 rounded text-xs font-mono border transition-all flex items-center gap-1.5 ${
                     autoAnnotate
                       ? 'bg-zinc-900 border-zinc-700 text-emerald-400'
-                      : 'bg-zinc-950 border-zinc-850 text-zinc-500'
+                      : 'bg-zinc-950 dark:border-zinc-850 text-zinc-500'
                   }`}
                 >
                   <Crosshair className="w-3.5 h-3.5" />
@@ -320,7 +320,7 @@ export const OperationRecorder: React.FC<OperationRecorderProps> = ({
         </div>
 
         {steps.length === 0 ? (
-          <div className="p-12 text-center border border-dashed border-zinc-850 rounded-xl text-xs text-zinc-500">
+          <div className="p-12 text-center border border-dashed dark:border-zinc-850 rounded-xl text-xs text-zinc-500">
             {isRecording
               ? 'Click "Capture Step" whenever you reach a meaningful action or screen state.'
               : 'Start screen capture to begin recording step screenshots.'}
@@ -330,7 +330,7 @@ export const OperationRecorder: React.FC<OperationRecorderProps> = ({
             {steps.map((step) => (
               <div
                 key={step.id}
-                className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 flex flex-col md:flex-row items-start gap-5"
+                className="bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 flex flex-col md:flex-row items-start gap-5"
               >
                 {step.screenshotDataUrl && (
                   <div className="relative w-full md:w-64 rounded-lg overflow-hidden border border-zinc-800 bg-zinc-900 shrink-0">

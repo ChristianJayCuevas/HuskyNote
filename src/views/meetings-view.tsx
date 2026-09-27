@@ -34,7 +34,7 @@ export const MeetingsView: React.FC = () => {
   const isDetailOpen = Boolean(isRecordingMode || selectedMeeting);
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-slate-50 dark:bg-black transition-colors duration-500">
+    <div className="flex h-full w-full overflow-hidden bg-slate-50 dark:bg-canvas transition-colors duration-500">
       {/* Left Sidebar: Sessions List */}
       <div
         className={`${

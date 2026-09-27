@@ -140,12 +140,12 @@ export const WorkspaceAnalyticsCard: React.FC = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
       {/* Bento Board 1: Meetings & Voice Notes */}
-      <div className="p-5 sm:p-6 rounded-2xl border border-slate-300 dark:border-white/15 bg-white dark:bg-zinc-950 shadow-sm dark:shadow-xl transition-all flex flex-col justify-between">
+      <div className="p-5 sm:p-6 rounded-2xl border border-slate-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm dark:shadow-none transition-all flex flex-col justify-between">
         <div>
           {/* Board Header */}
-          <div className="flex items-start justify-between gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-white/10">
+          <div className="flex items-start justify-between gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-slate-100 dark:bg-white/10 border border-slate-300 dark:border-white/20 text-slate-900 dark:text-white">
+              <div className="p-2 rounded-xl bg-slate-100 dark:bg-zinc-850 border border-slate-300 dark:border-zinc-800 text-slate-900 dark:text-white">
                 <Mic className="w-5 h-5 text-slate-900 dark:text-white" />
               </div>
               <div>
@@ -153,7 +153,7 @@ export const WorkspaceAnalyticsCard: React.FC = () => {
                   <h3 className="text-base font-bold text-slate-950 dark:text-white tracking-tight">
                     Meetings & Voice Notes
                   </h3>
-                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-900 dark:bg-white/10 dark:text-white font-bold border border-slate-300 dark:border-white/20 flex items-center gap-1">
+                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-900 dark:bg-zinc-850 dark:text-white font-bold border border-slate-300 dark:border-zinc-800 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-slate-900 dark:bg-white animate-pulse" />
                     ACTIVE
                   </span>
@@ -177,7 +177,7 @@ export const WorkspaceAnalyticsCard: React.FC = () => {
 
           {/* Quick Metrics Cluster */}
           <div className="grid grid-cols-2 gap-3 mb-5">
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-white/10">
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800">
               <span className="text-[11px] font-mono uppercase text-slate-600 dark:text-zinc-400 font-semibold block">
                 Total Meetings
               </span>
@@ -189,7 +189,7 @@ export const WorkspaceAnalyticsCard: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-white/10">
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800">
               <span className="text-[11px] font-mono uppercase text-slate-600 dark:text-zinc-400 font-semibold block">
                 Spoken Lines
               </span>
@@ -203,7 +203,7 @@ export const WorkspaceAnalyticsCard: React.FC = () => {
           </div>
 
           {/* Straight Graph Board */}
-          <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-black/50 border border-slate-200 dark:border-white/10 mb-4">
+          <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-canvas-inset/50 border border-slate-200 dark:border-zinc-800 mb-4">
             <div className="flex items-center justify-between text-xs font-mono mb-3">
               <span className="font-bold text-slate-700 dark:text-zinc-300 flex items-center gap-1.5">
                 <BarChart3 className="w-4 h-4 text-slate-900 dark:text-white" />
@@ -271,12 +271,12 @@ export const WorkspaceAnalyticsCard: React.FC = () => {
       </div>
 
       {/* Bento Board 2: Notes & Documents Activity */}
-      <div className="p-5 sm:p-6 rounded-2xl border border-slate-300 dark:border-white/15 bg-white dark:bg-zinc-950 shadow-sm dark:shadow-xl transition-all flex flex-col justify-between">
+      <div className="p-5 sm:p-6 rounded-2xl border border-slate-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm dark:shadow-none transition-all flex flex-col justify-between">
         <div>
           {/* Board Header */}
-          <div className="flex items-start justify-between gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-white/10">
+          <div className="flex items-start justify-between gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-slate-100 dark:bg-white/10 border border-slate-300 dark:border-white/20 text-slate-900 dark:text-white">
+              <div className="p-2 rounded-xl bg-slate-100 dark:bg-zinc-850 border border-slate-300 dark:border-zinc-800 text-slate-900 dark:text-white">
                 <FileText className="w-5 h-5 text-slate-900 dark:text-white" />
               </div>
               <div>
@@ -284,7 +284,7 @@ export const WorkspaceAnalyticsCard: React.FC = () => {
                   <h3 className="text-base font-bold text-slate-950 dark:text-white tracking-tight">
                     Notes & Documents
                   </h3>
-                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-900 dark:bg-white/10 dark:text-white font-bold border border-slate-300 dark:border-white/20">
+                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-900 dark:bg-zinc-850 dark:text-white font-bold border border-slate-300 dark:border-zinc-800">
                     AUTO-SAVED
                   </span>
                 </div>
@@ -307,7 +307,7 @@ export const WorkspaceAnalyticsCard: React.FC = () => {
 
           {/* Quick Metrics Cluster */}
           <div className="grid grid-cols-2 gap-3 mb-5">
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-white/10">
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800">
               <span className="text-[11px] font-mono uppercase text-slate-600 dark:text-zinc-400 font-semibold block">
                 Notes & Guides
               </span>
@@ -321,7 +321,7 @@ export const WorkspaceAnalyticsCard: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-white/10">
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800">
               <span className="text-[11px] font-mono uppercase text-slate-600 dark:text-zinc-400 font-semibold block">
                 Files & Documents
               </span>
@@ -337,7 +337,7 @@ export const WorkspaceAnalyticsCard: React.FC = () => {
           </div>
 
           {/* Straight Graph Board */}
-          <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-black/50 border border-slate-200 dark:border-white/10 mb-4">
+          <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-canvas-inset/50 border border-slate-200 dark:border-zinc-800 mb-4">
             <div className="flex items-center justify-between text-xs font-mono mb-3">
               <span className="font-bold text-slate-700 dark:text-zinc-300 flex items-center gap-1.5">
                 <TrendingUp className="w-4 h-4 text-slate-900 dark:text-white" />

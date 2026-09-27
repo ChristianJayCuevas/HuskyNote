@@ -521,7 +521,7 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-black text-slate-900 dark:text-white p-4 sm:p-8 overflow-y-auto max-w-5xl mx-auto w-full transition-colors duration-500 font-sans">
+    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas text-slate-900 dark:text-white p-4 sm:p-8 overflow-y-auto max-w-5xl mx-auto w-full transition-colors duration-500 font-sans">
 
       {/* ── Ollama Offline Banner ── */}
       <OllamaBanner
@@ -1176,7 +1176,7 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
                     aria-label={`${seg.speaker} at ${formatSecondsToTime(seg.timestampSeconds)}`}
                     className={`p-3.5 rounded-lg border text-xs transition-colors space-y-1.5 mb-2 ${
                       isTarget
-                        ? 'bg-slate-200 dark:bg-zinc-800/80 border-slate-900 dark:border-white text-slate-950 dark:text-white shadow-md'
+                        ? 'bg-slate-200 dark:bg-zinc-800/80 border-slate-900 dark:border-zinc-400 text-slate-950 dark:text-white shadow-md'
                         : 'bg-slate-50 dark:bg-zinc-900/40 border-slate-200 dark:border-zinc-850 text-slate-800 dark:text-zinc-300'
                     }`}
                   >

@@ -60,14 +60,14 @@ export const Modal: React.FC<ModalProps> = ({
         aria-modal="true"
       >
         {(title || description) && (
-          <div className="px-6 py-4 border-b border-zinc-850 flex items-center justify-between">
+          <div className="px-6 py-4 border-b dark:border-zinc-850 flex items-center justify-between">
             <div>
               {title && <h2 className="text-base font-semibold text-white tracking-tight">{title}</h2>}
               {description && <p className="text-xs text-zinc-400 mt-0.5">{description}</p>}
             </div>
             <button
               onClick={onClose}
-              className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-850 transition-colors"
+              className="p-1 rounded-md text-zinc-400 hover:text-white dark:hover:bg-zinc-850 transition-colors"
               aria-label="Close modal"
             >
               <X className="w-4 h-4" />

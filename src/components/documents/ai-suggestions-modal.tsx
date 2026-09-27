@@ -134,8 +134,8 @@ export const AISuggestionsModal: React.FC<AISuggestionsModalProps> = ({
                     sugg.status === 'accepted'
                       ? 'bg-zinc-900/90 border-zinc-700'
                       : sugg.status === 'rejected'
-                      ? 'opacity-40 bg-zinc-950 border-zinc-850'
-                      : 'bg-zinc-950 border-zinc-850'
+                      ? 'opacity-40 bg-zinc-950 dark:border-zinc-850'
+                      : 'bg-zinc-950 dark:border-zinc-850'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
@@ -180,7 +180,7 @@ export const AISuggestionsModal: React.FC<AISuggestionsModalProps> = ({
           </div>
         )}
 
-        <div className="pt-4 border-t border-zinc-850 flex items-center justify-between">
+        <div className="pt-4 border-t dark:border-zinc-850 flex items-center justify-between">
           <Button size="sm" variant="outline" onClick={handleAcceptAll}>
             <CheckCheck className="w-3.5 h-3.5" />
             <span>Accept All ({suggestions.length})</span>
