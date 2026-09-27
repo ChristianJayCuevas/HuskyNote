@@ -4,6 +4,51 @@ import { GitCommit, Shield, Database, Cpu, CheckCircle, Terminal, Layers } from 
 
 const RELEASES = [
   {
+    version: 'v0.5.0',
+    date: '2026-09-27',
+    title: 'GPU Transcription, GitHub-Style Dark Mode & Topbar Fixes',
+    highlights: [
+      'Parakeet TDT v3 now runs on the GPU on computers that support it. A configuration error made it fall back to the slower CPU version every time; on an RTX 4060, phrases now transcribe about 8 times faster.',
+      'The first phrase of a recording no longer waits several seconds while the GPU warms up.',
+      'Parakeet starts without an internet connection once downloaded, because its speech runtime now ships with the app instead of loading from a CDN.',
+      'Microphone audio is filtered properly when it is converted for transcription, so hiss and high-pitched noise no longer fold into the speech range.',
+      'Settings shows which speech models are downloaded on this device and how large they are, lets you remove them, and explains why the GPU was not used if it falls back to the CPU.',
+      "Dark mode uses GitHub's dark palette: #0d1117 pages, a #010409 sidebar and topbar, and #30363d borders. Light mode is unchanged.",
+      'Cards and calendar cells in dark mode no longer have white outlines, and about 340 dark-mode borders and hover states that never displayed now work.',
+      'Removed the "Thock" sound button from the topbar. Cmd/Ctrl + M still mutes sound effects.',
+      'The pull-cord theme switch no longer blocks clicks on the buttons underneath it.',
+      'The workspace switcher stays in the same place on every page, its menu opens directly under it, and it matches the other topbar buttons in dark mode.',
+      'The Settings header now scrolls with the page instead of staying pinned to the top.',
+    ],
+  },
+  {
+    version: 'v0.4.0',
+    date: '2026-09-26',
+    title: 'HuskyNote Rebrand, On-Device Transcription & Claude',
+    highlights: [
+      'Rebranded from DomoNote to HuskyNote with a new husky logo, mascot, and app icons. Notes and meetings saved by DomoNote carry over on first launch.',
+      'Meetings are transcribed on this device with Whisper, including shared tab audio mixed with your microphone. It also works in the desktop apps, where browser speech recognition is unavailable.',
+      'Choose a transcription engine in Settings: Parakeet (default, fastest, 25 European languages), Moonshine (lightweight, English), or Whisper (multilingual). Languages an engine does not support switch to Whisper automatically.',
+      'Claude is available as an AI provider with your own Anthropic API key (Opus 5, Sonnet 5, or Haiku 4.5). The key stays on this device and is left out of workspace backups.',
+      'Rebuilt macOS disk images for Universal, Apple Silicon, and Intel Macs.',
+      'Removed the glow that followed the cursor across every page.',
+    ],
+  },
+  {
+    version: 'v0.3.0',
+    date: '2026-09-25',
+    title: 'Multilingual Meetings, Speaker Names & Windows App',
+    highlights: [
+      'Live transcription and AI translation across languages, with automatic spoken-language detection and summaries in the language you choose.',
+      'Speaker names are picked up automatically from Google Meet and other meeting apps, including a participant scanner that works without the Chrome extension.',
+      'An always-on-top floating meeting controller that stays visible over Google Meet and fullscreen windows.',
+      'Native Windows desktop app with a standalone installer.',
+      'Dark and light themes with the pull-cord switch and a circular transition, and the interface in English, Chinese, Japanese, and French.',
+      'One-click Chrome extension setup, uploads for PowerPoint, Word, and text files, and document deletion.',
+      'A responsive landing page with a mobile menu, automated build pipelines, and reliable installer downloads.',
+    ],
+  },
+  {
     version: 'v0.2.0',
     date: '2026-09-13',
     title: 'Interactive Audio ("Thock"), Workspace Modes & Husky Mascot',
@@ -53,7 +98,7 @@ export const ChangelogView: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-black text-slate-900 dark:text-white p-8 overflow-y-auto max-w-5xl mx-auto w-full select-none font-sans transition-colors duration-500">
+    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas text-slate-900 dark:text-white p-8 overflow-y-auto max-w-5xl mx-auto w-full select-none font-sans transition-colors duration-500">
       <div className="border-b border-slate-200 dark:border-zinc-850 pb-5 mb-8">
         <div className="flex items-center gap-2 text-slate-950 dark:text-white">
           <GitCommit className="w-5 h-5 text-slate-700 dark:text-zinc-400" />
