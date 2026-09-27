@@ -14,6 +14,7 @@ import {
 import { speechStatus, speechEngine, toWhisperLanguage, isNonSpeech } from './speech-engine';
 import { resolveTranscriptionEngine, getTranscriptionEngine, MULTILINGUAL_FALLBACK_ENGINE } from './transcription-engines';
 import { startPcmCapture, takeChunkBatch, locateInBatch, type PcmCapture, type SpeechChunk } from './pcm-capture';
+import { openMicrophone } from './microphone';
 
 // Longest audio merged into one Whisper call (the model window is 30 s)
 const MAX_BATCH_SECONDS = 25;
@@ -342,9 +343,7 @@ export class LiveSpeechTranscriber {
     try {
       let stream = this.inputStream;
       if (!stream) {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true },
-        });
+        stream = await openMicrophone({ echoCancellation: true, noiseSuppression: true });
         this.ownedStream = stream;
       }
       if (session !== this.session) {

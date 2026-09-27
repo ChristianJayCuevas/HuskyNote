@@ -521,7 +521,7 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-black text-slate-900 dark:text-white p-4 sm:p-8 overflow-y-auto max-w-5xl mx-auto w-full transition-colors duration-500 font-sans">
+    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas text-slate-900 dark:text-white p-4 sm:p-8 overflow-y-auto max-w-5xl mx-auto w-full transition-colors duration-500 font-sans">
 
       {/* ── Ollama Offline Banner ── */}
       <OllamaBanner
@@ -657,9 +657,13 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
         Shows a quick at-a-glance summary of the meeting's quantitative facts.
         This strip is always visible regardless of the active tab, giving the
         user instant context without needing to navigate.
+
+        It and the tab bar need shrink-0: they scroll horizontally, and a
+        scroll container in this height-limited flex column has no minimum
+        height, so long tab content squeezed both rows down to slivers.
       */}
       <div
-        className="flex items-stretch gap-2 mb-6 overflow-x-auto pb-1"
+        className="flex items-stretch gap-2 mb-6 overflow-x-auto pb-1 shrink-0"
         role="region"
         aria-label="Meeting key metrics"
       >
@@ -708,7 +712,7 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
 
       {/* ── Tab Navigation ── */}
       <div
-        className="flex items-center border-b border-slate-200 dark:border-zinc-850 mb-6 gap-2 overflow-x-auto"
+        className="flex items-center border-b border-slate-200 dark:border-zinc-850 mb-6 gap-2 overflow-x-auto shrink-0"
         role="tablist"
         aria-label="Meeting sections"
       >
@@ -1176,7 +1180,7 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
                     aria-label={`${seg.speaker} at ${formatSecondsToTime(seg.timestampSeconds)}`}
                     className={`p-3.5 rounded-lg border text-xs transition-colors space-y-1.5 mb-2 ${
                       isTarget
-                        ? 'bg-slate-200 dark:bg-zinc-800/80 border-slate-900 dark:border-white text-slate-950 dark:text-white shadow-md'
+                        ? 'bg-slate-200 dark:bg-zinc-800/80 border-slate-900 dark:border-zinc-400 text-slate-950 dark:text-white shadow-md'
                         : 'bg-slate-50 dark:bg-zinc-900/40 border-slate-200 dark:border-zinc-850 text-slate-800 dark:text-zinc-300'
                     }`}
                   >
@@ -1323,10 +1327,10 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-mono text-white/90 font-semibold">
+                        <span className="text-[10px] font-mono text-slate-950/90 dark:text-white/90 font-semibold">
                           {formatSecondsToTime(ss.timestampSeconds)}
                         </span>
-                        <span className="text-[10px] text-white/80 font-medium flex items-center gap-1">
+                        <span className="text-[10px] text-slate-950/80 dark:text-white/80 font-medium flex items-center gap-1">
                           {ss.type === 'portion' ? (
                             <>
                               <Crop className="w-2.5 h-2.5" aria-hidden="true" />
@@ -1341,7 +1345,7 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
                         </span>
                       </div>
                       {ss.caption && (
-                        <p className="text-[11px] text-white/80 mt-1 line-clamp-1">{ss.caption}</p>
+                        <p className="text-[11px] text-slate-950/80 dark:text-white/80 mt-1 line-clamp-1">{ss.caption}</p>
                       )}
                     </div>
                   </div>

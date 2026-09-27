@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# HuskyNote for Linux.
+#
+# Serves the bundled web app on 127.0.0.1:5892, the same address as the
+# Windows and macOS apps, and opens it in an app window. Data is kept by the
+# browser for that address, so it persists between launches.
+#
+# Environment:
+#   HUSKYNOTE_PORT=5892        port to serve on
+#   HUSKYNOTE_SERVE_ONLY=1     start the server without opening a window (for tests)
+
+set -u
+
+HERE="$(dirname "$(readlink -f "$0")")"
+WEB="$HERE/usr/share/huskynote/web"
+SERVE="$HERE/usr/share/huskynote/serve.py"
+PORT="${HUSKYNOTE_PORT:-5892}"
+URL="http://127.0.0.1:$PORT/"
+DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/HuskyNote"
+
+fail() {
+  command -v notify-send >/dev/null 2>&1 && notify-send "HuskyNote" "$1"
+  echo "HuskyNote: $1" >&2
+  exit 1
+}
+
+command -v python3 >/dev/null 2>&1 || fail "Python 3 is required. Install it with your package manager, for example: sudo apt install python3"
+
+# True when a HuskyNote server (not some other program) answers on the port
+huskynote_running() {
+  python3 - "$URL" <<'PY' >/dev/null 2>&1
+import sys, urllib.request
+body = urllib.request.urlopen(sys.argv[1], timeout=1).read(4096).decode("utf-8", "ignore")
+sys.exit(0 if "HuskyNote" in body else 1)
+PY
+}
+
+SERVER_PID=""
+if ! huskynote_running; then
+  python3 "$SERVE" "$PORT" "$WEB" &
+  SERVER_PID=$!
+  trap '[ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null' EXIT INT TERM
+  for _ in $(seq 1 50); do
+    huskynote_running && break
+    kill -0 "$SERVER_PID" 2>/dev/null || fail "Could not start the local server on port $PORT. Another program may be using it."
+    sleep 0.1
+  done
+  huskynote_running || fail "The local server on port $PORT did not respond."
+fi
+
+if [ "${HUSKYNOTE_SERVE_ONLY:-}" = "1" ]; then
+  echo "HuskyNote is serving $URL"
+  [ -n "$SERVER_PID" ] && wait "$SERVER_PID"
+  exit 0
+fi
+
+# An app window with its own profile keeps HuskyNote separate from normal browsing
+for browser in chromium chromium-browser google-chrome google-chrome-stable microsoft-edge microsoft-edge-stable brave-browser; do
+  if command -v "$browser" >/dev/null 2>&1; then
+    mkdir -p "$DATA_DIR/browser"
+    "$browser" --app="$URL" --user-data-dir="$DATA_DIR/browser" --class=HuskyNote --no-first-run --no-default-browser-check "$@"
+    exit $?
+  fi
+done
+
+# No Chromium-based browser: open the default browser and keep serving until this is closed
+echo "HuskyNote is running at $URL"
+echo "Close this window or press Ctrl+C to stop it."
+xdg-open "$URL" >/dev/null 2>&1 || true
+[ -n "$SERVER_PID" ] && wait "$SERVER_PID"

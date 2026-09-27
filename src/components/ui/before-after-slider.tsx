@@ -102,11 +102,11 @@ export const BeforeAfterSlider: React.FC = () => {
         ref={containerRef}
         onClick={handleTrackClick}
         onTouchMove={handleTouchMove}
-        className="relative w-full min-h-[480px] rounded-2xl overflow-hidden border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#070709] shadow-xl dark:shadow-2xl cursor-ew-resize select-none"
+        className="relative w-full min-h-[480px] rounded-2xl overflow-hidden border border-slate-200 dark:border-zinc-800 bg-white dark:bg-canvas shadow-xl dark:shadow-2xl cursor-ew-resize select-none"
       >
         {/* Left Side: Raw Audio Transcript Buffer */}
         <div
-          className={`absolute inset-y-0 left-0 overflow-hidden bg-slate-50 dark:bg-[#0c0c0e] border-r border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-300 z-10 select-none shadow-[6px_0_24px_rgba(0,0,0,0.1)] dark:shadow-[6px_0_24px_rgba(0,0,0,0.7)] ${
+          className={`absolute inset-y-0 left-0 overflow-hidden bg-slate-50 dark:bg-zinc-900 border-r border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-300 z-10 select-none shadow-[6px_0_24px_rgba(0,0,0,0.1)] dark:shadow-[6px_0_24px_rgba(0,0,0,0.7)] ${
             isDraggingState ? '' : 'transition-[width] duration-300 ease-out'
           }`}
           style={{ width: `${sliderPos}%` }}
@@ -161,7 +161,7 @@ export const BeforeAfterSlider: React.FC = () => {
 
         {/* Right Side: Structured AI Summary & Tasks */}
         <div
-          className={`absolute inset-y-0 right-0 overflow-hidden bg-slate-50 dark:bg-[#070709] text-slate-900 dark:text-zinc-100 select-none ${
+          className={`absolute inset-y-0 right-0 overflow-hidden bg-slate-50 dark:bg-canvas text-slate-900 dark:text-zinc-100 select-none ${
             isDraggingState ? '' : 'transition-[left,width] duration-300 ease-out'
           }`}
           style={{ left: `${sliderPos}%`, width: `${100 - sliderPos}%` }}

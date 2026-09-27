@@ -16,7 +16,7 @@ export const ThemeToggle: React.FC<{ className?: string }> = ({ className = '' }
       onClick={handleClick}
       className={`p-1.5 sm:p-2 rounded-lg border transition-all duration-200 flex items-center justify-center ${
         isDark
-          ? 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700 hover:bg-zinc-850 shadow-sm'
+          ? 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700 dark:hover:bg-zinc-850 shadow-sm'
           : 'bg-white border-slate-200 text-slate-700 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 shadow-sm'
       } ${className}`}
       title={isDark ? `${t('theme.light')} mode` : `${t('theme.dark')} mode`}

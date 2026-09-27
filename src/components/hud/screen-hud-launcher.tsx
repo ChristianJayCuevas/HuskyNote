@@ -163,7 +163,7 @@ export const ScreenHudLauncher: React.FC = () => {
       >
         <Monitor className="w-3.5 h-3.5" />
         <span className="hidden xl:inline">Quick Bar</span>
-        {isActive && <span className="w-1.5 h-1.5 rounded-full bg-white dark:bg-black animate-pulse" />}
+        {isActive && <span className="w-1.5 h-1.5 rounded-full bg-white dark:bg-canvas animate-pulse" />}
       </button>
 
       {/* Render into Document PiP window via Portal */}

@@ -52,13 +52,13 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
   );
 
   return (
-    <div className="flex items-center gap-2 flex-wrap py-2 border-b border-zinc-850 bg-zinc-950 px-6">
-      <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+    <div className="flex items-center gap-2 flex-wrap py-2 border-b dark:border-zinc-850 bg-white dark:bg-zinc-950 px-6">
+      <span className="text-[11px] font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
         Context:
       </span>
 
       {selectedChips.length === 0 ? (
-        <span className="text-xs text-zinc-500 italic">No context attached.</span>
+        <span className="text-xs text-slate-500 dark:text-zinc-500 italic">No context attached.</span>
       ) : (
         selectedChips.map((chip) => {
           const icons = {
@@ -71,13 +71,13 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
           return (
             <span
               key={chip.id}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-750 text-xs text-zinc-200 font-medium"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 dark:bg-zinc-900 border dark:border-zinc-750 text-xs text-slate-800 dark:text-zinc-200 font-medium"
             >
-              <Icon className="w-3.5 h-3.5 text-zinc-400" />
+              <Icon className="w-3.5 h-3.5 text-slate-600 dark:text-zinc-400" />
               <span className="truncate max-w-[150px]">{chip.title}</span>
               <button
                 onClick={() => onRemoveChip(chip.id)}
-                className="text-zinc-500 hover:text-white p-0.5 rounded"
+                className="text-slate-500 dark:text-zinc-500 hover:text-slate-950 dark:hover:text-white p-0.5 rounded"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -107,19 +107,19 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
         >
           <div className="space-y-4">
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-2.5" />
+              <Search className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-500 absolute left-3 top-2.5" />
               <input
                 type="text"
                 placeholder="Search workspace entities..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-md pl-8 pr-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none"
+                className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-md pl-8 pr-3 py-1.5 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-500 dark:placeholder-zinc-500 focus:outline-none"
               />
             </div>
 
             <div className="max-h-72 overflow-y-auto space-y-2">
               {filtered.length === 0 ? (
-                <div className="py-8 text-center text-xs text-zinc-500">
+                <div className="py-8 text-center text-xs text-slate-500 dark:text-zinc-500">
                   {availableItems.length === 0
                     ? 'No notes, meetings, or documents in workspace yet.'
                     : 'No additional items match your query.'}
@@ -140,18 +140,18 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
                         onAddChip(item);
                         setIsModalOpen(false);
                       }}
-                      className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/60 border border-zinc-850 hover:bg-zinc-850 hover:border-zinc-700 cursor-pointer transition-colors text-xs"
+                      className="flex items-center justify-between p-3 rounded-lg bg-slate-50/60 dark:bg-zinc-900/60 border dark:border-zinc-850 dark:hover:bg-zinc-850 hover:border-slate-300 dark:hover:border-zinc-700 cursor-pointer transition-colors text-xs"
                     >
                       <div className="flex items-center gap-2.5">
-                        <Icon className="w-4 h-4 text-zinc-400" />
+                        <Icon className="w-4 h-4 text-slate-600 dark:text-zinc-400" />
                         <div>
-                          <div className="font-semibold text-zinc-200">{item.title}</div>
-                          <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
+                          <div className="font-semibold text-slate-800 dark:text-zinc-200">{item.title}</div>
+                          <span className="text-[10px] text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
                             {item.type}
                           </span>
                         </div>
                       </div>
-                      <Plus className="w-4 h-4 text-zinc-400" />
+                      <Plus className="w-4 h-4 text-slate-600 dark:text-zinc-400" />
                     </div>
                   );
                 })

@@ -20,6 +20,7 @@ interface LoadedEngine {
   engine: TransformersEngine;
   asr: AutomaticSpeechRecognitionPipeline;
   device: 'webgpu' | 'wasm';
+  gpuError?: string;
 }
 
 let loaded: Promise<LoadedEngine> | null = null;
@@ -33,7 +34,10 @@ const progress_callback = (p: any) => {
 async function createEngine(engine: TransformersEngine): Promise<LoadedEngine> {
   // Cast avoids transformers.js' pipeline overload union, which exceeds TypeScript's limits
   const create = pipeline as any;
-  if ((await detectWebGpu()).available) {
+  const gpu = await detectWebGpu();
+  let gpuError = gpu.reason;
+  if (gpu.available) {
+    gpuError = undefined;
     try {
       const asr = await create('automatic-speech-recognition', engine.model, {
         device: 'webgpu',
@@ -43,7 +47,8 @@ async function createEngine(engine: TransformersEngine): Promise<LoadedEngine> {
       // The first GPU run compiles shaders; do it now rather than on the first phrase
       await asr(new Float32Array(16000));
       return { engine, asr, device: 'webgpu' };
-    } catch (err) {
+    } catch (err: any) {
+      gpuError = err?.message || String(err);
       console.warn('[HuskyNote] WebGPU speech model failed, using CPU:', err);
     }
   }
@@ -52,7 +57,7 @@ async function createEngine(engine: TransformersEngine): Promise<LoadedEngine> {
     dtype: engine.dtype.wasm,
     progress_callback,
   });
-  return { engine, asr, device: 'wasm' };
+  return { engine, asr, device: 'wasm', gpuError };
 }
 
 self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
@@ -66,8 +71,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           loaded = null; // allow a retry after a failed download
         });
       }
-      const { device } = await loaded;
-      post({ type: 'ready', engineId: req.engine.id, device });
+      const { device, gpuError } = await loaded;
+      post({ type: 'ready', engineId: req.engine.id, device, gpuError });
     } catch (err: any) {
       post({ type: 'error', message: err?.message || String(err) });
     }

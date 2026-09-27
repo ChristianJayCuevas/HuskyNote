@@ -301,16 +301,15 @@ export const PhysicsRopeToggle: React.FC<{ className?: string }> = ({ className 
   return (
     <div
       ref={containerRef}
-      className={`relative select-none touch-none ${className}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={() => setIsHovered(false)}
+      className={`relative select-none touch-none pointer-events-none ${className}`}
       title={`Pull cord: Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
       aria-label="Physics pull-cord lampshade switch under appbar"
     >
-      <div className="relative w-[72px] h-[130px] pointer-events-auto">
+      {/* The 72x130 box hangs over page content, so only the handle takes pointer events */}
+      <div className="relative w-[72px] h-[130px]">
         <svg
           ref={svgRef}
-          className="w-full h-full overflow-visible block"
+          className="w-full h-full overflow-visible block pointer-events-none"
           viewBox="0 0 100 150"
           preserveAspectRatio="xMidYMin meet"
           onPointerDown={handlePointerDown}
@@ -390,13 +389,19 @@ export const PhysicsRopeToggle: React.FC<{ className?: string }> = ({ className 
           <g
             ref={handleGroupRef}
             transform={`translate(${ANCHOR_X}, ${ANCHOR_Y + L_REST}) rotate(0)`}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={() => setIsHovered(false)}
             style={{
+              pointerEvents: 'auto',
               filter: isHovered || isDragging
                 ? 'drop-shadow(0 4px 10px rgba(0,0,0,0.35))'
                 : 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
               transition: 'filter 0.15s ease',
             }}
           >
+            {/* Hit target covering the bell and the DARK / LIGHT badge */}
+            <rect x="-22" y="-4" width="44" height="37" fill="transparent" pointerEvents="all" />
+
             {/* Ring collar */}
             <rect x="-3" y="-1" width="6" height="3" rx="1"
               fill={isDark ? '#a1a1aa' : '#475569'} />

@@ -1,5 +1,6 @@
 import Dexie from 'dexie';
 import { db } from '../db';
+import { DEFAULT_PROFILE_ID, getActiveProfileId } from './profiles';
 
 /**
  * One-time migration of data stored under the pre-rebrand DomoNote names.
@@ -60,6 +61,8 @@ export async function migrateLegacyDatabase(): Promise<void> {
 export async function migrateLegacyData(): Promise<void> {
   try {
     if (localStorage.getItem(MIGRATED_FLAG) === 'true') return;
+    // Old DomoNote data belongs in the original database, not in another profile
+    if (getActiveProfileId() !== DEFAULT_PROFILE_ID) return;
     migrateLegacyLocalStorage(localStorage);
     await migrateLegacyDatabase();
     localStorage.setItem(MIGRATED_FLAG, 'true');

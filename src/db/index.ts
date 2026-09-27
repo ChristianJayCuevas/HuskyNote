@@ -11,6 +11,7 @@ import type {
   StoredBlob,
   ScheduleEvent,
 } from '../types';
+import { DEFAULT_PROFILE_ID, createProfile, getActiveProfileId, profileDatabaseName, removeProfile, type Profile } from '../services/profiles';
 
 export class HuskyNoteDatabase extends Dexie {
   notes!: Table<Note, string>;
@@ -24,8 +25,9 @@ export class HuskyNoteDatabase extends Dexie {
   blobs!: Table<StoredBlob, string>;
   schedule!: Table<ScheduleEvent, string>;
 
-  constructor() {
-    super('HuskyNoteDB');
+  /** Each profile has its own database; the default profile keeps the original name */
+  constructor(name: string = profileDatabaseName(DEFAULT_PROFILE_ID)) {
+    super(name);
     this.version(1).stores({
       notes: 'id, title, folderId, createdAt, updatedAt, *tags',
       meetings: 'id, title, startTime, createdAt',
@@ -43,7 +45,8 @@ export class HuskyNoteDatabase extends Dexie {
   }
 }
 
-export const db = new HuskyNoteDatabase();
+// The open profile's data. Switching profiles reloads the app, which reopens this with the new database.
+export const db = new HuskyNoteDatabase(profileDatabaseName(getActiveProfileId()));
 
 // Default Application Settings
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -124,6 +127,33 @@ export async function initializeDatabase(): Promise<void> {
   if (templateCount === 0) {
     await db.templates.bulkPut(BUILTIN_TEMPLATES);
   }
+}
+
+/**
+ * Creates a profile and copies this profile's settings into it, so the AI
+ * provider, API key, and transcription choices carry over. Everything else
+ * starts empty.
+ */
+export async function createProfileWithSettings(name: string): Promise<Profile> {
+  const profile = createProfile(name);
+  const settings = await db.settings.get('current');
+  if (settings) {
+    const target = new HuskyNoteDatabase(profileDatabaseName(profile.id));
+    try {
+      await target.settings.put(settings);
+    } finally {
+      target.close();
+    }
+  }
+  return profile;
+}
+
+/** Permanently deletes a profile and all of its notes, meetings, documents, and settings. */
+export async function deleteProfileAndData(profileId: string): Promise<void> {
+  if (profileId === DEFAULT_PROFILE_ID) throw new Error('The default profile cannot be deleted.');
+  if (profileId === getActiveProfileId()) throw new Error('Switch to another profile before deleting this one.');
+  await Dexie.delete(profileDatabaseName(profileId));
+  removeProfile(profileId);
 }
 
 // Full Workspace Backup & Restore

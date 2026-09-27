@@ -23,21 +23,84 @@ interface ChunkerOptions {
   minSpeechSeconds?: number;
 }
 
-/** Linear-interpolation resampler for mono audio */
+/**
+ * Band-limited resampler for mono audio (Blackman-windowed sinc). When
+ * downsampling, everything above the output's Nyquist frequency (8 kHz for
+ * 16 kHz output) is filtered out first; skipping that step folds consonant
+ * bursts, hiss, and fan noise back into the speech band and garbles words.
+ */
 export function resample(input: Float32Array, fromRate: number, toRate: number): Float32Array {
   if (fromRate === toRate) return input;
-  const outLength = Math.max(1, Math.round((input.length * toRate) / fromRate));
-  const out = new Float32Array(outLength);
   const ratio = fromRate / toRate;
+  const outLength = Math.max(1, Math.round(input.length / ratio));
+  const out = new Float32Array(outLength);
+  const { kernels, halfWidth } = getResampleKernels(fromRate, toRate);
+  const width = 2 * halfWidth;
+  const last = input.length - 1;
   for (let i = 0; i < outLength; i++) {
-    const pos = i * ratio;
-    const idx = Math.floor(pos);
-    const frac = pos - idx;
-    const a = input[idx] ?? 0;
-    const b = input[idx + 1] ?? a;
-    out[i] = a + (b - a) * frac;
+    const center = i * ratio;
+    let base = Math.floor(center);
+    let phase = Math.round((center - base) * KERNEL_PHASES);
+    if (phase === KERNEL_PHASES) {
+      base += 1;
+      phase = 0;
+    }
+    const kernel = kernels[phase];
+    // Taps cover input samples base - halfWidth + 1 .. base + halfWidth
+    const first = base - halfWidth + 1;
+    let sum = 0;
+    if (first >= 0 && first + width - 1 <= last) {
+      for (let m = 0; m < width; m++) sum += input[first + m] * kernel[m];
+      out[i] = sum;
+    } else {
+      // At the chunk edges, renormalize over the taps that exist to keep unity gain
+      let weight = 0;
+      for (let m = 0; m < width; m++) {
+        const j = first + m;
+        if (j < 0 || j > last) continue;
+        sum += input[j] * kernel[m];
+        weight += kernel[m];
+      }
+      out[i] = weight !== 0 ? sum / weight : 0;
+    }
   }
   return out;
+}
+
+/** Fractional positions the filter is precomputed for; finer than any audible timing error */
+const KERNEL_PHASES = 256;
+const kernelCache = new Map<string, { kernels: Float32Array[]; halfWidth: number }>();
+
+function getResampleKernels(fromRate: number, toRate: number): { kernels: Float32Array[]; halfWidth: number } {
+  const key = `${fromRate}:${toRate}`;
+  const cached = kernelCache.get(key);
+  if (cached) return cached;
+  const scale = Math.min(1, toRate / fromRate);
+  // Cutoff just under the lower Nyquist, in cycles per input sample
+  const cutoff = 0.45 * scale;
+  // Kernel half-width in input samples; wider kernels give a sharper transition
+  const halfWidth = Math.ceil(16 / scale);
+  const kernels: Float32Array[] = [];
+  for (let p = 0; p < KERNEL_PHASES; p++) {
+    const kernel = new Float32Array(2 * halfWidth);
+    const frac = p / KERNEL_PHASES;
+    let total = 0;
+    for (let m = 0; m < kernel.length; m++) {
+      const t = m - halfWidth + 1 - frac;
+      const x = t / halfWidth;
+      if (Math.abs(x) >= 1) continue;
+      const window = 0.42 + 0.5 * Math.cos(Math.PI * x) + 0.08 * Math.cos(2 * Math.PI * x);
+      const sinc = t === 0 ? 2 * cutoff : Math.sin(2 * Math.PI * cutoff * t) / (Math.PI * t);
+      kernel[m] = sinc * window;
+      total += kernel[m];
+    }
+    // Unity gain for speech-band frequencies
+    for (let m = 0; m < kernel.length; m++) kernel[m] /= total;
+    kernels.push(kernel);
+  }
+  const result = { kernels, halfWidth };
+  kernelCache.set(key, result);
+  return result;
 }
 
 export class SpeechChunker {

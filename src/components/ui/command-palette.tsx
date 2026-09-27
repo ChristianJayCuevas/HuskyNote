@@ -222,7 +222,7 @@ export const CommandPalette: React.FC = () => {
   if (!isCommandPaletteOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/60 dark:bg-black/80 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/60 dark:bg-canvas-inset/80 backdrop-blur-sm animate-fade-in">
       <div
         className="fixed inset-0"
         onClick={() => setIsCommandPaletteOpen(false)}

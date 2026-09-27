@@ -1,0 +1,50 @@
+name: Build Linux App
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  build-linux:
+    name: Build AppImage and tarball
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Web Bundle
+        run: npm run build
+
+      - name: Package AppImage and Tarball
+        run: bash scripts/build-linux.sh
+
+      - name: Smoke Test the AppImage
+        run: |
+          # Serve-only mode starts the packaged server without opening a window
+          HUSKYNOTE_SERVE_ONLY=1 HUSKYNOTE_PORT=5899 APPIMAGE_EXTRACT_AND_RUN=1 ./build/linux/HuskyNote-Linux-x86_64.AppImage &
+          for i in $(seq 1 50); do curl -fs -o /dev/null http://127.0.0.1:5899/ && break; sleep 0.2; done
+          curl -fs http://127.0.0.1:5899/ | grep -q '<title>HuskyNote' || { echo "App page not served"; exit 1; }
+          MJS=$(find build/linux/HuskyNote.AppDir/usr/share/huskynote/web/assets -name '*.mjs' | head -1 | xargs basename)
+          TYPE=$(curl -fsI "http://127.0.0.1:5899/assets/$MJS" | tr -d '\r' | awk -F': ' 'tolower($1)=="content-type"{print $2}')
+          echo "$MJS -> $TYPE"
+          [ "$TYPE" = "text/javascript" ] || { echo "Module scripts must be served as JavaScript"; exit 1; }
+          pkill -f 'serve.py 5899' || true
+
+      - name: Upload Linux Packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: huskynote-linux
+          path: |
+            build/linux/HuskyNote-Linux-x86_64.AppImage
+            build/linux/HuskyNote-Linux-x64.tar.gz
+          if-no-files-found: error

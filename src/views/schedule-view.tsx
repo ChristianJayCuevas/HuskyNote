@@ -395,9 +395,9 @@ Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Re
   }, [selectedDate]);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-black text-slate-900 dark:text-white p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-7xl mx-auto w-full select-none font-sans transition-colors duration-500">
+    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas text-slate-900 dark:text-white p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-7xl mx-auto w-full select-none font-sans transition-colors duration-500">
       {/* Sticky Top Header */}
-      <div className="sticky top-0 z-20 bg-slate-50/95 dark:bg-black/95 backdrop-blur-md pb-5 pt-1 -mt-2 mb-8 border-b border-slate-200 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors duration-500">
+      <div className="sticky top-0 z-20 bg-slate-50/95 dark:bg-canvas/95 backdrop-blur-md pb-5 pt-1 -mt-2 mb-8 border-b border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors duration-500">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
@@ -443,9 +443,9 @@ Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Re
         {/* Left 7 Cols: Calendar Grid & Agenda List */}
         <div className="lg:col-span-7 space-y-6">
           {/* Interactive Month Calendar Card */}
-          <div className="p-5 sm:p-6 rounded-2xl border border-slate-300 dark:border-white/15 bg-white dark:bg-zinc-950 shadow-sm dark:shadow-xl transition-all">
+          <div className="p-5 sm:p-6 rounded-2xl border border-slate-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm dark:shadow-xl transition-all">
             {/* Calendar Controls */}
-            <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-white/10">
+            <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
               <div className="flex items-center gap-2">
                 <CalendarCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 <h3 className="text-base font-bold text-slate-950 dark:text-white tracking-tight">
@@ -464,14 +464,14 @@ Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Re
                 </Button>
                 <button
                   onClick={handlePrevMonth}
-                  className="p-1.5 rounded-lg border border-slate-300 dark:border-white/10 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                  className="p-1.5 rounded-lg border border-slate-300 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
                   title="Previous Month"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <button
                   onClick={handleNextMonth}
-                  className="p-1.5 rounded-lg border border-slate-300 dark:border-white/10 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                  className="p-1.5 rounded-lg border border-slate-300 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
                   title="Next Month"
                 >
                   <ChevronRight className="w-4 h-4" />
@@ -504,7 +504,7 @@ Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Re
                       cell.isSelected
                         ? 'border-emerald-600 dark:border-emerald-400 bg-emerald-500/10 shadow-xs ring-1 ring-emerald-500'
                         : cell.isToday
-                        ? 'border-slate-400 dark:border-white/30 bg-slate-100 dark:bg-white/5 font-extrabold'
+                        ? 'border-slate-400 dark:border-zinc-400 bg-slate-100 dark:bg-zinc-900 font-extrabold'
                         : cell.isCurrentMonth
                         ? 'border-slate-200 dark:border-zinc-850 hover:border-slate-400 dark:hover:border-zinc-700 bg-slate-50/50 dark:bg-zinc-900/40'
                         : 'border-transparent text-slate-400 dark:text-zinc-600 opacity-40 hover:opacity-80'
@@ -545,7 +545,7 @@ Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Re
 
           {/* Agenda / Plotted Events List */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-zinc-800">
               <div>
                 <h3 className="text-sm font-bold text-slate-950 dark:text-white tracking-tight">
                   {selectedDateLabel}
@@ -556,7 +556,7 @@ Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Re
                 </span>
               </div>
 
-              <div className="flex items-center gap-1 bg-slate-200/80 dark:bg-white/10 p-0.5 rounded-lg text-xs font-mono">
+              <div className="flex items-center gap-1 bg-slate-200/80 dark:bg-zinc-850 p-0.5 rounded-lg text-xs font-mono">
                 <button
                   onClick={() => setActiveFilter('selected-day')}
                   className={`px-2.5 py-1 rounded-md transition-colors ${
@@ -581,7 +581,7 @@ Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Re
             </div>
 
             {displayedEvents.length === 0 ? (
-              <div className="p-8 rounded-2xl border border-dashed border-slate-300 dark:border-white/15 text-center bg-white/60 dark:bg-zinc-950/60">
+              <div className="p-8 rounded-2xl border border-dashed border-slate-300 dark:border-zinc-800 text-center bg-white/60 dark:bg-zinc-950/60">
                 <CalendarIcon className="w-8 h-8 text-slate-400 dark:text-zinc-600 mx-auto mb-2 opacity-60" />
                 <p className="text-xs text-slate-700 dark:text-zinc-300 font-medium">
                   No events plotted for {selectedDate}.
@@ -593,7 +593,7 @@ Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Re
             ) : (
               <div className="space-y-3">
                 {displayedEvents.map((ev) => {
-                  const categoryBadge = 'bg-slate-100 text-slate-900 border-slate-300 dark:bg-white/10 dark:text-white dark:border-white/20';
+                  const categoryBadge = 'bg-slate-100 text-slate-900 border-slate-300 dark:bg-zinc-850 dark:text-white dark:border-zinc-800';
 
                   return (
                     <div
@@ -601,7 +601,7 @@ Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Re
                       className={`p-4 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
                         ev.completed
                           ? 'bg-slate-100/60 dark:bg-zinc-950/40 border-slate-200 dark:border-zinc-900 opacity-60'
-                          : 'bg-white dark:bg-zinc-950 border-slate-300 dark:border-white/10 shadow-xs hover:border-slate-400 dark:hover:border-white/20'
+                          : 'bg-white dark:bg-zinc-950 border-slate-300 dark:border-zinc-800 shadow-xs hover:border-slate-400 dark:hover:border-zinc-600'
                       }`}
                     >
                       <div className="flex items-start gap-3 min-w-0">
@@ -630,7 +630,7 @@ Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Re
                             </span>
 
                             {ev.detectedFrom && (
-                              <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-slate-200 text-slate-900 dark:bg-white/10 dark:text-white border border-slate-300 dark:border-white/20 flex items-center gap-1 font-bold">
+                              <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-slate-200 text-slate-900 dark:bg-zinc-850 dark:text-white border border-slate-300 dark:border-zinc-800 flex items-center gap-1 font-bold">
                                 <Sparkles className="w-2.5 h-2.5 text-slate-900 dark:text-white" />
                                 AI DETECTED
                               </span>
@@ -704,9 +704,9 @@ Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Re
           {/* Quick Add Event Form */}
           <form
             onSubmit={handleAddEvent}
-            className="p-5 sm:p-6 rounded-2xl border border-slate-300 dark:border-white/15 bg-white dark:bg-zinc-950 space-y-4 shadow-sm dark:shadow-xl transition-all"
+            className="p-5 sm:p-6 rounded-2xl border border-slate-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 space-y-4 shadow-sm dark:shadow-xl transition-all"
           >
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-zinc-800">
               <h3 className="text-sm font-bold text-slate-950 dark:text-white tracking-tight flex items-center gap-2">
                 <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>Plot Schedule Event</span>
@@ -808,8 +808,8 @@ Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Re
           </form>
 
           {/* Google Calendar Sync & Auth Panel */}
-          <div className="p-5 sm:p-6 rounded-2xl border border-slate-300 dark:border-white/15 bg-white dark:bg-zinc-950 shadow-sm dark:shadow-xl space-y-4 transition-all">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10">
+          <div className="p-5 sm:p-6 rounded-2xl border border-slate-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm dark:shadow-xl space-y-4 transition-all">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-zinc-800">
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 <h3 className="text-sm font-bold text-slate-950 dark:text-white tracking-tight">
@@ -898,7 +898,7 @@ Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Re
           </div>
 
           {/* Privacy & Offline Guarantee Card */}
-          <div className="p-4 sm:p-5 rounded-2xl border border-slate-300 dark:border-white/10 bg-slate-100/60 dark:bg-zinc-950/60 font-mono text-xs space-y-2 text-slate-700 dark:text-zinc-400">
+          <div className="p-4 sm:p-5 rounded-2xl border border-slate-300 dark:border-zinc-800 bg-slate-100/60 dark:bg-zinc-950/60 font-mono text-xs space-y-2 text-slate-700 dark:text-zinc-400">
             <div className="flex items-center gap-2 text-slate-950 dark:text-zinc-200 font-bold text-xs">
               <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>100% Local Scheduling Engine</span>

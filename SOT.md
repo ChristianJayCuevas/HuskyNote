@@ -143,7 +143,7 @@ All entities are defined with strict TypeScript typing and indexed in IndexedDB:
 
 1. **XSS Prevention**: Raw markdown is rendered through React Markdown with dangerous HTML execution disabled and sanitized with DOMPurify.
 2. **File Upload Verification**: PDF uploads are validated for valid PDF headers (`%PDF-`) and size-constrained client-side.
-3. **Network Isolation**: All outbound network requests from the web application target either localhost (Ollama port 11434, companion port 8765) or are completely client-side.
+3. **Network Isolation**: Outbound network requests from the web application target localhost (Ollama port 11434, companion port 8765) or are completely client-side, except two connections the user turns on: the Claude API when Claude is the selected AI provider, and the once-a-day update check against GitHub Releases (off by default, sends no workspace data).
 4. **Permissions Principle**: Microphone and Screen Sharing APIs are invoked only upon direct user action. Visual indicators remain conspicuous during active recording.
 
 ---

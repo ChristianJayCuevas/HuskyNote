@@ -44,6 +44,7 @@ jobs:
             # Bundle the web app without the downloadable installers
             rsync -a --exclude 'downloads' dist/ "$APP/Contents/Resources/web/"
             cp AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+            cp desktop/serve.py "$APP/Contents/Resources/serve.py"
             sed "s/__VERSION__/$VERSION/g" desktop/Info.plist > "$APP/Contents/Info.plist"
             codesign --force --deep --sign - --entitlements desktop/entitlements.plist "$APP"
             cp "desktop/Open HuskyNote.command" "$STAGE/"
@@ -53,6 +54,20 @@ jobs:
           done
           ls -lh build/*.dmg
           shasum -a 256 build/*.dmg
+
+      - name: Smoke Test the Bundled Server
+        run: |
+          # The app serves its files with the system Python; module scripts must come back as JavaScript
+          RES="build/stage-Universal/HuskyNote.app/Contents/Resources"
+          /usr/bin/python3 --version
+          /usr/bin/python3 "$RES/serve.py" 5899 "$RES/web" &
+          for i in $(seq 1 50); do curl -fs -o /dev/null http://127.0.0.1:5899/ && break; sleep 0.2; done
+          curl -fs http://127.0.0.1:5899/ | grep -q '<title>HuskyNote' || { echo "App page not served"; exit 1; }
+          MJS=$(find "$RES/web/assets" -name '*.mjs' | head -1 | xargs basename)
+          TYPE=$(curl -fsI "http://127.0.0.1:5899/assets/$MJS" | tr -d '\r' | awk -F': ' 'tolower($1)=="content-type"{print $2}')
+          echo "$MJS -> $TYPE"
+          [ "$TYPE" = "text/javascript" ] || { echo "Module scripts must be served as JavaScript"; exit 1; }
+          pkill -f 'serve.py 5899' || true
 
       - name: Upload Disk Images
         uses: actions/upload-artifact@v4

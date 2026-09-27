@@ -74,9 +74,9 @@ export const HuskyMascot: React.FC<HuskyMascotProps> = ({
 
         {/* Animated Pencil & Notepad Scribble Effect */}
         {size !== 'sm' && (scribbleActive || isWriting) && (
-          <div className="absolute bottom-5 right-6 pointer-events-none flex items-center gap-1 bg-zinc-950/80 border border-zinc-800 px-2 py-0.5 rounded-full shadow-lg animate-fade-in">
-            <Edit3 className="w-3 h-3 text-white animate-bounce" />
-            <span className="text-[9px] font-mono text-zinc-300 tracking-wider whitespace-nowrap">
+          <div className="absolute bottom-5 right-6 pointer-events-none flex items-center gap-1 bg-white/80 dark:bg-zinc-950/80 border border-slate-200 dark:border-zinc-800 px-2 py-0.5 rounded-full shadow-lg animate-fade-in">
+            <Edit3 className="w-3 h-3 text-slate-950 dark:text-white animate-bounce" />
+            <span className="text-[9px] font-mono text-slate-700 dark:text-zinc-300 tracking-wider whitespace-nowrap">
               taking notes...
             </span>
           </div>
@@ -86,8 +86,8 @@ export const HuskyMascot: React.FC<HuskyMascotProps> = ({
         {isHovered && (
           <div className="absolute -top-1 -right-1 pointer-events-none">
             <span className="flex h-3 w-3 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-40" />
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-900 dark:bg-white opacity-40" />
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-slate-900 dark:bg-white" />
             </span>
           </div>
         )}

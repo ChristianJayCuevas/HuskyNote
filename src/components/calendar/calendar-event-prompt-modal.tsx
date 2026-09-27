@@ -89,15 +89,15 @@ export const CalendarEventPromptModal: React.FC<CalendarEventPromptModalProps> =
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-xl rounded-2xl border border-slate-300 dark:border-white/15 bg-white dark:bg-zinc-950 text-slate-950 dark:text-white shadow-2xl p-6 relative overflow-hidden">
+      <div className="w-full max-w-xl rounded-2xl border border-slate-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-slate-950 dark:text-white shadow-2xl p-6 relative overflow-hidden">
         {/* Glow ambient background */}
         <div className="absolute -top-10 -right-10 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Modal Header */}
-        <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10 relative z-10">
+        <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-200 dark:border-zinc-800 relative z-10">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-white/10 border border-slate-300 dark:border-white/20 text-slate-900 dark:text-white">
+            <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-zinc-850 border border-slate-300 dark:border-zinc-800 text-slate-900 dark:text-white">
               <Sparkles className="w-5 h-5 text-slate-900 dark:text-white" />
             </div>
             <div>
@@ -105,7 +105,7 @@ export const CalendarEventPromptModal: React.FC<CalendarEventPromptModalProps> =
                 <h3 className="text-lg font-bold text-slate-950 dark:text-white tracking-tight">
                   Scheduled Events Detected
                 </h3>
-                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-900 dark:bg-white/10 dark:text-white font-bold border border-slate-300 dark:border-white/20">
+                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-900 dark:bg-zinc-850 dark:text-white font-bold border border-slate-300 dark:border-zinc-800">
                   Local AI
                 </span>
               </div>
@@ -117,7 +117,7 @@ export const CalendarEventPromptModal: React.FC<CalendarEventPromptModalProps> =
 
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -197,7 +197,7 @@ export const CalendarEventPromptModal: React.FC<CalendarEventPromptModalProps> =
         </div>
 
         {/* Modal Footer */}
-        <div className="pt-4 mt-2 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 relative z-10">
+        <div className="pt-4 mt-2 border-t border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3 relative z-10">
           <button
             onClick={handleViewSchedule}
             className="text-xs font-bold text-slate-900 dark:text-white hover:underline flex items-center gap-1"

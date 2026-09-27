@@ -4,6 +4,7 @@
  */
 import type { TimedText, WorkerRequest, WorkerResponse } from './asr-protocol';
 import type { TranscriptionEngine } from './transcription-engines';
+import { requestPersistentStorage } from './model-cache';
 
 export type { TimedText };
 
@@ -18,6 +19,8 @@ export interface SpeechEngineStatus {
   device?: 'webgpu' | 'wasm';
   /** Display name of the engine being loaded or used */
   engineName?: string;
+  /** Why the model runs on the CPU although this device has a GPU */
+  gpuError?: string;
 }
 
 type Listener = (status: SpeechEngineStatus) => void;
@@ -70,6 +73,8 @@ class SpeechEngine {
   private loadPromise: Promise<void> | null = null;
   private fileProgress = new Map<string, { loaded: number; total: number }>();
   private device: 'webgpu' | 'wasm' | undefined;
+  private gpuError: string | undefined;
+  private storageRequested = false;
 
   isSupported(): boolean {
     return typeof Worker !== 'undefined' && typeof WebAssembly !== 'undefined';
@@ -81,7 +86,12 @@ class SpeechEngine {
   }
 
   private setStatus(status: SpeechEngineStatus): void {
-    speechStatus.set({ ...status, engineName: this.engine?.name, device: status.device ?? this.device });
+    speechStatus.set({
+      ...status,
+      engineName: this.engine?.name,
+      device: status.device ?? this.device,
+      gpuError: status.gpuError ?? this.gpuError,
+    });
   }
 
   private reset(reason: string): void {
@@ -89,6 +99,7 @@ class SpeechEngine {
     this.worker = null;
     this.loadPromise = null;
     this.device = undefined;
+    this.gpuError = undefined;
     this.fileProgress.clear();
     this.pending.forEach((p) => p.reject(new Error(reason)));
     this.pending.clear();
@@ -129,7 +140,9 @@ class SpeechEngine {
       }
       case 'ready':
         this.device = msg.device;
-        this.setStatus({ state: 'ready', device: msg.device });
+        this.gpuError = msg.gpuError;
+        if (msg.gpuError) console.warn(`[HuskyNote] ${this.engine?.name} is running on the CPU: ${msg.gpuError}`);
+        this.setStatus({ state: 'ready', device: msg.device, gpuError: msg.gpuError });
         break;
       case 'result': {
         const p = this.pending.get(msg.id);
@@ -162,6 +175,11 @@ class SpeechEngine {
       this.engine = engine;
     }
     if (!this.loadPromise) {
+      // Models are hundreds of MB; keep the browser from evicting them under storage pressure
+      if (!this.storageRequested) {
+        this.storageRequested = true;
+        requestPersistentStorage();
+      }
       if (speechStatus.get().state !== 'ready' || !this.device) this.setStatus({ state: 'loading' });
       this.loadPromise = new Promise<void>((resolve, reject) => {
         const worker = this.getWorker();

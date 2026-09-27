@@ -1,35 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../db';
+import releases from '../data/changelog.json';
 import { GitCommit, Shield, Database, Cpu, CheckCircle, Terminal, Layers } from 'lucide-react';
 
-const RELEASES = [
-  {
-    version: 'v0.2.0',
-    date: '2026-09-13',
-    title: 'Interactive Audio ("Thock"), Workspace Modes & Husky Mascot',
-    highlights: [
-      'Web Audio API mechanical switch audio synthesis with custom low-frequency thock, click, pop, and chime.',
-      'Workspace Modes: Husky Notes Focus Sanctuary, Automated Schedule & Calendar, Full Screen Studio Recorder.',
-      'Animated Husky mascot companion taking notes in Husky Notes mode.',
-      'Embedded screen recording walkthrough demo player in About section.',
-      'Collapsible desktop sidebar (256px <-> 64px) with persistent hardware status pill.',
-      'Screen capture flight recorder with keyframe step extraction.',
-    ],
-  },
-  {
-    version: 'v0.1.0',
-    date: '2026-09-13',
-    title: 'Initial Production Release — HuskyNote Core Architecture',
-    highlights: [
-      'Local-first client-side architecture using Dexie IndexedDB.',
-      'Meeting Secretary with real browser MediaRecorder speech recognition and clickable timeline milestones.',
-      'Document Intelligence powered by PDF.js with coordinate-anchored annotations and Turn into Steps.',
-      'Direct local integration with Ollama models on port 11434 with 100% private execution.',
-      'Automated single-click Ollama setup script (setup-ollama.sh and start.sh).',
-      'Client-side PDF and Markdown export engines.',
-    ],
-  },
-];
+// Also the source of the GitHub release notes (scripts/release-notes.mjs)
+const RELEASES: { version: string; date: string; title: string; highlights: string[] }[] = releases;
 
 export const ChangelogView: React.FC = () => {
   const [stats, setStats] = useState({
@@ -53,7 +28,7 @@ export const ChangelogView: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-black text-slate-900 dark:text-white p-8 overflow-y-auto max-w-5xl mx-auto w-full select-none font-sans transition-colors duration-500">
+    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas text-slate-900 dark:text-white p-8 overflow-y-auto max-w-5xl mx-auto w-full select-none font-sans transition-colors duration-500">
       <div className="border-b border-slate-200 dark:border-zinc-850 pb-5 mb-8">
         <div className="flex items-center gap-2 text-slate-950 dark:text-white">
           <GitCommit className="w-5 h-5 text-slate-700 dark:text-zinc-400" />

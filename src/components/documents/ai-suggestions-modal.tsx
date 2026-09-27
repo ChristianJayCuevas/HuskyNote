@@ -113,7 +113,7 @@ export const AISuggestionsModal: React.FC<AISuggestionsModalProps> = ({
     >
       <div className="space-y-4">
         {suggestions.length === 0 ? (
-          <div className="py-12 text-center text-xs text-zinc-500">
+          <div className="py-12 text-center text-xs text-slate-500 dark:text-zinc-500">
             No specific steps, warnings, or definitions were automatically detected on this page.
           </div>
         ) : (
@@ -122,7 +122,7 @@ export const AISuggestionsModal: React.FC<AISuggestionsModalProps> = ({
               const colors = {
                 Warning: 'text-red-400 bg-red-950/40 border-red-800/40',
                 Requirement: 'text-blue-400 bg-blue-950/40 border-blue-800/40',
-                Step: 'text-zinc-200 bg-zinc-900 border-zinc-700',
+                Step: 'text-slate-800 dark:text-zinc-200 bg-slate-50 dark:bg-zinc-900 border-slate-300 dark:border-zinc-700',
                 Important: 'text-amber-400 bg-amber-950/40 border-amber-800/40',
                 Definition: 'text-emerald-400 bg-emerald-950/40 border-emerald-800/40',
               };
@@ -132,10 +132,10 @@ export const AISuggestionsModal: React.FC<AISuggestionsModalProps> = ({
                   key={sugg.id}
                   className={`p-3.5 rounded-lg border text-xs transition-colors ${
                     sugg.status === 'accepted'
-                      ? 'bg-zinc-900/90 border-zinc-700'
+                      ? 'bg-slate-50/90 dark:bg-zinc-900/90 border-slate-300 dark:border-zinc-700'
                       : sugg.status === 'rejected'
-                      ? 'opacity-40 bg-zinc-950 border-zinc-850'
-                      : 'bg-zinc-950 border-zinc-850'
+                      ? 'opacity-40 bg-white dark:bg-zinc-950 dark:border-zinc-850'
+                      : 'bg-white dark:bg-zinc-950 dark:border-zinc-850'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
@@ -152,8 +152,8 @@ export const AISuggestionsModal: React.FC<AISuggestionsModalProps> = ({
                         onClick={() => handleToggleStatus(sugg.id, 'accepted')}
                         className={`p-1 rounded transition-colors ${
                           sugg.status === 'accepted'
-                            ? 'bg-white text-black'
-                            : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                            ? 'bg-slate-900 dark:bg-white text-white dark:text-black'
+                            : 'text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800'
                         }`}
                         title="Accept suggestion"
                       >
@@ -163,8 +163,8 @@ export const AISuggestionsModal: React.FC<AISuggestionsModalProps> = ({
                         onClick={() => handleToggleStatus(sugg.id, 'rejected')}
                         className={`p-1 rounded transition-colors ${
                           sugg.status === 'rejected'
-                            ? 'bg-zinc-800 text-red-400'
-                            : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                            ? 'bg-slate-100 dark:bg-zinc-800 text-red-400'
+                            : 'text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800'
                         }`}
                         title="Reject suggestion"
                       >
@@ -173,14 +173,14 @@ export const AISuggestionsModal: React.FC<AISuggestionsModalProps> = ({
                     </div>
                   </div>
 
-                  <p className="text-zinc-300 leading-relaxed">{sugg.text}</p>
+                  <p className="text-slate-700 dark:text-zinc-300 leading-relaxed">{sugg.text}</p>
                 </div>
               );
             })}
           </div>
         )}
 
-        <div className="pt-4 border-t border-zinc-850 flex items-center justify-between">
+        <div className="pt-4 border-t dark:border-zinc-850 flex items-center justify-between">
           <Button size="sm" variant="outline" onClick={handleAcceptAll}>
             <CheckCheck className="w-3.5 h-3.5" />
             <span>Accept All ({suggestions.length})</span>

@@ -63,11 +63,11 @@ export const TemplateGallery: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-black p-8 overflow-y-auto max-w-5xl mx-auto w-full select-none">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-zinc-850 pb-5 mb-6">
+    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-black p-8 overflow-y-auto max-w-5xl mx-auto w-full select-none">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b dark:border-zinc-850 pb-5 mb-6">
         <div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Templates Gallery</h2>
-          <p className="text-xs text-zinc-400 mt-1">
+          <h2 className="text-xl font-bold text-slate-950 dark:text-white tracking-tight">Templates Gallery</h2>
+          <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1">
             Standard structures for meeting notes, project briefs, SOPs, and engineering logs.
           </p>
         </div>
@@ -86,8 +86,8 @@ export const TemplateGallery: React.FC = () => {
             onClick={() => setSelectedCategory(cat)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
               selectedCategory === cat
-                ? 'bg-zinc-800 text-white'
-                : 'bg-zinc-900/50 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
+                ? 'bg-slate-100 dark:bg-zinc-800 text-slate-950 dark:text-white'
+                : 'bg-slate-50/50 dark:bg-zinc-900/50 text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-900'
             }`}
           >
             {cat}
@@ -100,17 +100,17 @@ export const TemplateGallery: React.FC = () => {
         {filtered.map((tmpl) => (
           <div
             key={tmpl.id}
-            className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 flex flex-col justify-between hover:border-zinc-700 transition-colors"
+            className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 flex flex-col justify-between hover:border-slate-300 dark:hover:border-zinc-700 transition-colors"
           >
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-zinc-100">{tmpl.title}</span>
-                <span className="text-[10px] text-zinc-400 uppercase tracking-wider bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
+                <span className="text-xs font-semibold text-slate-900 dark:text-zinc-100">{tmpl.title}</span>
+                <span className="text-[10px] text-slate-600 dark:text-zinc-400 uppercase tracking-wider bg-slate-50 dark:bg-zinc-900 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-800">
                   {tmpl.category}
                 </span>
               </div>
-              <p className="text-xs text-zinc-400 mb-4 leading-relaxed">{tmpl.description}</p>
-              <div className="bg-zinc-900/40 p-3 rounded-lg border border-zinc-850 text-[11px] font-mono text-zinc-400 max-h-24 overflow-hidden line-clamp-3 mb-4">
+              <p className="text-xs text-slate-600 dark:text-zinc-400 mb-4 leading-relaxed">{tmpl.description}</p>
+              <div className="bg-slate-50/40 dark:bg-zinc-900/40 p-3 rounded-lg border dark:border-zinc-850 text-[11px] font-mono text-slate-600 dark:text-zinc-400 max-h-24 overflow-hidden line-clamp-3 mb-4">
                 {tmpl.defaultContent}
               </div>
             </div>
@@ -139,22 +139,22 @@ export const TemplateGallery: React.FC = () => {
         >
           <div className="space-y-4 text-xs">
             <div>
-              <label className="block text-zinc-300 font-medium mb-1">Template Title</label>
+              <label className="block text-slate-700 dark:text-zinc-300 font-medium mb-1">Template Title</label>
               <input
                 type="text"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="e.g., Weekly Incident Retrospective"
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-md p-2.5 text-zinc-200 focus:outline-none focus:border-zinc-700"
+                className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-md p-2.5 text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-slate-300 dark:focus:border-zinc-700"
               />
             </div>
 
             <div>
-              <label className="block text-zinc-300 font-medium mb-1">Category</label>
+              <label className="block text-slate-700 dark:text-zinc-300 font-medium mb-1">Category</label>
               <select
                 value={newCategory}
                 onChange={(e: any) => setNewCategory(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-md p-2.5 text-zinc-200 focus:outline-none focus:border-zinc-700"
+                className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-md p-2.5 text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-slate-300 dark:focus:border-zinc-700"
               >
                 <option value="general">General</option>
                 <option value="meeting">Meeting</option>
@@ -163,13 +163,13 @@ export const TemplateGallery: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-zinc-300 font-medium mb-1">Default Markdown Content</label>
+              <label className="block text-slate-700 dark:text-zinc-300 font-medium mb-1">Default Markdown Content</label>
               <textarea
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
                 rows={6}
                 placeholder="# Heading\n\n- [ ] Task 1..."
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-md p-2.5 text-zinc-200 font-mono text-xs focus:outline-none focus:border-zinc-700"
+                className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-md p-2.5 text-slate-800 dark:text-zinc-200 font-mono text-xs focus:outline-none focus:border-slate-300 dark:focus:border-zinc-700"
               />
             </div>
 

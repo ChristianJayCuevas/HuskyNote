@@ -23,7 +23,7 @@ export const Card: React.FC<CardProps> = ({
     <div
       className={twMerge(
         clsx(
-          'bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-5 transition-colors duration-150',
+          'bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 transition-colors duration-150',
           hoverEffect && 'hover:border-slate-300 dark:hover:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-900/60',
           className
         )

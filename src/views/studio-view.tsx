@@ -578,7 +578,7 @@ CRITICAL RULES:
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-black text-slate-900 dark:text-white p-6 sm:p-8 overflow-y-auto max-w-6xl mx-auto w-full select-none font-sans transition-colors duration-500">
+    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas text-slate-900 dark:text-white p-6 sm:p-8 overflow-y-auto max-w-6xl mx-auto w-full select-none font-sans transition-colors duration-500">
       {/* Top Header Controls Card */}
       <div className="border-b border-slate-200 dark:border-zinc-850 pb-5 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -607,8 +607,8 @@ CRITICAL RULES:
                 onClick={() => setAutoAnnotateEnabled(!autoAnnotateEnabled)}
                 className={`px-3 py-1.5 rounded text-xs font-mono border transition-all flex items-center gap-1.5 ${
                   autoAnnotateEnabled
-                    ? 'bg-zinc-900 border-zinc-700 text-emerald-400 shadow-sm'
-                    : 'bg-zinc-950 border-zinc-850 text-zinc-500'
+                    ? 'bg-slate-50 dark:bg-zinc-900 border-slate-300 dark:border-zinc-700 text-emerald-400 shadow-sm'
+                    : 'bg-white dark:bg-zinc-950 dark:border-zinc-850 text-slate-500 dark:text-zinc-500'
                 }`}
               >
                 <Crosshair className="w-3.5 h-3.5" />
@@ -620,17 +620,17 @@ CRITICAL RULES:
                 onClick={handleToggleMic}
                 className={`px-3 py-1.5 rounded text-xs font-mono border transition-all flex items-center gap-1.5 ${
                   !isMicMuted
-                    ? 'bg-zinc-900 border-zinc-700 text-white shadow-sm'
-                    : 'bg-zinc-950 border-zinc-850 text-zinc-500'
+                    ? 'bg-slate-50 dark:bg-zinc-900 border-slate-300 dark:border-zinc-700 text-slate-950 dark:text-white shadow-sm'
+                    : 'bg-white dark:bg-zinc-950 dark:border-zinc-850 text-slate-500 dark:text-zinc-500'
                 }`}
                 title={isMicMuted ? 'Unmute microphone narration' : 'Mute microphone narration'}
               >
-                {!isMicMuted ? <Mic className="w-3.5 h-3.5 text-white" /> : <MicOff className="w-3.5 h-3.5" />}
+                {!isMicMuted ? <Mic className="w-3.5 h-3.5 text-slate-950 dark:text-white" /> : <MicOff className="w-3.5 h-3.5" />}
                 <span>MIC: {!isMicMuted ? 'LIVE' : 'MUTED'}</span>
                 {!isMicMuted && (
                   <span className="flex items-center gap-0.5 ml-1">
                     <span
-                      className="w-1 rounded-full bg-white transition-all"
+                      className="w-1 rounded-full bg-slate-900 dark:bg-white transition-all"
                       style={{ height: `${Math.max(4, Math.min(12, (audioLevel / 100) * 12))}px` }}
                     />
                   </span>
@@ -659,19 +659,19 @@ CRITICAL RULES:
                 value={sessionTitle}
                 onChange={(e) => setSessionTitle(e.target.value)}
                 placeholder="Procedure Session Title..."
-                className="px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 w-56"
+                className="px-3 py-1.5 rounded bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs text-slate-950 dark:text-white placeholder-slate-500 dark:placeholder-zinc-500 focus:outline-none focus:border-slate-300 dark:focus:border-zinc-600 w-56"
               />
 
               <button
                 onClick={() => setEnableMic(!enableMic)}
                 className={`px-2.5 py-1.5 rounded text-xs font-mono border transition-all flex items-center gap-1.5 ${
                   enableMic
-                    ? 'bg-zinc-900 border-zinc-700 text-white'
-                    : 'bg-zinc-950 border-zinc-850 text-zinc-500'
+                    ? 'bg-slate-50 dark:bg-zinc-900 border-slate-300 dark:border-zinc-700 text-slate-950 dark:text-white'
+                    : 'bg-white dark:bg-zinc-950 dark:border-zinc-850 text-slate-500 dark:text-zinc-500'
                 }`}
                 title={enableMic ? 'Microphone audio enabled' : 'Microphone audio disabled'}
               >
-                {enableMic ? <Mic className="w-3.5 h-3.5 text-white" /> : <MicOff className="w-3.5 h-3.5" />}
+                {enableMic ? <Mic className="w-3.5 h-3.5 text-slate-950 dark:text-white" /> : <MicOff className="w-3.5 h-3.5" />}
                 <span>MIC {enableMic ? 'ON' : 'OFF'}</span>
               </button>
 
@@ -685,9 +685,9 @@ CRITICAL RULES:
       </div>
 
       {/* Main Studio Canvas & Stream Box */}
-      <div className="relative rounded-2xl border border-zinc-800 bg-zinc-950 overflow-hidden shadow-2xl min-h-[460px] flex items-center justify-center">
+      <div className="relative rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden shadow-2xl min-h-[460px] flex items-center justify-center">
         {hasScreenStream ? (
-          <div className="relative w-full h-full flex items-center justify-center bg-black">
+          <div className="relative w-full h-full flex items-center justify-center bg-slate-50 dark:bg-black">
             {/* Interactive Video Stream with Click-to-Annotate */}
             <video
               ref={(el) => {
@@ -708,19 +708,19 @@ CRITICAL RULES:
 
             {/* Live speech transcription subtitle bar */}
             {!isMicMuted && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 max-w-xl w-[92%] px-4 py-2.5 rounded-xl bg-black/90 backdrop-blur-md border border-white/20 text-center z-20 shadow-2xl transition-all">
-                <div className="flex items-center justify-center gap-2 text-[10px] font-mono text-zinc-400 mb-1">
-                  <span className={`w-2 h-2 rounded-full ${audioLevel > 15 ? 'bg-emerald-400 animate-ping' : 'bg-zinc-500'}`} />
-                  <span className="uppercase tracking-widest text-zinc-300 font-semibold">Live Speech Narration</span>
-                  <span className="text-zinc-600">•</span>
-                  <span className="text-[9px] text-zinc-400">Audio Level: {audioLevel}%</span>
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 max-w-xl w-[92%] px-4 py-2.5 rounded-xl bg-black/90 backdrop-blur-md border border-slate-900/20 dark:border-white/20 text-center z-20 shadow-2xl transition-all">
+                <div className="flex items-center justify-center gap-2 text-[10px] font-mono text-slate-600 dark:text-zinc-400 mb-1">
+                  <span className={`w-2 h-2 rounded-full ${audioLevel > 15 ? 'bg-emerald-400 animate-ping' : 'bg-slate-400 dark:bg-zinc-500'}`} />
+                  <span className="uppercase tracking-widest text-slate-700 dark:text-zinc-300 font-semibold">Live Speech Narration</span>
+                  <span className="text-slate-400 dark:text-zinc-600">•</span>
+                  <span className="text-[9px] text-slate-600 dark:text-zinc-400">Audio Level: {audioLevel}%</span>
                 </div>
-                <p className="text-xs text-white line-clamp-2 font-medium">
+                <p className="text-xs text-slate-950 dark:text-white line-clamp-2 font-medium">
                   {currentInterimSpeech
                     ? `"${currentInterimSpeech}..."`
                     : liveTranscript.length > 0
                     ? `"${liveTranscript[liveTranscript.length - 1].text}"`
-                    : <span className="text-zinc-500 italic">Speak into microphone to narrate action points in real time...</span>}
+                    : <span className="text-slate-500 dark:text-zinc-500 italic">Speak into microphone to narrate action points in real time...</span>}
                 </p>
               </div>
             )}
@@ -732,7 +732,7 @@ CRITICAL RULES:
                 style={{ left: clickIndicator.x, top: clickIndicator.y }}
               >
                 <span className="flex h-10 w-10 relative items-center justify-center">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-50" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-900 dark:bg-white opacity-50" />
                   <span className="relative inline-flex rounded-full h-6 w-6 border-2 border-white bg-black/80 text-[10px] text-white font-mono items-center justify-center">
                     {capturedSteps.length + 1}
                   </span>
@@ -741,16 +741,16 @@ CRITICAL RULES:
             )}
 
             {/* Instruction Overlay Pill */}
-            <div className="absolute top-4 left-4 bg-zinc-950/90 border border-zinc-800 text-zinc-300 px-3 py-1.5 rounded-full text-xs font-mono shadow-xl flex items-center gap-2 backdrop-blur-md">
+            <div className="absolute top-4 left-4 bg-white/90 dark:bg-zinc-950/90 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 px-3 py-1.5 rounded-full text-xs font-mono shadow-xl flex items-center gap-2 backdrop-blur-md">
               <Crosshair className="w-3.5 h-3.5 text-emerald-400 animate-spin" />
               <span>Click stream to stamp annotation marker</span>
-              <span className="text-zinc-600">•</span>
-              <span className="text-zinc-400">Auto-captures every {autoIntervalSec}s</span>
+              <span className="text-slate-400 dark:text-zinc-600">•</span>
+              <span className="text-slate-600 dark:text-zinc-400">Auto-captures every {autoIntervalSec}s</span>
             </div>
 
             {/* Picture-in-Picture Webcam Box */}
             {enableWebcam && (
-              <div className="absolute bottom-6 right-6 w-48 h-36 rounded-xl border border-zinc-700 bg-black overflow-hidden shadow-2xl z-20">
+              <div className="absolute bottom-6 right-6 w-48 h-36 rounded-xl border border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-black overflow-hidden shadow-2xl z-20">
                 <video
                   ref={webcamVideoRef}
                   className="w-full h-full object-cover"
@@ -765,13 +765,13 @@ CRITICAL RULES:
           </div>
         ) : (
           <div className="p-12 text-center max-w-md space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 mx-auto">
+            <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-700 dark:text-zinc-300 mx-auto">
               <Monitor className="w-7 h-7" />
             </div>
-            <h3 className="text-lg font-bold text-white tracking-tight">
+            <h3 className="text-lg font-bold text-slate-950 dark:text-white tracking-tight">
               Screen Recording Studio
             </h3>
-            <p className="text-xs text-zinc-400 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
               Start recording your screen or window. As you demonstrate tasks,
               HuskyNote automatically captures steps and screenshots into an easy-to-follow guide.
             </p>
@@ -792,28 +792,28 @@ CRITICAL RULES:
       {/* Captured Keyframes Strip */}
       {capturedSteps.length > 0 && (
         <div className="mt-8 space-y-3">
-          <div className="flex items-center justify-between text-xs font-mono text-zinc-400 uppercase">
+          <div className="flex items-center justify-between text-xs font-mono text-slate-600 dark:text-zinc-400 uppercase">
             <div className="flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
               <span>Captured Steps ({capturedSteps.length})</span>
             </div>
-            <span className="text-[10px] text-zinc-500">Edit titles & notes before saving</span>
+            <span className="text-[10px] text-slate-500 dark:text-zinc-500">Edit titles & notes before saving</span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-x-auto pb-2">
             {capturedSteps.map((step, idx) => (
               <div
                 key={step.id}
-                className="rounded-xl border border-zinc-800 bg-zinc-950 p-2.5 space-y-2 shadow-lg transition-transform hover:scale-[1.01]"
+                className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 space-y-2 shadow-lg transition-transform hover:scale-[1.01]"
               >
-                <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 border-b border-zinc-850 pb-1">
-                  <span className="font-bold text-white">STEP {step.stepNumber}</span>
-                  <span className="text-zinc-500">{formatTimer(step.timestampSeconds)}</span>
+                <div className="flex items-center justify-between text-[10px] font-mono text-slate-600 dark:text-zinc-400 border-b dark:border-zinc-850 pb-1">
+                  <span className="font-bold text-slate-950 dark:text-white">STEP {step.stepNumber}</span>
+                  <span className="text-slate-500 dark:text-zinc-500">{formatTimer(step.timestampSeconds)}</span>
                 </div>
                 <img
                   src={step.screenshotDataUrl}
                   alt={`Step ${step.stepNumber}`}
-                  className="w-full h-24 object-cover rounded border border-zinc-850"
+                  className="w-full h-24 object-cover rounded border dark:border-zinc-850"
                 />
                 <input
                   type="text"
@@ -824,7 +824,7 @@ CRITICAL RULES:
                       prev.map((s, i) => (i === idx ? { ...s, title: newTitle } : s))
                     );
                   }}
-                  className="w-full bg-zinc-900/80 border border-zinc-800 rounded px-1.5 py-0.5 text-[11px] font-semibold text-white focus:outline-none focus:border-zinc-600 truncate"
+                  className="w-full bg-slate-50/80 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded px-1.5 py-0.5 text-[11px] font-semibold text-slate-950 dark:text-white focus:outline-none focus:border-slate-300 dark:focus:border-zinc-600 truncate"
                   placeholder="Step title..."
                 />
                 <textarea
@@ -836,7 +836,7 @@ CRITICAL RULES:
                     );
                   }}
                   rows={2}
-                  className="w-full bg-zinc-900/40 border border-zinc-800/80 rounded p-1.5 text-[10px] text-zinc-300 font-mono focus:outline-none focus:border-zinc-600 resize-none leading-tight"
+                  className="w-full bg-slate-50/40 dark:bg-zinc-900/40 border border-slate-200/80 dark:border-zinc-800/80 rounded p-1.5 text-[10px] text-slate-700 dark:text-zinc-300 font-mono focus:outline-none focus:border-slate-300 dark:focus:border-zinc-600 resize-none leading-tight"
                   placeholder="Step instruction..."
                 />
               </div>
@@ -848,18 +848,18 @@ CRITICAL RULES:
       {/* Documentation Generation Modal */}
       {showDocModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+          <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
             {/* Modal Header */}
-            <div className="p-4 border-b border-zinc-850 flex items-center justify-between">
+            <div className="p-4 border-b dark:border-zinc-850 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-white" />
-                <h3 className="font-bold text-sm text-white">
+                <FileText className="w-4 h-4 text-slate-950 dark:text-white" />
+                <h3 className="font-bold text-sm text-slate-950 dark:text-white">
                   Generated Standard Operating Documentation
                 </h3>
               </div>
               <button
                 onClick={() => setShowDocModal(false)}
-                className="p-1 rounded text-zinc-400 hover:text-white"
+                className="p-1 rounded text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -867,21 +867,21 @@ CRITICAL RULES:
 
             {/* Modal Content / Markdown View */}
             <div className="flex-1 overflow-y-auto p-6 space-y-4 text-left">
-              <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center justify-between text-xs text-zinc-300">
+              <div className="p-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg flex items-center justify-between text-xs text-slate-700 dark:text-zinc-300">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span>Captured {capturedSteps.length} steps with dynamic coordinate callouts.</span>
                 </div>
-                <span className="text-zinc-500 font-mono">Status: Ready to Export</span>
+                <span className="text-slate-500 dark:text-zinc-500 font-mono">Status: Ready to Export</span>
               </div>
 
-              <div className="bg-black border border-zinc-850 rounded-xl p-4 font-mono text-xs text-zinc-300 whitespace-pre-wrap max-h-[420px] overflow-y-auto leading-relaxed">
+              <div className="bg-slate-50 dark:bg-black border dark:border-zinc-850 rounded-xl p-4 font-mono text-xs text-slate-700 dark:text-zinc-300 whitespace-pre-wrap max-h-[420px] overflow-y-auto leading-relaxed">
                 {generatedMarkdown}
               </div>
             </div>
 
             {/* Modal Footer Actions */}
-            <div className="p-4 border-t border-zinc-850 bg-zinc-900/60 flex flex-wrap items-center justify-between gap-3">
+            <div className="p-4 border-t dark:border-zinc-850 bg-slate-50/60 dark:bg-zinc-900/60 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={handleCopyMarkdown}>
                   <Copy className="w-3.5 h-3.5" />

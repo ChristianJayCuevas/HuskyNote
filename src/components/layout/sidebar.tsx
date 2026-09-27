@@ -30,6 +30,7 @@ import { useLanguage } from '../../context/language-context';
 import { useAI } from '../../context/ai-context';
 import { useGitHubStars } from '../../services/github/stars';
 import logoImg from '../../assets/official_huskynote.png';
+import { ProfileSwitcher } from './profile-switcher';
 
 export const Sidebar: React.FC = () => {
   const {
@@ -114,12 +115,12 @@ export const Sidebar: React.FC = () => {
                 collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'
               } rounded-xl text-xs font-medium transition-all duration-150 active:scale-[0.98] ${
                 isActive
-                  ? 'bg-slate-950 text-white dark:bg-white/12 dark:text-white font-semibold shadow-sm border border-slate-900 dark:border-white/20 backdrop-blur-md'
-                  : 'text-slate-900 dark:text-zinc-200 font-semibold hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-transparent'
+                  ? 'bg-slate-950 text-white dark:bg-zinc-850 dark:text-white font-semibold shadow-sm border border-slate-900 dark:border-zinc-800 backdrop-blur-md'
+                  : 'text-slate-900 dark:text-zinc-200 font-semibold hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-850 border border-transparent'
               }`}
             >
               {isActive && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-emerald-400 dark:bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-emerald-400 dark:bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)] dark:shadow-none" />
               )}
 
               <Icon
@@ -158,12 +159,12 @@ export const Sidebar: React.FC = () => {
                 collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'
               } rounded-xl text-xs font-medium transition-all duration-150 active:scale-[0.98] ${
                 isActive
-                  ? 'bg-slate-950 text-white dark:bg-white/12 dark:text-white font-semibold shadow-sm border border-slate-900 dark:border-white/20 backdrop-blur-md'
-                  : 'text-slate-900 dark:text-zinc-200 font-semibold hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-transparent'
+                  ? 'bg-slate-950 text-white dark:bg-zinc-850 dark:text-white font-semibold shadow-sm border border-slate-900 dark:border-zinc-800 backdrop-blur-md'
+                  : 'text-slate-900 dark:text-zinc-200 font-semibold hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-850 border border-transparent'
               }`}
             >
               {isActive && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-emerald-400 dark:bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-emerald-400 dark:bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)] dark:shadow-none" />
               )}
 
               <Icon
@@ -193,7 +194,7 @@ export const Sidebar: React.FC = () => {
           title={collapsed ? 'Chrome Extension' : undefined}
           className={`group relative w-full flex items-center ${
             collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'
-          } rounded-xl text-xs font-medium transition-all duration-150 active:scale-[0.98] text-slate-900 dark:text-zinc-200 font-semibold hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-transparent`}
+          } rounded-xl text-xs font-medium transition-all duration-150 active:scale-[0.98] text-slate-900 dark:text-zinc-200 font-semibold hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-850 border border-transparent`}
         >
           <ChromeIcon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
           {!collapsed && (
@@ -210,7 +211,7 @@ export const Sidebar: React.FC = () => {
       </nav>
 
       {/* Local AI Status Hardware Card */}
-      <div className="p-2.5 border-t border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-black transition-colors">
+      <div className="p-2.5 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/80 dark:bg-canvas transition-colors">
         {collapsed ? (
           <div className="flex flex-col items-center gap-2 py-2">
             <span
@@ -228,7 +229,7 @@ export const Sidebar: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-900/90 border border-slate-200 dark:border-white/10 shadow-sm">
+          <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-900/90 border border-slate-200 dark:border-zinc-800 shadow-sm">
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-2 min-w-0">
                 <span
@@ -297,13 +298,13 @@ export const Sidebar: React.FC = () => {
       <aside
         className={`hidden md:flex flex-col h-screen select-none shrink-0 transition-all duration-300 ease-in-out z-30 ${
           isCollapsed ? 'w-16' : 'w-60 lg:w-64'
-        } bg-white dark:bg-[#070707] border-r border-slate-200 dark:border-white/10`}
+        } bg-white dark:bg-canvas-inset border-r border-slate-200 dark:border-zinc-800`}
       >
         {/* macOS Titlebar & Traffic Light Clearance Area */}
         <div className="h-8 w-full shrink-0 flex items-center px-4 select-none [app-region:drag] [-webkit-app-region:drag]" />
 
         {/* Brand Header — logo hidden when collapsed, only toggle button shown */}
-        <div className={`pb-3 border-b border-slate-200 dark:border-white/10 flex items-center ${
+        <div className={`pb-3 border-b border-slate-200 dark:border-zinc-800 flex items-center ${
           isCollapsed ? 'justify-center px-2' : 'px-3.5 justify-between'
         }`}>
           {/* Logo + name: only visible when expanded */}
@@ -318,7 +319,7 @@ export const Sidebar: React.FC = () => {
               <img
                 src={logoImg}
                 alt="HuskyNote"
-                className="w-8 h-8 rounded-xl object-contain shrink-0 shadow-md border border-slate-200 dark:border-white/10 group-hover:scale-105 transition-transform"
+                className="w-8 h-8 rounded-xl object-contain shrink-0 shadow-md border border-slate-200 dark:border-zinc-800 group-hover:scale-105 transition-transform"
               />
               <div className="truncate">
                 <div className="font-bold text-sm text-slate-950 dark:text-white tracking-tight leading-none truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
@@ -335,12 +336,17 @@ export const Sidebar: React.FC = () => {
           {/* Collapse / Expand toggle — always visible */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1.5 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
             title={isCollapsed ? 'Expand sidebar (⌘B)' : 'Collapse sidebar (⌘B)'}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {isCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
           </button>
+        </div>
+
+        {/* Profile switcher: each profile is a separate workspace for a job or project */}
+        <div className={`py-2.5 border-b border-slate-200 dark:border-zinc-800 ${isCollapsed ? 'px-2' : 'px-3'}`}>
+          <ProfileSwitcher collapsed={isCollapsed} />
         </div>
 
         {renderNavContent(isCollapsed)}
@@ -356,7 +362,7 @@ export const Sidebar: React.FC = () => {
           />
 
           {/* Drawer Body */}
-          <div className="relative w-72 max-w-[80vw] bg-white dark:bg-[#0A0A0A] border-r border-slate-200 dark:border-zinc-850 flex flex-col h-full z-10 shadow-2xl animate-fade-in">
+          <div className="relative w-72 max-w-[80vw] bg-white dark:bg-canvas-inset border-r border-slate-200 dark:border-zinc-850 flex flex-col h-full z-10 shadow-2xl animate-fade-in">
             <div className="p-3.5 border-b border-slate-200 dark:border-zinc-850 flex items-center justify-between">
               <button
                 type="button"
@@ -385,6 +391,10 @@ export const Sidebar: React.FC = () => {
               >
                 <X className="w-4 h-4" />
               </button>
+            </div>
+
+            <div className="px-3 py-2.5 border-b border-slate-200 dark:border-zinc-800">
+              <ProfileSwitcher />
             </div>
 
             {renderNavContent(false)}

@@ -450,7 +450,7 @@ export const OllamaPermissionModal: React.FC<OllamaPermissionModalProps> = ({
 
         {/* ── Privacy Guarantee ── */}
         <div
-          className="p-4 rounded-xl bg-black border border-zinc-850 space-y-2 text-xs text-zinc-300"
+          className="p-4 rounded-xl bg-black border dark:border-zinc-850 space-y-2 text-xs text-zinc-300"
           role="note"
           aria-label="Privacy guarantee"
         >
@@ -505,7 +505,7 @@ export const OllamaPermissionModal: React.FC<OllamaPermissionModalProps> = ({
             )}
           </div>
         ) : (
-          <div className="p-3.5 rounded-xl bg-zinc-900/40 border border-zinc-850 space-y-2">
+          <div className="p-3.5 rounded-xl bg-zinc-900/40 border dark:border-zinc-850 space-y-2">
             <div className="text-xs font-semibold text-white flex items-center gap-1.5">
               <Zap className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
               <span>What happens when you click below</span>
@@ -539,7 +539,7 @@ export const OllamaPermissionModal: React.FC<OllamaPermissionModalProps> = ({
             <span>Or install manually in your terminal:</span>
           </div>
           <code
-            className="block text-[10px] text-zinc-300 font-mono bg-black p-2.5 rounded border border-zinc-850 overflow-x-auto whitespace-pre select-all"
+            className="block text-[10px] text-zinc-300 font-mono bg-black p-2.5 rounded border dark:border-zinc-850 overflow-x-auto whitespace-pre select-all"
             aria-label="Terminal install command"
           >
             {detectedOS === 'macos'

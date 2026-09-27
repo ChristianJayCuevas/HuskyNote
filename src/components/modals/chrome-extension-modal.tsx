@@ -268,7 +268,7 @@ export const ChromeExtensionModal: React.FC<ChromeExtensionModalProps> = ({
         </div>
 
         {/* ── 2-Step Drag & Drop Visual Guide ── */}
-        <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-850 space-y-3">
+        <div className="p-4 rounded-xl bg-zinc-900/60 border dark:border-zinc-850 space-y-3">
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold text-zinc-200">How It Works (10 Seconds):</span>
             <button
@@ -304,7 +304,7 @@ export const ChromeExtensionModal: React.FC<ChromeExtensionModalProps> = ({
         </div>
 
         {/* ── Downloads & Manual Fallback ── */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-zinc-850">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t dark:border-zinc-850">
           <div className="flex items-center gap-2">
             {/* Direct ZIP download with proper headers */}
             <a

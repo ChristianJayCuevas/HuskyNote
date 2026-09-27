@@ -5,6 +5,7 @@ import { db } from '../db';
 import { NoteList } from '../components/notes/note-list';
 import { NoteEditor } from '../components/notes/note-editor';
 import { EmptyState } from '../components/ui/empty-state';
+import { ResizableListPanel } from '../components/ui/resizable-list-panel';
 import { FileText } from 'lucide-react';
 
 export const NotesView: React.FC = () => {
@@ -41,14 +42,14 @@ export const NotesView: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-slate-50 dark:bg-black transition-colors duration-500">
-      <div className={`${activeNoteId ? 'hidden md:flex' : 'flex'} w-full md:w-80 shrink-0 h-full`}>
+    <div className="flex h-full w-full overflow-hidden bg-slate-50 dark:bg-canvas transition-colors duration-500">
+      <ResizableListPanel storageKey="notes" label="Notes" hiddenOnMobile={!!activeNoteId}>
         <NoteList
           selectedNoteId={activeNoteId}
           onSelectNote={(id) => setActiveNoteId(id)}
           onCreateNote={handleCreateNote}
         />
-      </div>
+      </ResizableListPanel>
 
       <div className={`${activeNoteId ? 'flex' : 'hidden md:flex'} flex-1 h-full min-w-0 flex-col`}>
         {activeNoteId ? (

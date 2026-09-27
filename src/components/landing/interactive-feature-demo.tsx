@@ -328,10 +328,10 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
     <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="w-full rounded-2xl border border-zinc-850 bg-zinc-950 overflow-hidden shadow-xl font-sans text-left relative z-10"
+      className="w-full rounded-2xl border dark:border-zinc-850 bg-zinc-950 overflow-hidden shadow-xl font-sans text-left relative z-10"
     >
       {/* Top Minimal Bar */}
-      <div className="px-4 py-3 border-b border-zinc-850 bg-zinc-900/50 flex items-center justify-between gap-3 text-xs">
+      <div className="px-4 py-3 border-b dark:border-zinc-850 bg-zinc-900/50 flex items-center justify-between gap-3 text-xs">
         {/* Left: Window Dots & Title */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 shrink-0">
@@ -388,7 +388,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
       </div>
 
       {/* Minimal Stepper Tabs */}
-      <div className="px-3 sm:px-6 pt-3 pb-2 border-b border-zinc-850 bg-zinc-950">
+      <div className="px-3 sm:px-6 pt-3 pb-2 border-b dark:border-zinc-850 bg-zinc-950">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
           {stages.map((stage) => {
             const Icon = stage.icon;
@@ -405,7 +405,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
               >
                 <div
                   className={`w-6 h-6 rounded flex items-center justify-center shrink-0 text-xs ${
-                    isActive ? 'bg-white text-black' : 'bg-zinc-850 text-zinc-400'
+                    isActive ? 'bg-white text-black' : 'dark:bg-zinc-850 text-zinc-400'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -440,7 +440,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
         {activeStage === 'calls' && (
           <div className="space-y-5">
             {/* Header info */}
-            <div className="p-3.5 rounded-lg border border-zinc-850 bg-zinc-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="p-3.5 rounded-lg border dark:border-zinc-850 bg-zinc-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200">
                   <Mic className="w-4 h-4" />
@@ -476,7 +476,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all flex items-center gap-1.5 shadow-sm ${
                     isVoiceAudioEnabled
                       ? 'bg-white text-black border-white shadow-zinc-900/50'
-                      : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:text-white hover:bg-zinc-850'
+                      : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:text-white dark:hover:bg-zinc-850'
                   }`}
                   title="Click to hear voices out loud"
                 >
@@ -498,7 +498,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
             {/* Visualizer & Dialogue Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               {/* Speakers Column (Left 4 cols) */}
-              <div className="lg:col-span-4 p-3.5 rounded-lg border border-zinc-850 bg-zinc-900/30 space-y-2.5 text-xs lg:h-[390px] overflow-y-auto">
+              <div className="lg:col-span-4 p-3.5 rounded-lg border dark:border-zinc-850 bg-zinc-900/30 space-y-2.5 text-xs lg:h-[390px] overflow-y-auto">
                 <div className="text-[11px] font-medium text-zinc-400 flex items-center justify-between">
                   <span>Speakers</span>
                 </div>
@@ -516,7 +516,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                         className={`p-2.5 rounded-lg border flex flex-col gap-1.5 transition-all cursor-pointer ${
                           isActive
                             ? 'bg-zinc-900 border-zinc-700 text-white ring-1 ring-zinc-700'
-                            : 'bg-zinc-950 border-zinc-850 text-zinc-400 hover:border-zinc-750 hover:bg-zinc-900/50'
+                            : 'bg-zinc-950 dark:border-zinc-850 text-zinc-400 dark:hover:border-zinc-750 hover:bg-zinc-900/50'
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -530,7 +530,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                             </div>
                             <div className="flex items-center gap-1.5">
                               <span className="font-semibold text-zinc-200">{speaker.name}</span>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded border font-mono bg-zinc-850 text-zinc-300 border-zinc-750">
+                              <span className="text-[10px] px-1.5 py-0.5 rounded border font-mono dark:bg-zinc-850 text-zinc-300 dark:border-zinc-750">
                                 {speaker.role}
                               </span>
                             </div>
@@ -549,7 +549,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                                   setIsVoiceAudioEnabled(true);
                                   handleSelectSpeaker(idx);
                                 }}
-                                className="p-1 rounded hover:bg-zinc-850 text-zinc-400 hover:text-white transition-colors"
+                                className="p-1 rounded dark:hover:bg-zinc-850 text-zinc-400 hover:text-white transition-colors"
                                 title={`Hear ${speaker.name}'s voice`}
                               >
                                 <Volume2 className="w-3.5 h-3.5" />
@@ -564,9 +564,9 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
               </div>
 
               {/* Audio Wave & Live Transcribing Stream (Right 8 cols) */}
-              <div className="lg:col-span-8 p-3.5 rounded-lg border border-zinc-850 bg-zinc-900/30 space-y-3 flex flex-col justify-between lg:h-[390px] overflow-y-auto">
+              <div className="lg:col-span-8 p-3.5 rounded-lg border dark:border-zinc-850 bg-zinc-900/30 space-y-3 flex flex-col justify-between lg:h-[390px] overflow-y-auto">
                 {/* Audio Wave Visualizer reacting to active speaker */}
-                <div className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-850 flex flex-col gap-1.5">
+                <div className="p-2.5 rounded-lg bg-zinc-950 border dark:border-zinc-850 flex flex-col gap-1.5">
                   <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 px-1">
                     <span className="flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -602,13 +602,13 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                         className={`p-3 rounded-lg border transition-all ${
                           isCurrent
                             ? 'bg-zinc-900/80 border-zinc-700 shadow-md ring-1 ring-zinc-700/50'
-                            : 'bg-zinc-950/70 border-zinc-850 opacity-85'
+                            : 'bg-zinc-950/70 dark:border-zinc-850 opacity-85'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-1.5">
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-zinc-200">{speaker.name}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded border font-mono bg-zinc-850 text-zinc-300 border-zinc-750">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded border font-mono dark:bg-zinc-850 text-zinc-300 dark:border-zinc-750">
                               {speaker.role}
                             </span>
                           </div>
@@ -637,7 +637,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                                 setIsVoiceAudioEnabled(true);
                                 handleSelectSpeaker(idx);
                               }}
-                              className="px-2 py-0.5 rounded text-[10px] font-medium border border-zinc-800 bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-850 hover:border-zinc-750 transition-colors flex items-center gap-1 shrink-0 ml-1"
+                              className="px-2 py-0.5 rounded text-[10px] font-medium border border-zinc-800 bg-zinc-900 text-zinc-300 hover:text-white dark:hover:bg-zinc-850 dark:hover:border-zinc-750 transition-colors flex items-center gap-1 shrink-0 ml-1"
                               title={`Listen to ${speaker.name}'s voice`}
                             >
                               <Volume2 className="w-3 h-3 text-zinc-400" />
@@ -672,7 +672,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
         {activeStage === 'summarizing' && (
           <div className="space-y-5">
             {/* Header */}
-            <div className="p-3.5 rounded-lg border border-zinc-850 bg-zinc-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="p-3.5 rounded-lg border dark:border-zinc-850 bg-zinc-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-white text-black flex items-center justify-center">
                   <Sparkles className="w-4 h-4" />
@@ -687,7 +687,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                 </div>
               </div>
 
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-850 text-zinc-300 text-[11px]">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-zinc-900 border dark:border-zinc-850 text-zinc-300 text-[11px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-white" />
                 <span>Saved & Ready</span>
               </span>
@@ -696,9 +696,9 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
             {/* Clean 2-column layout */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 text-xs">
               {/* Left: Input snippets */}
-              <div className="lg:col-span-5 p-3.5 rounded-lg border border-zinc-850 bg-zinc-900/30 space-y-2 lg:h-[390px] overflow-y-auto">
+              <div className="lg:col-span-5 p-3.5 rounded-lg border dark:border-zinc-850 bg-zinc-900/30 space-y-2 lg:h-[390px] overflow-y-auto">
                 <div className="text-[11px] font-medium text-zinc-400">What We Said</div>
-                <div className="space-y-2 p-3 rounded bg-zinc-950 border border-zinc-850 text-zinc-400 text-[11px] leading-relaxed">
+                <div className="space-y-2 p-3 rounded bg-zinc-950 border dark:border-zinc-850 text-zinc-400 text-[11px] leading-relaxed">
                   <p>• Keep all notes safe on this computer</p>
                   <p>• Works even when you turn off Wi-Fi</p>
                   <p>• Draw red boxes on important sentences</p>
@@ -707,7 +707,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
               </div>
 
               {/* Right: Structured Notes */}
-              <div className="lg:col-span-7 p-3.5 rounded-lg border border-zinc-850 bg-zinc-900/30 space-y-3 lg:h-[390px] overflow-y-auto">
+              <div className="lg:col-span-7 p-3.5 rounded-lg border dark:border-zinc-850 bg-zinc-900/30 space-y-3 lg:h-[390px] overflow-y-auto">
                 <div className="text-[11px] font-medium text-zinc-300">Short Summary</div>
 
                 <div className="p-3 rounded bg-zinc-950 border border-zinc-800 text-zinc-300 leading-relaxed text-xs">
@@ -716,11 +716,11 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                 </div>
 
                 <div className="space-y-2 text-xs">
-                  <div className="p-2.5 rounded bg-zinc-950 border border-zinc-850 text-zinc-300 flex items-start gap-2">
+                  <div className="p-2.5 rounded bg-zinc-950 border dark:border-zinc-850 text-zinc-300 flex items-start gap-2">
                     <Check className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" />
                     <span>100% Secret: Like a diary with a physical lock on it.</span>
                   </div>
-                  <div className="p-2.5 rounded bg-zinc-950 border border-zinc-850 text-zinc-300 flex items-start gap-2">
+                  <div className="p-2.5 rounded bg-zinc-950 border dark:border-zinc-850 text-zinc-300 flex items-start gap-2">
                     <Check className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" />
                     <span>Super Fast: Answers right away without waiting for slow internet.</span>
                   </div>
@@ -734,7 +734,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
         {activeStage === 'annotation' && (
           <div className="space-y-5">
             {/* Header */}
-            <div className="p-3.5 rounded-lg border border-zinc-850 bg-zinc-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="p-3.5 rounded-lg border dark:border-zinc-850 bg-zinc-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-red-950/50 border border-red-800/60 flex items-center justify-center text-red-400 shrink-0">
                   <Highlighter className="w-4 h-4" />
@@ -776,7 +776,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                     className={`px-2.5 py-1 rounded text-xs border transition-colors ${
                       selectedAnnotationPreset === idx
                         ? 'bg-red-600 text-white border-red-500 font-semibold shadow-xs'
-                        : 'bg-zinc-950 text-zinc-400 border-zinc-850 hover:text-white'
+                        : 'bg-zinc-950 text-zinc-400 dark:border-zinc-850 hover:text-white'
                     }`}
                   >
                     {preset.title}
@@ -925,8 +925,8 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
               </div>
 
               {/* Right 4 Cols: Inspector */}
-              <div className="lg:col-span-4 p-4 rounded-xl border border-zinc-850 bg-zinc-900/40 text-xs space-y-3 lg:h-[390px] overflow-y-auto flex flex-col justify-between">
-                <div className="pb-3 border-b border-zinc-850">
+              <div className="lg:col-span-4 p-4 rounded-xl border dark:border-zinc-850 bg-zinc-900/40 text-xs space-y-3 lg:h-[390px] overflow-y-auto flex flex-col justify-between">
+                <div className="pb-3 border-b dark:border-zinc-850">
                   <div className="font-semibold text-white mb-1">Transcript Annotation</div>
                   <div className="text-[11px] text-zinc-400">
                     Real-time AI highlight on A4 meeting transcript
@@ -934,7 +934,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                 </div>
 
                 {/* Highlight Style Badge */}
-                <div className="p-3 rounded-lg bg-zinc-950 border border-zinc-850 space-y-2">
+                <div className="p-3 rounded-lg bg-zinc-950 border dark:border-zinc-850 space-y-2">
                   <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 block font-semibold">
                     Highlight Style
                   </span>
@@ -948,7 +948,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                 </div>
 
                 {/* Why This is Highlighted */}
-                <div className="p-3 rounded-lg bg-zinc-950 border border-zinc-850 space-y-1.5">
+                <div className="p-3 rounded-lg bg-zinc-950 border dark:border-zinc-850 space-y-1.5">
                   <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-400 block font-semibold">
                     Why Is This Highlighted?
                   </span>
@@ -958,7 +958,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                 </div>
 
                 {/* Document Information */}
-                <div className="p-3 rounded-lg bg-zinc-950 border border-zinc-850 space-y-1.5 text-[11px]">
+                <div className="p-3 rounded-lg bg-zinc-950 border dark:border-zinc-850 space-y-1.5 text-[11px]">
                   <div className="flex items-center justify-between text-zinc-400">
                     <span>Document Format</span>
                     <span className="font-mono text-zinc-200">A4 Meeting Transcript</span>
@@ -985,7 +985,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
         {activeStage === 'notes' && (
           <div className="space-y-5">
             {/* Header */}
-            <div className="p-3.5 rounded-lg border border-zinc-850 bg-zinc-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="p-3.5 rounded-lg border dark:border-zinc-850 bg-zinc-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white">
                   <FileText className="w-4 h-4" />
@@ -1033,8 +1033,8 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
             </div>
 
             {/* Clean Note Content */}
-            <div className="p-4 sm:p-5 rounded-lg border border-zinc-850 bg-zinc-900/20 text-xs space-y-4 lg:h-[390px] overflow-y-auto">
-              <div className="flex items-center gap-2 text-zinc-400 text-[11px] pb-3 border-b border-zinc-850">
+            <div className="p-4 sm:p-5 rounded-lg border dark:border-zinc-850 bg-zinc-900/20 text-xs space-y-4 lg:h-[390px] overflow-y-auto">
+              <div className="flex items-center gap-2 text-zinc-400 text-[11px] pb-3 border-b dark:border-zinc-850">
                 <Clock className="w-3.5 h-3.5 text-zinc-500" />
                 <span>Duration: 15 mins</span>
                 <span>•</span>
@@ -1046,7 +1046,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                 <div className="md:col-span-6 space-y-3">
                   <div>
                     <div className="font-semibold text-zinc-300 mb-1 text-xs">Quick Summary</div>
-                    <p className="p-2.5 rounded bg-zinc-950 border border-zinc-850 text-zinc-300 text-xs leading-relaxed">
+                    <p className="p-2.5 rounded bg-zinc-950 border dark:border-zinc-850 text-zinc-300 text-xs leading-relaxed">
                       We all agreed: HuskyNote is the best because all our notes stay on our own computer, and it writes down to-dos automatically!
                     </p>
                   </div>
@@ -1054,11 +1054,11 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                   <div>
                     <div className="font-semibold text-zinc-300 mb-1 text-xs">What We Decided</div>
                     <div className="space-y-1.5 text-xs">
-                      <div className="p-2 rounded bg-zinc-950 border border-zinc-850 text-zinc-300 flex items-center gap-2">
+                      <div className="p-2 rounded bg-zinc-950 border dark:border-zinc-850 text-zinc-300 flex items-center gap-2">
                         <Check className="w-3.5 h-3.5 text-zinc-400" />
                         <span>Always use bright red boxes to highlight the most important sentence.</span>
                       </div>
-                      <div className="p-2 rounded bg-zinc-950 border border-zinc-850 text-zinc-300 flex items-center gap-2">
+                      <div className="p-2 rounded bg-zinc-950 border dark:border-zinc-850 text-zinc-300 flex items-center gap-2">
                         <Check className="w-3.5 h-3.5 text-zinc-400" />
                         <span>Keep everything working even when Wi-Fi is completely turned off.</span>
                       </div>
@@ -1078,7 +1078,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
                     <div
                       key={idx}
                       onClick={() => toggleTask(idx)}
-                      className="p-2.5 rounded bg-zinc-950 border border-zinc-850 hover:border-zinc-700 cursor-pointer flex items-center gap-2.5 text-xs"
+                      className="p-2.5 rounded bg-zinc-950 border dark:border-zinc-850 hover:border-zinc-700 cursor-pointer flex items-center gap-2.5 text-xs"
                     >
                       <input
                         type="checkbox"
@@ -1100,7 +1100,7 @@ We talked about keeping all notes safe at home on this computer. Nobody on the i
       </div>
 
       {/* Bottom Footer Bar */}
-      <div className="p-3.5 border-t border-zinc-850 bg-zinc-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-zinc-400">
+      <div className="p-3.5 border-t dark:border-zinc-850 bg-zinc-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-zinc-400">
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-white" />
           <span>Listens to your voice, summarizes long chats, and highlights what matters in red.</span>

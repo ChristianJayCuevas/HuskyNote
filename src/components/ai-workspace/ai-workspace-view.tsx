@@ -172,7 +172,7 @@ export const AIWorkspaceView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-black select-none">
+    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas select-none">
       {/* Top Context Selector Chips */}
       <ContextSelector
         selectedChips={selectedChips}
@@ -181,43 +181,43 @@ export const AIWorkspaceView: React.FC = () => {
       />
 
       {/* Context-Aware Command Toolbar */}
-      <div className="px-6 py-2 border-b border-zinc-850 flex items-center gap-1.5 overflow-x-auto bg-zinc-950/60 shrink-0 text-xs">
-        <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mr-1">
+      <div className="px-6 py-2 border-b dark:border-zinc-850 flex items-center gap-1.5 overflow-x-auto bg-white/60 dark:bg-zinc-950/60 shrink-0 text-xs">
+        <span className="text-[10px] font-semibold text-slate-500 dark:text-zinc-500 uppercase tracking-wider mr-1">
           Commands:
         </span>
         <button
           onClick={() => executeCommand('Provide a comprehensive synthesis and executive summary of the attached context.')}
-          className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-850 transition-colors"
+          className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white dark:hover:bg-zinc-850 transition-colors"
         >
-          <FileText className="w-3 h-3 text-zinc-400" />
+          <FileText className="w-3 h-3 text-slate-600 dark:text-zinc-400" />
           <span>Summarize</span>
         </button>
         <button
           onClick={() => executeCommand('Extract all actionable tasks, deliverables, and owners into a structured task list.')}
-          className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-850 transition-colors"
+          className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white dark:hover:bg-zinc-850 transition-colors"
         >
-          <CheckSquare className="w-3 h-3 text-zinc-400" />
+          <CheckSquare className="w-3 h-3 text-slate-600 dark:text-zinc-400" />
           <span>Extract Tasks</span>
         </button>
         <button
           onClick={() => executeCommand('Generate a step-by-step Standard Operating Procedure (SOP) based on the procedures described.')}
-          className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-850 transition-colors"
+          className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white dark:hover:bg-zinc-850 transition-colors"
         >
-          <ListOrdered className="w-3 h-3 text-zinc-400" />
+          <ListOrdered className="w-3 h-3 text-slate-600 dark:text-zinc-400" />
           <span>Create SOP</span>
         </button>
         <button
           onClick={() => executeCommand('Identify all key decisions and agreements documented in this context.')}
-          className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-850 transition-colors"
+          className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white dark:hover:bg-zinc-850 transition-colors"
         >
-          <Lightbulb className="w-3 h-3 text-zinc-400" />
+          <Lightbulb className="w-3 h-3 text-slate-600 dark:text-zinc-400" />
           <span>Find Decisions</span>
         </button>
         <button
           onClick={() => executeCommand('Highlight potential risks, vulnerabilities, or open blockers present in the attached materials.')}
-          className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-850 transition-colors"
+          className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white dark:hover:bg-zinc-850 transition-colors"
         >
-          <AlertTriangle className="w-3 h-3 text-zinc-400" />
+          <AlertTriangle className="w-3 h-3 text-slate-600 dark:text-zinc-400" />
           <span>Find Risks</span>
         </button>
       </div>
@@ -225,11 +225,11 @@ export const AIWorkspaceView: React.FC = () => {
       {/* Messages Feed */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6 max-w-4xl mx-auto w-full select-text">
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-8 text-zinc-500 text-xs max-w-md mx-auto">
-            <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 mb-3">
+          <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-500 dark:text-zinc-500 text-xs max-w-md mx-auto">
+            <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-400 mb-3">
               <Bot className="w-6 h-6" />
             </div>
-            <h3 className="text-sm font-semibold text-zinc-200 mb-1">AI Workspace</h3>
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200 mb-1">AI Workspace</h3>
             <p className="leading-relaxed mb-4">
               Ground your queries by attaching notes, meetings, and documents from your local workspace.
               Responses run through your local Ollama models with zero external cloud transmission.
@@ -244,7 +244,7 @@ export const AIWorkspaceView: React.FC = () => {
               }`}
             >
               {msg.role === 'assistant' && (
-                <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 shrink-0 mt-0.5">
+                <div className="w-7 h-7 rounded-lg bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-700 dark:text-zinc-300 shrink-0 mt-0.5">
                   <Bot className="w-4 h-4" />
                 </div>
               )}
@@ -252,8 +252,8 @@ export const AIWorkspaceView: React.FC = () => {
               <div
                 className={`rounded-xl p-4 text-xs leading-relaxed max-w-2xl border ${
                   msg.role === 'user'
-                    ? 'bg-zinc-900 text-zinc-100 border-zinc-800'
-                    : 'bg-zinc-950 text-zinc-200 border-zinc-850 space-y-3'
+                    ? 'bg-slate-50 dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 border-slate-200 dark:border-zinc-800'
+                    : 'bg-white dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 dark:border-zinc-850 space-y-3'
                 }`}
               >
                 {msg.role === 'assistant' ? (
@@ -265,12 +265,12 @@ export const AIWorkspaceView: React.FC = () => {
                     </div>
 
                     {msg.sources && msg.sources.length > 0 && (
-                      <div className="pt-2 border-t border-zinc-850 flex items-center justify-between text-[10px] text-zinc-400">
+                      <div className="pt-2 border-t dark:border-zinc-850 flex items-center justify-between text-[10px] text-slate-600 dark:text-zinc-400">
                         <span>Grounding: {msg.sources.map((s) => s.title).join(', ')}</span>
                         {msg.content && !isStreaming && (
                           <button
                             onClick={() => handleSaveAsNote(msg.content)}
-                            className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors"
+                            className="flex items-center gap-1 text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white transition-colors"
                           >
                             <Save className="w-3 h-3" />
                             <span>Save as Note</span>
@@ -285,7 +285,7 @@ export const AIWorkspaceView: React.FC = () => {
               </div>
 
               {msg.role === 'user' && (
-                <div className="w-7 h-7 rounded-lg bg-zinc-850 border border-zinc-750 flex items-center justify-center text-zinc-300 shrink-0 mt-0.5">
+                <div className="w-7 h-7 rounded-lg dark:bg-zinc-850 border dark:border-zinc-750 flex items-center justify-center text-slate-700 dark:text-zinc-300 shrink-0 mt-0.5">
                   <User className="w-4 h-4" />
                 </div>
               )}
@@ -296,8 +296,8 @@ export const AIWorkspaceView: React.FC = () => {
       </div>
 
       {/* Input Form */}
-      <div className="p-4 border-t border-zinc-850 bg-zinc-950">
-        <div className="max-w-4xl mx-auto flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5">
+      <div className="p-4 border-t dark:border-zinc-850 bg-white dark:bg-zinc-950">
+        <div className="max-w-4xl mx-auto flex items-center gap-2 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5">
           <input
             type="text"
             placeholder={
@@ -314,7 +314,7 @@ export const AIWorkspaceView: React.FC = () => {
               }
             }}
             disabled={!isConnected || isStreaming}
-            className="flex-1 bg-transparent text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none"
+            className="flex-1 bg-transparent text-xs text-slate-900 dark:text-zinc-100 placeholder-slate-500 dark:placeholder-zinc-500 focus:outline-none"
           />
           <button
             type="button"
@@ -322,7 +322,7 @@ export const AIWorkspaceView: React.FC = () => {
             className={`p-2 rounded-lg border transition-all ${
               isListening
                 ? 'bg-red-950/80 border-red-700 text-white animate-pulse'
-                : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-700'
+                : 'bg-slate-100 dark:bg-zinc-800 border-slate-300 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-zinc-700'
             }`}
             title={isListening ? 'Stop voice input' : 'Speak prompt with microphone'}
           >

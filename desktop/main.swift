@@ -550,11 +550,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
             "/usr/local/bin/python3",      // Intel Homebrew
         ]
 
+        // serve.py (bundled next to web/) sets the JavaScript type for .mjs module files, which the
+        // system Python does not know; without it the bundled speech runtime fails to load
+        let serveScript = Bundle.main.path(forResource: "serve", ofType: "py")
+
         for pythonPath in pythonCandidates {
             if FileManager.default.fileExists(atPath: pythonPath) {
                 let p = Process()
                 p.executableURL = URL(fileURLWithPath: pythonPath)
-                p.arguments = ["-m", "http.server", String(port), "--directory", dir, "--bind", "127.0.0.1"]
+                if let script = serveScript {
+                    p.arguments = [script, String(port), dir]
+                } else {
+                    p.arguments = ["-m", "http.server", String(port), "--directory", dir, "--bind", "127.0.0.1"]
+                }
                 p.standardOutput = FileHandle.nullDevice
                 p.standardError = FileHandle.nullDevice
 

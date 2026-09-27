@@ -55,9 +55,9 @@ export const DashboardView: React.FC = () => {
   const totalItems = notes.length + meetings.length + documents.length + manuals.length;
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-black text-slate-900 dark:text-zinc-100 p-4 sm:p-6 lg:p-8 overflow-y-auto select-none font-sans transition-colors duration-500">
+    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas text-slate-900 dark:text-zinc-100 p-4 sm:p-6 lg:p-8 overflow-y-auto select-none font-sans transition-colors duration-500">
       {/* Header Profile / Welcome */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 border-b border-slate-200 dark:border-white/10 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 border-b border-slate-200 dark:border-zinc-800 pb-5">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-950 dark:text-white tracking-tight">Your Workspace</h2>
           <p className="text-xs sm:text-sm text-slate-800 dark:text-zinc-300 mt-1 font-medium">
@@ -70,7 +70,7 @@ export const DashboardView: React.FC = () => {
             size="sm"
             variant="outline"
             onClick={() => setIsExtensionModalOpen(true)}
-            className="hidden sm:flex items-center gap-1.5 bg-white dark:bg-black border border-slate-300 dark:border-zinc-850 text-slate-800 dark:text-zinc-200 hover:text-black dark:hover:text-white"
+            className="hidden sm:flex items-center gap-1.5 bg-white dark:bg-canvas border border-slate-300 dark:border-zinc-850 text-slate-800 dark:text-zinc-200 hover:text-black dark:hover:text-white"
             title="Automated 1-Click Chrome Extension Integration"
           >
             <ChromeIcon className="w-3.5 h-3.5 shrink-0" />
@@ -95,7 +95,7 @@ export const DashboardView: React.FC = () => {
         <TiltCard maxTilt={6} scale={1.02} className="rounded-xl">
           <button
             onClick={handleCreateNewNote}
-            className="w-full p-4 rounded-xl bg-white dark:bg-zinc-950 border border-slate-300 dark:border-white/10 hover:border-slate-500 dark:hover:border-white/30 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-all text-left flex flex-col justify-between min-h-[7.2rem] shadow-xs hover:shadow-md active:scale-[0.98]"
+            className="w-full p-4 rounded-xl bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 hover:border-slate-500 dark:hover:border-zinc-600 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-all text-left flex flex-col justify-between min-h-[7.2rem] shadow-xs hover:shadow-md active:scale-[0.98]"
           >
             <FileText className="w-5 h-5 text-slate-950 dark:text-zinc-200" />
             <div className="mt-2">
@@ -108,7 +108,7 @@ export const DashboardView: React.FC = () => {
         <TiltCard maxTilt={6} scale={1.02} className="rounded-xl">
           <button
             onClick={() => setActiveView('meetings')}
-            className="w-full p-4 rounded-xl bg-white dark:bg-zinc-950 border border-slate-300 dark:border-white/10 hover:border-slate-500 dark:hover:border-white/30 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-all text-left flex flex-col justify-between min-h-[7.2rem] shadow-xs hover:shadow-md active:scale-[0.98]"
+            className="w-full p-4 rounded-xl bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 hover:border-slate-500 dark:hover:border-zinc-600 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-all text-left flex flex-col justify-between min-h-[7.2rem] shadow-xs hover:shadow-md active:scale-[0.98]"
           >
             <Mic className="w-5 h-5 text-slate-950 dark:text-zinc-200" />
             <div className="mt-2">
@@ -121,7 +121,7 @@ export const DashboardView: React.FC = () => {
         <TiltCard maxTilt={6} scale={1.02} className="rounded-xl">
           <button
             onClick={() => setActiveView('documents')}
-            className="w-full p-4 rounded-xl bg-white dark:bg-zinc-950 border border-slate-300 dark:border-white/10 hover:border-slate-500 dark:hover:border-white/30 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-all text-left flex flex-col justify-between min-h-[7.2rem] shadow-xs hover:shadow-md active:scale-[0.98]"
+            className="w-full p-4 rounded-xl bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 hover:border-slate-500 dark:hover:border-zinc-600 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-all text-left flex flex-col justify-between min-h-[7.2rem] shadow-xs hover:shadow-md active:scale-[0.98]"
           >
             <FileUp className="w-5 h-5 text-slate-950 dark:text-zinc-200" />
             <div className="mt-2">
@@ -134,7 +134,7 @@ export const DashboardView: React.FC = () => {
         <TiltCard maxTilt={6} scale={1.02} className="rounded-xl">
           <button
             onClick={() => setActiveView('manuals')}
-            className="w-full p-4 rounded-xl bg-white dark:bg-zinc-950 border border-slate-300 dark:border-white/10 hover:border-slate-500 dark:hover:border-white/30 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-all text-left flex flex-col justify-between min-h-[7.2rem] shadow-xs hover:shadow-md active:scale-[0.98]"
+            className="w-full p-4 rounded-xl bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 hover:border-slate-500 dark:hover:border-zinc-600 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-all text-left flex flex-col justify-between min-h-[7.2rem] shadow-xs hover:shadow-md active:scale-[0.98]"
           >
             <Video className="w-5 h-5 text-slate-950 dark:text-zinc-200" />
             <div className="mt-2">
@@ -147,7 +147,7 @@ export const DashboardView: React.FC = () => {
         <TiltCard maxTilt={6} scale={1.02} className="rounded-xl">
           <button
             onClick={() => setActiveView('ai-workspace')}
-            className="w-full p-4 rounded-xl bg-white dark:bg-zinc-950 border border-slate-300 dark:border-white/10 hover:border-slate-500 dark:hover:border-white/30 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-all text-left flex flex-col justify-between min-h-[7.2rem] shadow-xs hover:shadow-md active:scale-[0.98]"
+            className="w-full p-4 rounded-xl bg-white dark:bg-zinc-950 border border-slate-300 dark:border-zinc-800 hover:border-slate-500 dark:hover:border-zinc-600 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-all text-left flex flex-col justify-between min-h-[7.2rem] shadow-xs hover:shadow-md active:scale-[0.98]"
           >
             <Bot className="w-5 h-5 text-slate-950 dark:text-zinc-200" />
             <div className="mt-2">
@@ -160,7 +160,7 @@ export const DashboardView: React.FC = () => {
 
       {/* Main Content Area: Real Stored Activity */}
       {totalItems === 0 ? (
-        <div className="py-14 sm:py-16 text-center border border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-zinc-950/70 p-6 sm:p-10 max-w-xl mx-auto shadow-sm dark:shadow-xl">
+        <div className="py-14 sm:py-16 text-center border border-slate-200 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-950/70 p-6 sm:p-10 max-w-xl mx-auto shadow-sm dark:shadow-xl">
           <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-400 mx-auto mb-4 shadow-sm">
             <BookOpen className="w-7 h-7 text-slate-900 dark:text-white" />
           </div>

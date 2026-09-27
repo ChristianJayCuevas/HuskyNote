@@ -30,17 +30,49 @@ html.theme-transitioning *::after {
 @layer base {
   :root {
     color-scheme: dark;
-    --bg-page: #050505;
-    --bg-surface: #0a0a0a;
-    --bg-card: #111111;
-    --bg-subtle: #171717;
-    --bg-hover: #202020;
-    --border-subtle: #202020;
-    --border-medium: #2a2a2a;
-    --border-active: #3a3a3a;
-    --text-muted: #71717a;
-    --text-secondary: #a1a1aa;
-    --text-primary: #f4f4f5;
+    --bg-page: #0d1117;
+    --bg-surface: #010409;
+    --bg-card: #0d1117;
+    --bg-subtle: #161b22;
+    --bg-hover: #21262d;
+    --border-subtle: #21262d;
+    --border-medium: #30363d;
+    --border-active: #3d444d;
+    --text-muted: #7d8590;
+    --text-secondary: #9198a1;
+    --text-primary: #e6edf3;
+
+    /* Tailwind stock zinc (light mode keeps these). 750 and 850 are only used behind dark: */
+    --zinc-50: 250 250 250;
+    --zinc-100: 244 244 245;
+    --zinc-200: 228 228 231;
+    --zinc-300: 212 212 216;
+    --zinc-400: 161 161 170;
+    --zinc-500: 113 113 122;
+    --zinc-600: 82 82 91;
+    --zinc-700: 63 63 70;
+    --zinc-750: 51 51 56;
+    --zinc-800: 39 39 42;
+    --zinc-850: 32 32 34;
+    --zinc-900: 24 24 27;
+    --zinc-950: 9 9 11;
+  }
+
+  /* GitHub dark palette (Primer) mapped onto the zinc scale */
+  html.dark {
+    --zinc-50: 240 246 252;   /* #f0f6fc */
+    --zinc-100: 230 237 243;  /* #e6edf3 fg.default */
+    --zinc-200: 209 215 224;  /* #d1d7e0 */
+    --zinc-300: 183 189 200;  /* #b7bdc8 */
+    --zinc-400: 145 152 161;  /* #9198a1 fg.muted */
+    --zinc-500: 125 133 144;  /* #7d8590 */
+    --zinc-600: 101 108 118;  /* #656c76 */
+    --zinc-700: 61 68 77;     /* #3d444d border.emphasis */
+    --zinc-750: 55 62 71;     /* #373e47 */
+    --zinc-800: 48 54 61;     /* #30363d border.default */
+    --zinc-850: 42 48 56;     /* #2a3038 */
+    --zinc-900: 22 27 34;     /* #161b22 canvas.subtle */
+    --zinc-950: 13 17 23;     /* #0d1117 canvas.default */
   }
 
   html.light {
@@ -83,12 +115,12 @@ html.theme-transitioning *::after {
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #27272a;
+    background: #30363d;
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #3f3f46;
+    background: #484f58;
   }
 
   html.light ::-webkit-scrollbar-thumb {

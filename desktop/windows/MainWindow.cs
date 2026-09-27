@@ -22,6 +22,11 @@ namespace HuskyNote
         private readonly ContextMenuStrip _trayMenu;
         private readonly ToolStripMenuItem _statusMenuItem;
         private readonly System.Windows.Forms.Timer _ollamaTimer;
+
+        // Window layout to restore when leaving full screen
+        private FormBorderStyle _borderBeforeFullScreen = FormBorderStyle.Sizable;
+        private FormWindowState _stateBeforeFullScreen = FormWindowState.Normal;
+        private bool _isFullScreen;
         private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(1.5) };
 
         private bool _isOllamaOnline = false;
@@ -167,6 +172,10 @@ namespace HuskyNote
                     }
                 };
 
+                // The web app requests full screen on F11; a WebView2 host has to resize its own window
+                _webView.CoreWebView2.ContainsFullScreenElementChanged += (s, e) =>
+                    SetFullScreen(_webView.CoreWebView2.ContainsFullScreenElement);
+
                 string targetUrl = await DetermineTargetUrlAsync();
                 _webView.CoreWebView2.Navigate(targetUrl);
             }
@@ -178,6 +187,30 @@ namespace HuskyNote
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
                 );
+            }
+        }
+
+        /// <summary>
+        /// Borderless and maximized while the page is full screen, restoring the
+        /// previous border and window state afterwards.
+        /// </summary>
+        private void SetFullScreen(bool fullScreen)
+        {
+            if (fullScreen == _isFullScreen) return;
+            _isFullScreen = fullScreen;
+            if (fullScreen)
+            {
+                _borderBeforeFullScreen = FormBorderStyle;
+                _stateBeforeFullScreen = WindowState;
+                FormBorderStyle = FormBorderStyle.None;
+                // Re-maximize so the borderless window covers the taskbar too
+                WindowState = FormWindowState.Normal;
+                WindowState = FormWindowState.Maximized;
+            }
+            else
+            {
+                FormBorderStyle = _borderBeforeFullScreen;
+                WindowState = _stateBeforeFullScreen;
             }
         }
 

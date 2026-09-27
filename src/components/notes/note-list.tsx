@@ -36,7 +36,7 @@ export const NoteList: React.FC<NoteListProps> = ({
   });
 
   return (
-    <div className="w-80 border-r border-slate-200 dark:border-zinc-850 flex flex-col h-full bg-white dark:bg-zinc-950 shrink-0 select-none transition-colors duration-500">
+    <div className="w-full border-r border-slate-200 dark:border-zinc-850 flex flex-col h-full bg-white dark:bg-zinc-950 shrink-0 select-none transition-colors duration-500">
       {/* Search and Create Header */}
       <div className="p-4 border-b border-slate-200 dark:border-zinc-850 space-y-3">
         <div className="flex items-center justify-between">

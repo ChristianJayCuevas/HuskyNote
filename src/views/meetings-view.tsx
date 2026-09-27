@@ -8,6 +8,7 @@ import { EmptyState } from '../components/ui/empty-state';
 import { Button } from '../components/ui/button';
 import { formatSecondsToTime } from '../services/audio/transcriber';
 import { Mic, Plus, Calendar, Clock, ChevronRight } from 'lucide-react';
+import { ResizableListPanel } from '../components/ui/resizable-list-panel';
 
 export const MeetingsView: React.FC = () => {
   const { activeMeetingId, setActiveMeetingId } = useWorkspace();
@@ -34,13 +35,10 @@ export const MeetingsView: React.FC = () => {
   const isDetailOpen = Boolean(isRecordingMode || selectedMeeting);
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-slate-50 dark:bg-black transition-colors duration-500">
+    <div className="flex h-full w-full overflow-hidden bg-slate-50 dark:bg-canvas transition-colors duration-500">
       {/* Left Sidebar: Sessions List */}
-      <div
-        className={`${
-          isDetailOpen ? 'hidden md:flex' : 'flex'
-        } w-full md:w-80 border-r border-slate-200 dark:border-zinc-850 flex-col h-full bg-white dark:bg-zinc-950 shrink-0 select-none transition-colors duration-500`}
-      >
+      <ResizableListPanel storageKey="meetings" label="Meetings" hiddenOnMobile={isDetailOpen}>
+      <div className="flex w-full border-r border-slate-200 dark:border-zinc-850 flex-col h-full bg-white dark:bg-zinc-950 select-none transition-colors duration-500">
         <div className="p-4 border-b border-slate-200 dark:border-zinc-850 flex items-center justify-between">
           <span className="text-xs font-bold text-slate-800 dark:text-zinc-300 uppercase tracking-wider">
             Meetings ({meetings.length})
@@ -104,6 +102,7 @@ export const MeetingsView: React.FC = () => {
           )}
         </div>
       </div>
+      </ResizableListPanel>
 
       {/* Right Content Area */}
       <div className={`${isDetailOpen ? 'flex' : 'hidden md:flex'} flex-1 h-full min-w-0 flex-col`}>

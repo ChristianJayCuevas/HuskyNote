@@ -54,6 +54,7 @@ import { ChromeIcon } from '../components/ui/chrome-icon';
 import { SUPPORTED_LANGUAGES } from '../services/ai/translation';
 import { AIProviderSettings } from '../components/settings/ai-provider-settings';
 import { TranscriptionSettings } from '../components/settings/transcription-settings';
+import { UpdateSettings } from '../components/settings/update-settings';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -324,9 +325,9 @@ export const SettingsView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-black text-slate-900 dark:text-white p-8 overflow-y-auto max-w-4xl mx-auto w-full select-none transition-colors duration-500 font-sans">
-      {/* Sticky Settings Header & Quick Jump Navigation */}
-      <div className="sticky top-0 z-20 bg-slate-50/90 dark:bg-black/90 backdrop-blur-md pb-4 pt-2 mb-8 border-b border-slate-200 dark:border-zinc-850 transition-colors duration-500">
+    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas text-slate-900 dark:text-white p-8 overflow-y-auto max-w-4xl mx-auto w-full select-none transition-colors duration-500 font-sans">
+      {/* Settings Header & Quick Jump Navigation (scrolls with the page) */}
+      <div className="pb-4 pt-2 mb-8 border-b border-slate-200 dark:border-zinc-800 transition-colors duration-500">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
           <div>
             <h2 className="text-2xl font-bold text-slate-950 dark:text-white tracking-tight">Settings</h2>
@@ -382,7 +383,7 @@ export const SettingsView: React.FC = () => {
 
         {/* Local AI / Ollama Configuration */}
         {provider === 'ollama' && (
-        <div id="section-ai" className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 space-y-5 scroll-mt-28 shadow-xs dark:shadow-xl transition-colors duration-500">
+        <div id="section-ai" className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 space-y-5 scroll-mt-6 shadow-xs dark:shadow-xl transition-colors duration-500">
           <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-850 pb-4">
             <div className="flex items-center gap-3">
               <Cpu className="w-5 h-5 text-slate-700 dark:text-zinc-300" />
@@ -413,7 +414,7 @@ export const SettingsView: React.FC = () => {
                 value={inputUrl}
                 onChange={(e) => setInputUrl(e.target.value)}
                 placeholder="http://localhost:11434"
-                className="flex-1 bg-zinc-900 border border-zinc-850 rounded-md px-3 py-2 text-xs text-zinc-100 font-mono focus:outline-none focus:border-zinc-700"
+                className="flex-1 bg-zinc-900 border dark:border-zinc-850 rounded-md px-3 py-2 text-xs text-zinc-100 font-mono focus:outline-none focus:border-zinc-700"
               />
               <Button size="sm" variant="secondary" onClick={handleSaveUrl}>
                 Save URL
@@ -689,7 +690,7 @@ export const SettingsView: React.FC = () => {
           )}
 
           {/* Compatible Models Hub (Ranked From Min to Higher) */}
-          <div id="section-models" className="space-y-4 pt-3 border-t border-slate-200 dark:border-zinc-850 scroll-mt-28">
+          <div id="section-models" className="space-y-4 pt-3 border-t border-slate-200 dark:border-zinc-850 scroll-mt-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h4 className="text-xs font-bold text-slate-950 dark:text-white flex items-center gap-2">
@@ -771,7 +772,7 @@ export const SettingsView: React.FC = () => {
                       key={model.id}
                       className={`p-3.5 rounded-xl border transition-all flex flex-col justify-between gap-3 ${
                         isCurrentlySelected
-                          ? 'bg-slate-100 dark:bg-zinc-900 border-slate-400 dark:border-white/50 shadow-sm'
+                          ? 'bg-slate-100 dark:bg-zinc-900 border-slate-400 dark:border-zinc-400 shadow-sm'
                           : isRec
                           ? 'bg-slate-50 dark:bg-zinc-900/60 border-slate-300 dark:border-zinc-700'
                           : 'bg-white dark:bg-zinc-900/30 border-slate-200 dark:border-zinc-800/80 hover:border-slate-300 dark:hover:border-zinc-700'
@@ -912,7 +913,7 @@ export const SettingsView: React.FC = () => {
         )}
 
         {/* Google Calendar & Cloud Sync Section */}
-        <div id="section-google-calendar" className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 space-y-6 scroll-mt-28 shadow-xs dark:shadow-xl transition-colors duration-500">
+        <div id="section-google-calendar" className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 space-y-6 scroll-mt-6 shadow-xs dark:shadow-xl transition-colors duration-500">
           <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-850 pb-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-slate-100 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 text-slate-900 dark:text-white">
@@ -1054,7 +1055,7 @@ export const SettingsView: React.FC = () => {
         </div>
 
         {/* Chrome Browser Extension Companion Setup */}
-        <div id="section-companion" className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 space-y-6 scroll-mt-28 shadow-xs dark:shadow-xl transition-colors duration-500">
+        <div id="section-companion" className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 space-y-6 scroll-mt-6 shadow-xs dark:shadow-xl transition-colors duration-500">
           <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-850 pb-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-slate-100 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 text-slate-900 dark:text-white">
@@ -1150,7 +1151,7 @@ export const SettingsView: React.FC = () => {
                 <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed font-medium">
                   Paste the address into your Chrome browser address bar and press Enter:
                 </p>
-                <div className="flex items-center justify-between p-2 rounded bg-slate-100 dark:bg-black border border-slate-200 dark:border-zinc-800 font-mono text-xs text-slate-900 dark:text-zinc-200">
+                <div className="flex items-center justify-between p-2 rounded bg-slate-100 dark:bg-canvas border border-slate-200 dark:border-zinc-800 font-mono text-xs text-slate-900 dark:text-zinc-200">
                   <span>chrome://extensions</span>
                   <button
                     onClick={() => copyToClipboard('chrome://extensions', 'url')}
@@ -1192,7 +1193,7 @@ export const SettingsView: React.FC = () => {
                 <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed font-medium">
                   Click the <strong className="text-slate-900 dark:text-zinc-200">Load unpacked</strong> button on the top-left toolbar and select this repository's extension folder:
                 </p>
-                <div className="flex items-center justify-between p-2 rounded bg-slate-100 dark:bg-black border border-slate-200 dark:border-zinc-800 font-mono text-xs text-slate-900 dark:text-zinc-200">
+                <div className="flex items-center justify-between p-2 rounded bg-slate-100 dark:bg-canvas border border-slate-200 dark:border-zinc-800 font-mono text-xs text-slate-900 dark:text-zinc-200">
                   <span className="truncate">huskynote/browser-extension</span>
                   <button
                     onClick={() => copyToClipboard('browser-extension', 'path')}
@@ -1226,7 +1227,7 @@ export const SettingsView: React.FC = () => {
         </div>
 
         {/* Multilingual Speech & Translation Preferences */}
-        <div id="section-speech" className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 space-y-5 scroll-mt-28 shadow-xs dark:shadow-xl transition-colors duration-500">
+        <div id="section-speech" className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 space-y-5 scroll-mt-6 shadow-xs dark:shadow-xl transition-colors duration-500">
           <div className="flex items-center gap-3 border-b border-slate-200 dark:border-zinc-850 pb-4">
             <Languages className="w-5 h-5 text-slate-700 dark:text-zinc-300" />
             <div>
@@ -1277,7 +1278,7 @@ export const SettingsView: React.FC = () => {
         </div>
 
         {/* Storage & Archive Management */}
-        <div id="section-storage" className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 space-y-5 scroll-mt-28 shadow-xs dark:shadow-xl transition-colors duration-500">
+        <div id="section-storage" className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 space-y-5 scroll-mt-6 shadow-xs dark:shadow-xl transition-colors duration-500">
           <div className="flex items-center gap-3 border-b border-slate-200 dark:border-zinc-850 pb-4">
             <Database className="w-5 h-5 text-slate-700 dark:text-zinc-300" />
             <div>
@@ -1337,6 +1338,8 @@ export const SettingsView: React.FC = () => {
             </Button>
           </div>
         </div>
+
+        <UpdateSettings />
       </div>
     </div>
   );

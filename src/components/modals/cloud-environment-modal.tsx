@@ -124,7 +124,7 @@ export const CloudEnvironmentModal: React.FC<CloudEnvironmentModalProps> = ({
             href="https://github.com/ChristianJayCuevas/HuskyNote"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-black border border-zinc-850 text-xs font-medium text-zinc-300 hover:text-white hover:border-white/40 transition-colors flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-black border dark:border-zinc-850 text-xs font-medium text-zinc-300 hover:text-white hover:border-white/40 transition-colors flex items-center justify-center gap-2"
           >
             <GithubIcon className="w-4 h-4" />
             <span>GitHub Repository</span>

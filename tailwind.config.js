@@ -1,3 +1,10 @@
+// zinc resolves through CSS variables so dark mode can use GitHub's dark palette
+// while light mode keeps Tailwind's stock zinc values (see src/index.css).
+const zincShades = [50, 100, 200, 300, 400, 500, 600, 700, 750, 800, 850, 900, 950];
+const zinc = Object.fromEntries(
+  zincShades.map((shade) => [shade, `rgb(var(--zinc-${shade}) / <alpha-value>)`])
+);
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -29,6 +36,12 @@ export default {
         ],
       },
       colors: {
+        zinc,
+        // GitHub dark canvases: canvas.default and canvas.inset
+        canvas: {
+          DEFAULT: '#0d1117',
+          inset: '#010409',
+        },
         husky: {
           950: '#050505',
           900: '#0a0a0a',
