@@ -30,6 +30,7 @@ import { useLanguage } from '../../context/language-context';
 import { useAI } from '../../context/ai-context';
 import { useGitHubStars } from '../../services/github/stars';
 import logoImg from '../../assets/official_huskynote.png';
+import { ProfileSwitcher } from './profile-switcher';
 
 export const Sidebar: React.FC = () => {
   const {
@@ -343,6 +344,11 @@ export const Sidebar: React.FC = () => {
           </button>
         </div>
 
+        {/* Profile switcher: each profile is a separate workspace for a job or project */}
+        <div className={`py-2.5 border-b border-slate-200 dark:border-zinc-800 ${isCollapsed ? 'px-2' : 'px-3'}`}>
+          <ProfileSwitcher collapsed={isCollapsed} />
+        </div>
+
         {renderNavContent(isCollapsed)}
       </aside>
 
@@ -385,6 +391,10 @@ export const Sidebar: React.FC = () => {
               >
                 <X className="w-4 h-4" />
               </button>
+            </div>
+
+            <div className="px-3 py-2.5 border-b border-slate-200 dark:border-zinc-800">
+              <ProfileSwitcher />
             </div>
 
             {renderNavContent(false)}

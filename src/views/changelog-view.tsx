@@ -6,8 +6,9 @@ const RELEASES = [
   {
     version: 'v0.5.0',
     date: '2026-09-27',
-    title: 'GPU Transcription, GitHub-Style Dark Mode & Topbar Fixes',
+    title: 'Profiles, GPU Transcription & GitHub-Style Dark Mode',
     highlights: [
+      'Profiles keep separate workspaces for different jobs or projects. Switch from the top of the sidebar; each profile has its own notes, meetings, documents, manuals, and schedule, and a new profile starts with your current AI and transcription settings.',
       'Parakeet TDT v3 now runs on the GPU on computers that support it. A configuration error made it fall back to the slower CPU version every time; on an RTX 4060, phrases now transcribe about 8 times faster.',
       'The first phrase of a recording no longer waits several seconds while the GPU warms up.',
       'Choose which microphone to record from with the dropdown next to Voice Type in Husky Notes and Start Microphone in meetings. The choice is remembered, shared by both, used as your mic for Google Meet or tab recordings, and falls back to the system default if that microphone is unplugged.',
