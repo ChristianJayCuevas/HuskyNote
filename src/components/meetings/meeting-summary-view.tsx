@@ -657,9 +657,13 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
         Shows a quick at-a-glance summary of the meeting's quantitative facts.
         This strip is always visible regardless of the active tab, giving the
         user instant context without needing to navigate.
+
+        It and the tab bar need shrink-0: they scroll horizontally, and a
+        scroll container in this height-limited flex column has no minimum
+        height, so long tab content squeezed both rows down to slivers.
       */}
       <div
-        className="flex items-stretch gap-2 mb-6 overflow-x-auto pb-1"
+        className="flex items-stretch gap-2 mb-6 overflow-x-auto pb-1 shrink-0"
         role="region"
         aria-label="Meeting key metrics"
       >
@@ -708,7 +712,7 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
 
       {/* ── Tab Navigation ── */}
       <div
-        className="flex items-center border-b border-slate-200 dark:border-zinc-850 mb-6 gap-2 overflow-x-auto"
+        className="flex items-center border-b border-slate-200 dark:border-zinc-850 mb-6 gap-2 overflow-x-auto shrink-0"
         role="tablist"
         aria-label="Meeting sections"
       >

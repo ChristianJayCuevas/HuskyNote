@@ -18,6 +18,7 @@ const RELEASES = [
       'Light mode now works on the Meetings recorder and meeting reports, Notes version history, Manuals, Documents, AI Workspace, Screen Recorder, Templates, and Husky Notes pages, which still showed dark panels and light text.',
       'In dark mode, the Meetings recorder, meeting report, Manuals, Documents, AI Workspace, and Husky Notes pages use the same background as the rest of the app instead of pure black.',
       'Zoomed PDF pages are no longer cut off on the left side.',
+      'The meeting stats and the Report / Summary / Transcript tabs no longer collapse into thin slivers when a meeting has a long transcript or report.',
       'Cards and calendar cells in dark mode no longer have white outlines, and about 340 dark-mode borders and hover states that never displayed now work.',
       'Removed the "Thock" sound button from the topbar. Cmd/Ctrl + M still mutes sound effects.',
       'The pull-cord theme switch no longer blocks clicks on the buttons underneath it.',
