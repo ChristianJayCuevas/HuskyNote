@@ -16,6 +16,7 @@
  * const audioBlob = await recorder.stop();
  * ```
  */
+import { openMicrophone } from './microphone';
 export class AudioRecorder {
   private mediaRecorder: MediaRecorder | null = null;
   private audioContext: AudioContext | null = null;
@@ -44,13 +45,8 @@ export class AudioRecorder {
       this.stream = inputStream;
       this.ownsStream = false;
     } else {
-      // Request microphone permission explicitly
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-        },
-      });
+      // Request microphone permission explicitly, on the microphone chosen in the app
+      this.stream = await openMicrophone({ echoCancellation: true, noiseSuppression: true });
       this.ownsStream = true;
     }
 

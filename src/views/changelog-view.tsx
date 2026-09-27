@@ -10,6 +10,7 @@ const RELEASES = [
     highlights: [
       'Parakeet TDT v3 now runs on the GPU on computers that support it. A configuration error made it fall back to the slower CPU version every time; on an RTX 4060, phrases now transcribe about 8 times faster.',
       'The first phrase of a recording no longer waits several seconds while the GPU warms up.',
+      'Choose which microphone to record from with the dropdown next to Voice Type in Husky Notes and Start Microphone in meetings. The choice is remembered, shared by both, used as your mic for Google Meet or tab recordings, and falls back to the system default if that microphone is unplugged.',
       'Parakeet starts without an internet connection once downloaded, because its speech runtime now ships with the app instead of loading from a CDN.',
       'Microphone audio is filtered properly when it is converted for transcription, so hiss and high-pitched noise no longer fold into the speech range.',
       'Settings shows which speech models are downloaded on this device and how large they are, lets you remove them, and says whether the GPU can be used, including when the browser has graphics acceleration turned off and how to turn it on.',

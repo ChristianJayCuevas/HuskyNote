@@ -4,6 +4,7 @@ import type { Note } from '../types';
 import { useWorkspace } from '../context/workspace-context';
 import { useSound } from '../context/sound-context';
 import { HuskyMascot } from '../components/ui/husky-mascot';
+import { MicrophonePicker } from '../components/ui/microphone-picker';
 import { Button } from '../components/ui/button';
 import {
   Feather,
@@ -205,10 +206,11 @@ export const ZenFocusView: React.FC = () => {
             {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
 
-          {/* Voice Typing Button */}
+          {/* Voice Typing Button, with the microphone picker attached */}
+          <div className="inline-flex items-stretch">
           <button
             onClick={toggleDictation}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono border transition-all ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-l text-xs font-mono border transition-all ${
               isDictating
                 ? 'bg-red-950/80 border-red-700 text-white animate-pulse'
                 : 'bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white'
@@ -218,6 +220,12 @@ export const ZenFocusView: React.FC = () => {
             {isDictating ? <Mic className="w-3.5 h-3.5 text-red-400" /> : <Mic className="w-3.5 h-3.5" />}
             <span>{isDictating ? 'LISTENING' : 'VOICE TYPE'}</span>
           </button>
+          <MicrophonePicker
+            align="right"
+            disabled={isDictating}
+            triggerClassName="px-1.5 rounded-r border border-l-0 bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white"
+          />
+          </div>
 
           {/* Manual Save */}
           <Button variant="outline" size="sm" onClick={handleManualSave}>

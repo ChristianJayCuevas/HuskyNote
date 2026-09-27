@@ -27,6 +27,8 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { GoogleMeetGuideModal } from './google-meet-guide-modal';
 import { FloatingMeetingController } from './floating-meeting-controller';
+import { MicrophonePicker } from '../ui/microphone-picker';
+import { openMicrophone } from '../../services/audio/microphone';
 import { ScreenSnipperOverlay, type CropRect } from './screen-snipper-overlay';
 import {
   SUPPORTED_LANGUAGES,
@@ -559,9 +561,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
       });
 
       // Request host microphone to perform dual-channel hardware diarization (Host Mic vs Meeting Tab Audio)
-      const micStream = await navigator.mediaDevices
-        .getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })
-        .catch(() => null);
+      const micStream = await openMicrophone({ echoCancellation: true, noiseSuppression: true }).catch(() => null);
       tabMicStreamRef.current = micStream;
 
       // Tab + mic mixed into one stream that is both recorded and transcribed
@@ -1045,10 +1045,17 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
 
             {!isRecording ? (
               <div className="flex items-center gap-2">
-                <Button variant="primary" size="md" onClick={startRecording}>
-                  <Mic className="w-4 h-4" />
-                  <span>Start Microphone</span>
-                </Button>
+                <div className="inline-flex items-stretch">
+                  <Button variant="primary" size="md" onClick={startRecording} className="rounded-r-none">
+                    <Mic className="w-4 h-4" />
+                    <span>Start Microphone</span>
+                  </Button>
+                  {/* The chosen microphone is also the host mic for Google Meet / Tab capture */}
+                  <MicrophonePicker
+                    align="right"
+                    triggerClassName="px-2 rounded-r-md border-l border-white/20 bg-slate-950 text-white hover:bg-slate-800 dark:border-black/10 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+                  />
+                </div>
                 <Button
                   variant="outline"
                   size="md"
