@@ -1323,10 +1323,10 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-mono text-white/90 font-semibold">
+                        <span className="text-[10px] font-mono text-slate-950/90 dark:text-white/90 font-semibold">
                           {formatSecondsToTime(ss.timestampSeconds)}
                         </span>
-                        <span className="text-[10px] text-white/80 font-medium flex items-center gap-1">
+                        <span className="text-[10px] text-slate-950/80 dark:text-white/80 font-medium flex items-center gap-1">
                           {ss.type === 'portion' ? (
                             <>
                               <Crop className="w-2.5 h-2.5" aria-hidden="true" />
@@ -1341,7 +1341,7 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
                         </span>
                       </div>
                       {ss.caption && (
-                        <p className="text-[11px] text-white/80 mt-1 line-clamp-1">{ss.caption}</p>
+                        <p className="text-[11px] text-slate-950/80 dark:text-white/80 mt-1 line-clamp-1">{ss.caption}</p>
                       )}
                     </div>
                   </div>

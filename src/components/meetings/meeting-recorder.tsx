@@ -995,9 +995,9 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-black p-8 max-w-5xl mx-auto w-full">
+    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas p-8 max-w-5xl mx-auto w-full">
       {/* Top Controls Card */}
-      <div className="bg-zinc-950 border dark:border-zinc-850 rounded-xl p-6 mb-6">
+      <div className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-6 mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="flex-1 min-w-0">
             <input
@@ -1005,10 +1005,10 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
               value={meetingTitle}
               onChange={(e) => setMeetingTitle(e.target.value)}
               disabled={isRecording}
-              className="bg-transparent text-xl font-bold text-white tracking-tight focus:outline-none placeholder-zinc-500 w-full"
+              className="bg-transparent text-xl font-bold text-slate-950 dark:text-white tracking-tight focus:outline-none placeholder-slate-500 dark:placeholder-zinc-500 w-full"
               placeholder="Meeting Title"
             />
-            <div className="flex items-center gap-3 text-xs text-zinc-400 mt-1">
+            <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-zinc-400 mt-1">
               <span className="flex items-center gap-1.5 font-mono">
                 <Clock className="w-3.5 h-3.5" />
                 {formatSecondsToTime(elapsedSeconds)}
@@ -1018,13 +1018,13 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
               {isConnected && (
                 <>
                   <span>•</span>
-                  <span className="text-zinc-300">AI: {selectedModel}</span>
+                  <span className="text-slate-700 dark:text-zinc-300">AI: {selectedModel}</span>
                 </>
               )}
               {screenshots.length > 0 && (
                 <>
                   <span>•</span>
-                  <span className="text-zinc-300 flex items-center gap-1">
+                  <span className="text-slate-700 dark:text-zinc-300 flex items-center gap-1">
                     <Image className="w-3 h-3" />
                     {screenshots.length} screenshot{screenshots.length !== 1 ? 's' : ''}
                   </span>
@@ -1053,7 +1053,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                   {/* The chosen microphone is also the host mic for Google Meet / Tab capture */}
                   <MicrophonePicker
                     align="right"
-                    triggerClassName="px-2 rounded-r-md border-l border-white/20 bg-slate-950 text-white hover:bg-slate-800 dark:border-black/10 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+                    triggerClassName="px-2 rounded-r-md border-l border-slate-900/20 bg-slate-950 text-white hover:bg-slate-800 dark:border-black/10 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
                   />
                 </div>
                 <Button
@@ -1079,7 +1079,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                   size="md"
                   onClick={() => setShouldAutoOpenPiP(true)}
                   title="Pop out Always-on-Top Floating Quick Navbar on your meeting tab or screen"
-                  className="border-zinc-700 hover:border-zinc-500"
+                  className="border-slate-300 dark:border-zinc-700 hover:border-slate-400 dark:hover:border-zinc-500"
                 >
                   <ExternalLink className="w-4 h-4" />
                   <span className="hidden sm:inline">Pop-out HUD</span>
@@ -1091,7 +1091,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                   size="md"
                   onClick={handleTakeScreenshot}
                   title="Capture a screenshot of the current screen"
-                  className="border-zinc-700 hover:border-zinc-500"
+                  className="border-slate-300 dark:border-zinc-700 hover:border-slate-400 dark:hover:border-zinc-500"
                 >
                   <Camera className="w-4 h-4" />
                   <span className="hidden sm:inline">Screenshot</span>
@@ -1114,7 +1114,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
         {/* Live Audio Meter Waveform */}
         {isRecording && (
           <div className="pt-4 border-t dark:border-zinc-850 flex items-center justify-between">
-            <span className="text-xs text-zinc-400 font-mono">Live Input Level</span>
+            <span className="text-xs text-slate-600 dark:text-zinc-400 font-mono">Live Input Level</span>
             <div className="flex items-center gap-1 h-6">
               {[...Array(24)].map((_, i) => {
                 const threshold = (i / 24) * 100;
@@ -1123,7 +1123,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                   <div
                     key={i}
                     className={`w-1 rounded-full transition-all duration-75 ${
-                      active ? 'bg-zinc-200 h-5' : 'bg-zinc-800 h-1.5'
+                      active ? 'bg-slate-800 dark:bg-zinc-200 h-5' : 'bg-slate-100 dark:bg-zinc-800 h-1.5'
                     }`}
                   />
                 );
@@ -1136,8 +1136,8 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
         {screenshots.length > 0 && (
           <div className="pt-4 border-t dark:border-zinc-850 mt-4">
             <div className="flex items-center gap-2 mb-3">
-              <Camera className="w-3.5 h-3.5 text-zinc-400" />
-              <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
+              <Camera className="w-3.5 h-3.5 text-slate-600 dark:text-zinc-400" />
+              <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
                 Captured Screenshots ({screenshots.length})
               </span>
             </div>
@@ -1146,7 +1146,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                 <div key={ss.id} className="relative group shrink-0">
                   <button
                     onClick={() => setPreviewScreenshot(ss)}
-                    className="block rounded-lg overflow-hidden border border-zinc-800 hover:border-zinc-600 transition-colors"
+                    className="block rounded-lg overflow-hidden border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-600 transition-colors"
                   >
                     <img
                       src={ss.dataUrl}
@@ -1163,10 +1163,10 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                         e.stopPropagation();
                         removeScreenshot(ss.id);
                       }}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-900 hover:border-red-700"
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-900 hover:border-red-700"
                       title="Remove screenshot"
                     >
-                      <X className="w-3 h-3 text-zinc-300" />
+                      <X className="w-3 h-3 text-slate-700 dark:text-zinc-300" />
                     </button>
                   )}
                 </div>
@@ -1178,7 +1178,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
         {/* Multilingual Speech Recognition & AI Translation Controls */}
         <div className="pt-3 border-t dark:border-zinc-850 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1.5 text-zinc-400 font-mono text-[11px]">
+            <div className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-400 font-mono text-[11px]">
               <Languages className="w-3.5 h-3.5 text-emerald-400" />
               <span>Spoken Language:</span>
             </div>
@@ -1191,7 +1191,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                 const lName = SUPPORTED_LANGUAGES.find((l) => l.bcp47 === newLang)?.name || newLang;
                 addToast(`Speech recognition set to ${lName}`, 'info');
               }}
-              className="bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-xs text-white focus:outline-none focus:border-zinc-600 font-medium"
+              className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded px-2.5 py-1 text-xs text-slate-950 dark:text-white focus:outline-none focus:border-slate-300 dark:focus:border-zinc-600 font-medium"
               title="Select spoken language for speech recognition"
             >
               {SUPPORTED_LANGUAGES.map((lang) => (
@@ -1201,8 +1201,8 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
               ))}
             </select>
 
-            <div className="flex items-center gap-1.5 text-zinc-400 font-mono text-[11px]">
-              <ArrowRightLeft className="w-3 h-3 text-zinc-500" />
+            <div className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-400 font-mono text-[11px]">
+              <ArrowRightLeft className="w-3 h-3 text-slate-500 dark:text-zinc-500" />
               <span>Translate To:</span>
             </div>
             <select
@@ -1217,7 +1217,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                   addToast('Live translation disabled (Original text only)', 'info');
                 }
               }}
-              className="bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-xs text-white focus:outline-none focus:border-zinc-600 font-medium"
+              className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded px-2.5 py-1 text-xs text-slate-950 dark:text-white focus:outline-none focus:border-slate-300 dark:focus:border-zinc-600 font-medium"
               title="Select target translation language"
             >
               {TRANSLATION_TARGETS.map((target) => (
@@ -1230,13 +1230,13 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
 
           {/* View mode toggle (Dual / Translated / Original) when translation is active */}
           {translationTarget !== 'none' && (
-            <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-lg p-0.5 text-[11px] font-mono">
+            <div className="flex items-center gap-1 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg p-0.5 text-[11px] font-mono">
               <button
                 onClick={() => setTranscriptViewMode('dual')}
                 className={`px-2 py-0.5 rounded transition-all ${
                   transcriptViewMode === 'dual'
-                    ? 'bg-zinc-800 text-white font-bold'
-                    : 'text-zinc-400 hover:text-white'
+                    ? 'bg-slate-100 dark:bg-zinc-800 text-slate-950 dark:text-white font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white'
                 }`}
                 title="Show both original spoken language and translated text"
               >
@@ -1246,8 +1246,8 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                 onClick={() => setTranscriptViewMode('translated')}
                 className={`px-2 py-0.5 rounded transition-all ${
                   transcriptViewMode === 'translated'
-                    ? 'bg-zinc-800 text-white font-bold'
-                    : 'text-zinc-400 hover:text-white'
+                    ? 'bg-slate-100 dark:bg-zinc-800 text-slate-950 dark:text-white font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white'
                 }`}
                 title="Show translated text only"
               >
@@ -1257,8 +1257,8 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                 onClick={() => setTranscriptViewMode('original')}
                 className={`px-2 py-0.5 rounded transition-all ${
                   transcriptViewMode === 'original'
-                    ? 'bg-zinc-800 text-white font-bold'
-                    : 'text-zinc-400 hover:text-white'
+                    ? 'bg-slate-100 dark:bg-zinc-800 text-slate-950 dark:text-white font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white'
                 }`}
                 title="Show original spoken text only"
               >
@@ -1272,17 +1272,17 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
       {/* Main split: Live Transcript on left, Manual Notes on right */}
       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 min-h-0">
         {/* Live Transcript Pane */}
-        <div className="bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 flex flex-col min-h-0">
+        <div className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 flex flex-col min-h-0">
           <div className="flex items-center justify-between pb-3 border-b dark:border-zinc-850 mb-3 shrink-0 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
-              <h3 className="text-xs font-semibold text-zinc-200 uppercase tracking-wider">
+              <h3 className="text-xs font-semibold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">
                 Live Verbal Transcript
               </h3>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-zinc-500 font-mono">
+              <span className="text-[11px] text-slate-500 dark:text-zinc-500 font-mono">
                 {transcript.length} segments
               </span>
 
@@ -1318,9 +1318,9 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
 
           {/* Active Speaker Hook & Switcher Toolbar */}
           {isRecording && (
-            <div className="mb-3 p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-between gap-2.5 flex-wrap text-xs">
+            <div className="mb-3 p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-2.5 flex-wrap text-xs">
               <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1.5 text-zinc-400 font-mono text-[11px]">
+                <div className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-400 font-mono text-[11px]">
                   <Users className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Speaking now:</span>
                 </div>
@@ -1339,11 +1339,11 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                     className={`px-2.5 py-1 rounded text-[11px] font-mono transition-all flex items-center gap-1.5 ${
                       currentSpeaker.toLowerCase() === spk.toLowerCase()
                         ? 'bg-emerald-500 text-black font-bold shadow-sm ring-1 ring-emerald-400'
-                        : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white'
+                        : 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 hover:text-slate-950 dark:hover:text-white'
                     }`}
                   >
                     {currentSpeaker.toLowerCase() === spk.toLowerCase() && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-50 dark:bg-canvas animate-pulse" />
                     )}
                     <span>{spk}</span>
                   </button>
@@ -1353,7 +1353,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                     const custom = window.prompt('Enter speaker / participant name:');
                     if (custom && custom.trim()) handleSpeakerChange(custom.trim());
                   }}
-                  className="px-2 py-1 rounded text-[11px] font-mono bg-zinc-800/80 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors border border-dashed border-zinc-700"
+                  className="px-2 py-1 rounded text-[11px] font-mono bg-slate-100/80 dark:bg-zinc-800/80 text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors border border-dashed border-slate-300 dark:border-zinc-700"
                   title="Manually add a participant to the speaker roster"
                 >
                   + Add Speaker
@@ -1370,10 +1370,10 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 font-semibold mb-0.5">
                     <span>{currentSpeaker}</span>
-                    <span className="text-zinc-500">•</span>
+                    <span className="text-slate-500 dark:text-zinc-500">•</span>
                     <span className="text-emerald-300 italic font-normal">speaking now (live)...</span>
                   </div>
-                  <p className="text-zinc-100 text-xs leading-relaxed font-sans">
+                  <p className="text-slate-900 dark:text-zinc-100 text-xs leading-relaxed font-sans">
                     {liveInterimText}
                   </p>
                 </div>
@@ -1381,10 +1381,10 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
             )}
 
             {transcript.length === 0 && !liveInterimText ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500 text-xs">
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 dark:text-zinc-500 text-xs">
                 {isRecording ? (
                   <>
-                    <Mic className="w-6 h-6 mb-2 text-zinc-400 animate-pulse" />
+                    <Mic className="w-6 h-6 mb-2 text-slate-600 dark:text-zinc-400 animate-pulse" />
                     <span>
                       {speechEngine.state === 'loading'
                         ? 'Preparing the on-device speech model. Audio is being captured and will be transcribed once it is ready.'
@@ -1409,8 +1409,8 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                 const showTranslatedOnly = transcriptViewMode === 'translated' && seg.translation;
 
                 return (
-                  <div key={seg.id || `seg-${idx}`} className="p-3 rounded-lg bg-zinc-900/70 border border-zinc-800 text-xs transition-colors hover:border-zinc-700 space-y-1.5">
-                    <div className="flex items-center justify-between text-[10px] text-zinc-400 mb-1">
+                  <div key={seg.id || `seg-${idx}`} className="p-3 rounded-lg bg-slate-50/70 dark:bg-zinc-900/70 border border-slate-200 dark:border-zinc-800 text-xs transition-colors hover:border-slate-300 dark:hover:border-zinc-700 space-y-1.5">
+                    <div className="flex items-center justify-between text-[10px] text-slate-600 dark:text-zinc-400 mb-1">
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleRenameSpeaker(displaySpeaker)}
@@ -1421,31 +1421,31 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                           <span>{displaySpeaker}</span>
                         </button>
                         {seg.sourceLanguage && (
-                          <span className="text-[9px] font-mono px-1 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
+                          <span className="text-[9px] font-mono px-1 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border border-slate-300 dark:border-zinc-700">
                             {seg.sourceLanguage}
                           </span>
                         )}
                       </div>
-                      <span className="font-mono text-zinc-500">{formatSecondsToTime(seg.timestampSeconds)}</span>
+                      <span className="font-mono text-slate-500 dark:text-zinc-500">{formatSecondsToTime(seg.timestampSeconds)}</span>
                     </div>
 
                     {showDual ? (
                       <div className="space-y-1 pl-1">
-                        <div className="text-zinc-400 text-[11px] leading-relaxed italic border-l-2 border-zinc-700 pl-2">
-                          <span className="text-[9px] font-mono uppercase text-zinc-500 mr-1.5">Spoken:</span>
+                        <div className="text-slate-600 dark:text-zinc-400 text-[11px] leading-relaxed italic border-l-2 border-slate-300 dark:border-zinc-700 pl-2">
+                          <span className="text-[9px] font-mono uppercase text-slate-500 dark:text-zinc-500 mr-1.5">Spoken:</span>
                           {seg.originalText || seg.text}
                         </div>
-                        <div className="text-zinc-100 text-xs font-medium leading-relaxed border-l-2 border-emerald-500/60 pl-2">
+                        <div className="text-slate-900 dark:text-zinc-100 text-xs font-medium leading-relaxed border-l-2 border-emerald-500/60 pl-2">
                           <span className="text-[9px] font-mono uppercase text-emerald-400 mr-1.5">Translated:</span>
                           {seg.translation}
                         </div>
                       </div>
                     ) : showTranslatedOnly ? (
-                      <p className="text-zinc-100 text-xs leading-relaxed pl-1 font-medium">
+                      <p className="text-slate-900 dark:text-zinc-100 text-xs leading-relaxed pl-1 font-medium">
                         {seg.translation}
                       </p>
                     ) : (
-                      <p className="text-zinc-200 leading-relaxed pl-1">
+                      <p className="text-slate-800 dark:text-zinc-200 leading-relaxed pl-1">
                         {seg.originalText || seg.text}
                       </p>
                     )}
@@ -1465,22 +1465,22 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
         </div>
 
         {/* Manual Meeting Notes Pane */}
-        <div className="bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 flex flex-col min-h-0">
+        <div className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 flex flex-col min-h-0">
           <div className="flex items-center justify-between pb-3 border-b dark:border-zinc-850 mb-3 shrink-0">
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-zinc-400" />
-              <h3 className="text-xs font-semibold text-zinc-200 uppercase tracking-wider">
+              <FileText className="w-4 h-4 text-slate-600 dark:text-zinc-400" />
+              <h3 className="text-xs font-semibold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">
                 Meeting Notes
               </h3>
             </div>
-            <span className="text-[11px] text-zinc-500">Live editor</span>
+            <span className="text-[11px] text-slate-500 dark:text-zinc-500">Live editor</span>
           </div>
 
           <textarea
             value={manualNotes}
             onChange={(e) => setManualNotes(e.target.value)}
             placeholder="Jot down notes, reminders, or questions during the meeting..."
-            className="flex-1 w-full bg-transparent resize-none text-xs leading-relaxed text-zinc-200 placeholder-zinc-600 focus:outline-none font-mono"
+            className="flex-1 w-full bg-transparent resize-none text-xs leading-relaxed text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none font-mono"
           />
         </div>
       </div>
@@ -1489,8 +1489,8 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
       {isProcessingAI && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4">
           <Sparkles className="w-8 h-8 text-zinc-300 animate-spin mb-4" />
-          <h3 className="text-sm font-semibold text-zinc-100 mb-1">Synthesizing Meeting</h3>
-          <p className="text-xs text-zinc-400 max-w-sm text-center">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 mb-1">Synthesizing Meeting</h3>
+          <p className="text-xs text-slate-600 dark:text-zinc-400 max-w-sm text-center">
             Extracting executive summary, key decisions, action items, and topic milestones from your
             actual recorded transcript...
           </p>
