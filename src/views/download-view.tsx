@@ -1,8 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { useWorkspace } from '../context/workspace-context';
-import { useTheme } from '../context/theme-context';
+import { HuskyLogo, HuskyMark } from '@/brand';
+import { cn } from '@/lib/utils';
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { PhysicsRopeToggle } from '../components/ui/physics-rope-toggle';
+import { Card } from '../components/ui/card';
+import { PageContainer, PageHeader } from '../components/ui/page';
+import { ThemeToggle } from '../components/ui/theme-toggle';
+import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import {
   Download,
   Terminal,
@@ -12,7 +18,6 @@ import {
   Shield,
   ArrowRight,
   ExternalLink,
-  Cpu,
   ArrowLeft,
   Layers,
   AlertCircle,
@@ -44,9 +49,86 @@ export const LinuxTuxIcon: React.FC<{ className?: string }> = ({ className = 'w-
   </svg>
 );
 
+/** Copyable shell command: muted mono block with an optional copy button */
+const CommandBlock: React.FC<{ command: string; copied?: boolean; onCopy?: () => void; className?: string }> = ({
+  command,
+  copied = false,
+  onCopy,
+  className,
+}) => (
+  <div className={cn('flex items-start gap-1 rounded-md border bg-muted py-1.5 pl-3', onCopy ? 'pr-1' : 'pr-3', className)}>
+    <code className="min-w-0 flex-1 select-all whitespace-pre-wrap break-words py-0.5 font-mono text-xs leading-5 text-foreground">{command}</code>
+    {onCopy && (
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        className="-my-0.5 shrink-0 text-muted-foreground"
+        onClick={onCopy}
+        title="Copy command"
+        aria-label={copied ? 'Copied' : 'Copy'}
+      >
+        {copied ? <Check className="text-success" /> : <Copy />}
+      </Button>
+    )}
+  </div>
+);
+
+interface OsCardProps {
+  name: string;
+  icon: React.ReactNode;
+  requirement: string;
+  description: string;
+  specs: Array<[label: string, value: string]>;
+  features: string[];
+  selected: boolean;
+  recommended: boolean;
+  children: React.ReactNode;
+}
+
+/** One platform: header, specs, three features and its download buttons pinned to the bottom */
+const OsCard: React.FC<OsCardProps> = ({ name, icon, requirement, description, specs, features, selected, recommended, children }) => (
+  <Card
+    className={cn(
+      'flex h-full flex-col p-5 transition-colors duration-100',
+      selected ? 'border-primary/60 shadow-sm' : 'hover:border-input'
+    )}
+  >
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-foreground">{icon}</div>
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {recommended && <Badge variant="default">Recommended</Badge>}
+        <span className="text-xs text-muted-foreground">{requirement}</span>
+      </div>
+    </div>
+
+    <h3 className="mt-4 text-lg font-semibold text-foreground">{name}</h3>
+    <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+
+    <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 rounded-md bg-muted/60 p-3">
+      {specs.map(([label, value]) => (
+        <div key={label} className="min-w-0">
+          <dt className="text-xs text-muted-foreground">{label}</dt>
+          <dd className="mt-0.5 text-sm font-medium text-foreground">{value}</dd>
+        </div>
+      ))}
+    </dl>
+
+    <ul className="mt-4 space-y-1.5 text-sm text-foreground">
+      {features.map((feature) => (
+        <li key={feature} className="flex items-start gap-2">
+          <CheckCircle className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span>{feature}</span>
+        </li>
+      ))}
+    </ul>
+
+    <div className="mt-auto space-y-2 pt-6">{children}</div>
+  </Card>
+);
+
 export const DownloadView: React.FC = () => {
   const { setActiveView, addToast } = useWorkspace();
-  const { theme } = useTheme();
 
   // Detect user operating system and architecture
   const detectedOS = useMemo<SupportedOS>(() => {
@@ -83,13 +165,13 @@ export const DownloadView: React.FC = () => {
   const GITHUB_RELEASE_BASE = `${GITHUB_REPO}/releases/latest/download`;
 
   const handleDownload = async (filename: string, osName: string) => {
-    // ─── Binary Package Downloads (.dmg, .exe, .zip, .AppImage, .deb) ────────
+    // ─── Binary Package Downloads (.dmg, .exe, .zip, .AppImage, .tar.gz) ────────
     if (
       filename.endsWith('.exe') ||
       filename.endsWith('.zip') ||
       filename.endsWith('.dmg') ||
       filename.endsWith('.AppImage') ||
-      filename.endsWith('.deb')
+      filename.endsWith('.tar.gz')
     ) {
       const localUrl = `/downloads/${filename}`;
       const releaseUrl = `${GITHUB_RELEASE_BASE}/${filename}`;
@@ -135,7 +217,9 @@ export const DownloadView: React.FC = () => {
         ? 'Windows Installer (.exe)'
         : filename.endsWith('.zip')
         ? 'Windows Portable Package (.zip)'
-        : 'Linux package';
+        : filename.endsWith('.tar.gz')
+        ? 'Linux portable archive (.tar.gz)'
+        : 'Linux AppImage';
 
       addToast(`Downloading ${label} (${filename}).`, 'success');
       return;
@@ -149,14 +233,14 @@ export const DownloadView: React.FC = () => {
       mimeType = 'application/x-bat';
       blobContent = `@echo off
 rem ========================================================
-rem   HuskyNote Desktop - Personal AI Secretary
+rem   HuskyNote Desktop - A local-first AI secretary for meetings, documents, and notes.
 rem   App Icon: official_huskynote.png
 rem   Repository: https://github.com/ChristianJayCuevas/HuskyNote
 rem ========================================================
 title HuskyNote Desktop Setup
 echo.
 echo  ========================================================
-echo    HuskyNote Desktop - Personal AI Secretary
+echo    HuskyNote Desktop - A local-first AI secretary for meetings, documents, and notes.
 echo    Setting up HuskyNote for Windows...
 echo  ========================================================
 echo.
@@ -193,7 +277,7 @@ call npm run dev
       mimeType = 'application/x-sh';
       blobContent = `#!/usr/bin/env bash
 # ========================================================
-#   HuskyNote Desktop - Personal AI Secretary
+#   HuskyNote Desktop - A local-first AI secretary for meetings, documents, and notes.
 #   Target OS: ${osName}
 #   App Icon: official_huskynote.png
 #   Repository: https://github.com/ChristianJayCuevas/HuskyNote
@@ -201,7 +285,7 @@ call npm run dev
 set -e
 
 echo "========================================================"
-echo "  HuskyNote Desktop - Local-First AI Secretary"
+echo "  HuskyNote Desktop - A local-first AI secretary for meetings, documents, and notes."
 echo "  Setting up HuskyNote for ${osName}..."
 echo "========================================================"
 
@@ -233,114 +317,83 @@ bash start.sh
     addToast(`Downloading ${filename} for ${osName}. Run script to launch.`, 'success');
   };
 
+  const detectedLabel =
+    detectedOS === 'macos'
+      ? isAppleSilicon
+        ? 'macOS (Apple Silicon M-Series)'
+        : 'macOS (Intel Core)'
+      : detectedOS === 'windows'
+      ? 'Windows 10 / 11 (64-bit)'
+      : 'Linux (x86_64)';
+
   return (
-    <div className="flex-1 flex flex-col min-h-full bg-slate-50 dark:bg-canvas text-slate-900 dark:text-white p-6 md:p-10 overflow-y-auto max-w-6xl mx-auto w-full select-none transition-colors duration-500 font-sans">
-      {/* Top Navigation */}
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-6 mb-8 transition-colors duration-500 relative">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setActiveView('landing')}
-            className="p-2 rounded-lg bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 text-slate-700 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-slate-400 dark:hover:border-zinc-600 transition-colors shadow-sm"
-            title="Back to Landing Page"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <img
-            src="/official_huskynote.png"
-            alt="HuskyNote Logo"
-            className="w-10 h-10 rounded-xl shadow-md border border-slate-200 dark:border-zinc-800"
-          />
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">
-              Download HuskyNote Desktop
-            </h1>
-            <p className="text-xs text-slate-600 dark:text-zinc-400 mt-0.5 font-medium">
-              Local-first desktop application with offline Ollama AI, screen recording, and secure local storage.
-            </p>
-          </div>
-        </div>
+    <div className="min-h-full">
+      {/* Top navigation */}
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background px-4 sm:px-6">
+        <Button variant="ghost" size="sm" className="-ml-1 text-muted-foreground" onClick={() => setActiveView('landing')} title="Back to Landing Page">
+          <ArrowLeft />
+          <span className="hidden sm:inline">Back</span>
+        </Button>
+        <span className="hidden text-foreground sm:inline-flex">
+          <HuskyLogo size="sm" />
+        </span>
+        <span className="inline-flex sm:hidden">
+          <HuskyMark size={20} title="HuskyNote" />
+        </span>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            onClick={() => setIsExtensionModalOpen(true)}
-            className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 text-xs font-semibold text-slate-800 dark:text-zinc-300 hover:text-black dark:hover:text-white hover:border-slate-400 dark:hover:border-zinc-600 transition-colors shadow-sm"
-          >
-            <ChromeIcon className="w-3.5 h-3.5" />
+        <div className="ml-auto flex items-center gap-2">
+          <Button variant="outline" size="sm" className="hidden sm:inline-flex" onClick={() => setIsExtensionModalOpen(true)}>
+            <ChromeIcon className="size-3.5" />
             <span>Chrome Extension</span>
-          </button>
+          </Button>
+          <Button variant="outline" size="sm" className="hidden sm:inline-flex" asChild>
+            <a href="https://github.com/ChristianJayCuevas/HuskyNote" target="_blank" rel="noopener noreferrer">
+              <GithubIcon className="size-3.5" />
+              <span>GitHub</span>
+            </a>
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setActiveView('dashboard')}>
+            <span>Launch Local Workspace</span>
+            <ArrowRight />
+          </Button>
+          <ThemeToggle />
+        </div>
+      </header>
 
-          <a
-            href="https://github.com/ChristianJayCuevas/HuskyNote"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 text-xs font-semibold text-slate-800 dark:text-zinc-300 hover:text-black dark:hover:text-white hover:border-slate-400 dark:hover:border-zinc-600 transition-colors shadow-sm"
-          >
-            <GithubIcon className="w-3.5 h-3.5" />
-            <span>GitHub</span>
-          </a>
+      <PageContainer width="wide">
+        <PageHeader
+          title="Download HuskyNote Desktop"
+          titleClassName="text-3xl font-bold"
+          description="Local-first desktop application with offline Ollama AI, screen recording, and secure local storage."
+        />
+
+        {/* Auto-detected operating system */}
+        <Alert className="mb-8 flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3.5">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background text-foreground">
+              {detectedOS === 'macos' && <AppleIcon className="size-5" />}
+              {detectedOS === 'windows' && <WindowsIcon className="size-4" />}
+              {detectedOS === 'linux' && <LinuxTuxIcon className="size-5" />}
+            </div>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                <span className="text-muted-foreground">Detected System:</span>
+                <span className="font-medium text-foreground">{detectedLabel}</span>
+                <Badge variant="outline">Auto-Matched</Badge>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {detectedOS === 'macos'
+                  ? 'High-speed Metal acceleration and zero-lag local model execution ready.'
+                  : detectedOS === 'windows'
+                  ? 'Installs like any Windows app, with optional GPU-accelerated transcription.'
+                  : 'Single-file AppImage, or a portable .tar.gz archive.'}
+              </p>
+            </div>
+          </div>
 
           <Button
-            size="sm"
-            variant="outline"
-            className="border-slate-300 dark:border-zinc-800 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-zinc-850 font-semibold"
-            onClick={() => setActiveView('dashboard')}
-          >
-            <span>Launch Local Workspace</span>
-            <ArrowRight className="w-3.5 h-3.5 ml-1" />
-          </Button>
-
-          {/* Lampcord Pull Switch anchored directly on bottom border */}
-          <div className="absolute -bottom-[2px] right-0 pointer-events-none z-50">
-            <PhysicsRopeToggle />
-          </div>
-        </div>
-      </div>
-
-      {/* Auto-Detected Operating System Banner */}
-      <div className="mb-8 p-4 rounded-xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm dark:shadow-none transition-colors duration-500">
-        <div className="flex items-center gap-3.5">
-          <div className="relative shrink-0">
-            <img
-              src="/official_huskynote.png"
-              alt="HuskyNote App Logo"
-              className="w-12 h-12 rounded-xl shadow-md border border-slate-200 dark:border-zinc-800 object-cover"
-            />
-            <div className="absolute -bottom-1 -right-1 p-1 rounded-md bg-slate-900 dark:bg-white text-white dark:text-black shadow-sm">
-              {detectedOS === 'macos' && <AppleIcon className="w-3.5 h-3.5" />}
-              {detectedOS === 'windows' && <WindowsIcon className="w-3.5 h-3.5" />}
-              {detectedOS === 'linux' && <LinuxTuxIcon className="w-3.5 h-3.5" />}
-            </div>
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white font-mono">
-                Detected System:
-              </span>
-              <span className="text-xs font-bold text-slate-950 dark:text-white uppercase">
-                {detectedOS === 'macos'
-                  ? isAppleSilicon
-                    ? 'macOS (Apple Silicon M-Series)'
-                    : 'macOS (Intel Core)'
-                  : detectedOS === 'windows'
-                  ? 'Windows 10 / 11 (64-bit)'
-                  : 'Linux (x86_64)'}
-              </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-black font-bold">
-                Auto-Matched
-              </span>
-            </div>
-            <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1 font-medium">
-              {detectedOS === 'macos'
-                ? 'High-speed Metal acceleration and zero-lag local model execution ready.'
-                : detectedOS === 'windows'
-                ? 'Native DirectML and AVX2 hardware acceleration configured.'
-                : 'Native systemd background service and glibc binary available.'}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <button
+            variant="default"
+            className="w-full shrink-0 sm:w-auto"
             onClick={() => {
               if (detectedOS === 'macos') {
                 handleDownload(
@@ -353,9 +406,8 @@ bash start.sh
                 handleDownload('HuskyNote-Linux-x86_64.AppImage', 'Linux');
               }
             }}
-            className="px-5 py-2.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-slate-800 dark:hover:bg-zinc-200 transition-colors flex items-center gap-2 shadow-lg"
           >
-            <Download className="w-4 h-4" />
+            <Download />
             <span>
               Download for{' '}
               {detectedOS === 'macos'
@@ -366,592 +418,329 @@ bash start.sh
                 ? 'Windows (64-bit)'
                 : 'Linux (AppImage)'}
             </span>
-          </button>
-        </div>
-      </div>
+          </Button>
+        </Alert>
 
-      {/* OS Filter Switcher */}
-      <div className="flex items-center gap-2 mb-6 border-b border-slate-200 dark:border-zinc-850 pb-4 transition-colors duration-500">
-        <button
-          onClick={() => setSelectedOS('macos')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2.5 ${
-            selectedOS === 'macos'
-              ? 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-md'
-              : 'bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-slate-400 dark:hover:border-zinc-600'
-          }`}
+        {/* OS filter */}
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          value={selectedOS}
+          onValueChange={(value) => value && setSelectedOS(value as SupportedOS)}
+          aria-label="Operating system"
+          className="mb-4"
         >
-          <AppleIcon className="w-4 h-4" />
-          <span>macOS</span>
-        </button>
+          <ToggleGroupItem value="macos" className="gap-2 px-3">
+            <AppleIcon className="size-3.5" />
+            <span>macOS</span>
+          </ToggleGroupItem>
+          <ToggleGroupItem value="windows" className="gap-2 px-3">
+            <WindowsIcon className="size-3" />
+            <span>Windows</span>
+          </ToggleGroupItem>
+          <ToggleGroupItem value="linux" className="gap-2 px-3">
+            <LinuxTuxIcon className="size-3.5" />
+            <span>Linux</span>
+          </ToggleGroupItem>
+        </ToggleGroup>
 
-        <button
-          onClick={() => setSelectedOS('windows')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2.5 ${
-            selectedOS === 'windows'
-              ? 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-md'
-              : 'bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-slate-400 dark:hover:border-zinc-600'
-          }`}
-        >
-          <WindowsIcon className="w-4 h-4" />
-          <span>Windows</span>
-        </button>
-
-        <button
-          onClick={() => setSelectedOS('linux')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2.5 ${
-            selectedOS === 'linux'
-              ? 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-md'
-              : 'bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-slate-400 dark:hover:border-zinc-600'
-          }`}
-        >
-          <LinuxTuxIcon className="w-4 h-4" />
-          <span>Linux</span>
-        </button>
-      </div>
-
-      {/* 3 Main OS Cards - Evenly Balanced & Equal Height */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 items-stretch">
-        {/* macOS Card */}
-        <div
-          className={`rounded-2xl p-6 flex flex-col justify-between h-full transition-all duration-500 ${
-            selectedOS === 'macos'
-              ? 'bg-white dark:bg-zinc-950 border-2 border-slate-900 dark:border-zinc-400 shadow-xl dark:shadow-none'
-              : 'bg-white/80 dark:bg-zinc-950/70 border border-slate-200 dark:border-zinc-850 hover:border-slate-400 dark:hover:border-zinc-600'
-          }`}
-        >
-          <div className="space-y-4">
-            {/* Header */}
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <img
-                  src="/official_huskynote.png"
-                  alt="HuskyNote macOS"
-                  className="w-10 h-10 rounded-xl shadow-md border border-slate-200 dark:border-zinc-800 object-cover"
-                />
-                <div className="p-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-black shadow-sm">
-                  <AppleIcon className="w-6 h-6" />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {detectedOS === 'macos' && (
-                  <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-black">
-                    Your System
-                  </span>
-                )}
-                <span className="text-[11px] text-slate-600 dark:text-zinc-400 font-mono font-semibold">macOS 12.0+</span>
-              </div>
-            </div>
-
-            {/* Title */}
-            <div>
-              <h3 className="text-xl font-bold text-slate-950 dark:text-white tracking-tight">macOS</h3>
-              <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1 font-medium">
-                Optimized for Apple Silicon Unified Memory and Intel x86_64.
-              </p>
-            </div>
-
-            {/* Balanced Hardware Compatibility Grid */}
-            <div className="p-3 rounded-xl bg-slate-100/80 dark:bg-canvas-inset/60 border border-slate-200 dark:border-zinc-800 grid grid-cols-2 gap-2 text-[11px] font-mono">
-              <div>
-                <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-zinc-500 block font-sans font-bold">Chip / Arch</span>
-                <span className="font-semibold text-slate-800 dark:text-zinc-200">Apple Silicon & Intel</span>
-              </div>
-              <div>
-                <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-zinc-500 block font-sans font-bold">Minimum RAM</span>
-                <span className="font-semibold text-slate-800 dark:text-zinc-200">8 GB Unified Memory</span>
-              </div>
-              <div>
-                <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-zinc-500 block font-sans font-bold">OS Version</span>
-                <span className="font-semibold text-slate-800 dark:text-zinc-200">Monterey 12.0+</span>
-              </div>
-              <div>
-                <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-zinc-500 block font-sans font-bold">Acceleration</span>
-                <span className="font-semibold text-slate-800 dark:text-zinc-200">Metal GPU Native</span>
-              </div>
-            </div>
-
-            {/* Features (Exactly 3 Lines) */}
-            <div className="space-y-1.5 text-xs text-slate-800 dark:text-zinc-300 font-medium">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-slate-900 dark:text-white shrink-0" />
-                <span>Metal GPU hardware acceleration</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-slate-900 dark:text-white shrink-0" />
-                <span>Screen Capture Studio with audio recording</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-slate-900 dark:text-white shrink-0" />
-                <span>Automated Ollama local model launcher</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Download Buttons */}
-          <div className="pt-6 space-y-2 mt-auto">
-            {/* Apple Silicon DMG */}
-            <button
+        {/* Platform cards, equal height */}
+        <div className="mb-10 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3">
+          <OsCard
+            name="macOS"
+            icon={<AppleIcon className="size-5" />}
+            requirement="macOS 12.0+"
+            description="Optimized for Apple Silicon Unified Memory and Intel x86_64."
+            specs={[
+              ['Chip / Arch', 'Apple Silicon & Intel'],
+              ['Minimum RAM', '8 GB Unified Memory'],
+              ['OS Version', 'Monterey 12.0+'],
+              ['Acceleration', 'Metal GPU Native'],
+            ]}
+            features={['Metal GPU hardware acceleration', 'Screen Capture Studio with audio recording', 'Automated Ollama local model launcher']}
+            selected={selectedOS === 'macos'}
+            recommended={detectedOS === 'macos'}
+          >
+            <Button
+              variant={selectedOS === 'macos' ? 'default' : 'secondary'}
+              className="w-full"
               onClick={() => handleDownload('HuskyNote-macOS-arm64.dmg', 'macOS (Apple Silicon)')}
-              className="w-full py-2.5 px-4 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-slate-800 dark:hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 shadow-sm"
               title="Download Apple Silicon .dmg installer (M1, M2, M3, M4) · 21 MB"
               aria-label="Download macOS Apple Silicon .dmg"
             >
-              <Download className="w-3.5 h-3.5" aria-hidden="true" />
+              <Download aria-hidden="true" />
               <span>Apple Silicon (.dmg)</span>
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
               onClick={() => handleDownload('HuskyNote-macOS-x64.dmg', 'macOS (Intel)')}
-              className="w-full py-2 px-4 rounded-lg bg-white dark:bg-canvas border border-slate-300 dark:border-zinc-800 text-slate-800 dark:text-zinc-300 text-xs font-semibold hover:border-slate-500 dark:hover:border-zinc-600 hover:text-black dark:hover:text-white transition-colors flex items-center justify-center gap-2"
               title="Download Intel Mac .dmg installer (Core i5, i7, i9) · 21 MB"
               aria-label="Download macOS Intel .dmg"
             >
-              <Download className="w-3.5 h-3.5" aria-hidden="true" />
+              <Download aria-hidden="true" />
               <span>Intel Mac (.dmg)</span>
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-muted-foreground"
               onClick={() => handleDownload('HuskyNote-macOS-Universal.dmg', 'macOS (Universal)')}
-              className="w-full py-1.5 px-3 rounded-lg border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 text-[11px] font-medium hover:border-slate-400 dark:hover:border-zinc-600 hover:text-black dark:hover:text-white transition-colors flex items-center justify-center gap-1.5"
               title="Download Universal .dmg installer — works on any Mac · 21 MB"
               aria-label="Download Universal macOS .dmg"
             >
-              <Download className="w-3 h-3" aria-hidden="true" />
+              <Download aria-hidden="true" />
               <span>Universal Mac (.dmg)</span>
-            </button>
-          </div>
-        </div>
+            </Button>
+          </OsCard>
 
-        {/* Windows Card */}
-        <div
-          className={`rounded-2xl p-6 flex flex-col justify-between h-full transition-all duration-500 ${
-            selectedOS === 'windows'
-              ? 'bg-white dark:bg-zinc-950 border-2 border-slate-900 dark:border-zinc-400 shadow-xl dark:shadow-none'
-              : 'bg-white/80 dark:bg-zinc-950/70 border border-slate-200 dark:border-zinc-850 hover:border-slate-400 dark:hover:border-zinc-600'
-          }`}
-        >
-          <div className="space-y-4">
-            {/* Header */}
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <img
-                  src="/official_huskynote.png"
-                  alt="HuskyNote Windows"
-                  className="w-10 h-10 rounded-xl shadow-md border border-slate-200 dark:border-zinc-800 object-cover"
-                />
-                <div className="p-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-black shadow-sm">
-                  <WindowsIcon className="w-6 h-6" />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {detectedOS === 'windows' && (
-                  <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-black">
-                    Your System
-                  </span>
-                )}
-                <span className="text-[11px] text-slate-600 dark:text-zinc-400 font-mono font-semibold">Win 10/11 64-bit</span>
-              </div>
-            </div>
-
-            {/* Title */}
-            <div>
-              <h3 className="text-xl font-bold text-slate-950 dark:text-white tracking-tight">Windows</h3>
-              <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1 font-medium">
-                Standard desktop installer and portable archive for Windows 10/11.
-              </p>
-            </div>
-
-            {/* Balanced Hardware Compatibility Grid */}
-            <div className="p-3 rounded-xl bg-slate-100/80 dark:bg-canvas-inset/60 border border-slate-200 dark:border-zinc-800 grid grid-cols-2 gap-2 text-[11px] font-mono">
-              <div>
-                <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-zinc-500 block font-sans font-bold">Architecture</span>
-                <span className="font-semibold text-slate-800 dark:text-zinc-200">x64 / ARM64 AVX2</span>
-              </div>
-              <div>
-                <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-zinc-500 block font-sans font-bold">Minimum RAM</span>
-                <span className="font-semibold text-slate-800 dark:text-zinc-200">8 GB System RAM</span>
-              </div>
-              <div>
-                <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-zinc-500 block font-sans font-bold">OS Version</span>
-                <span className="font-semibold text-slate-800 dark:text-zinc-200">Win 10 / 11 64-bit</span>
-              </div>
-              <div>
-                <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-zinc-500 block font-sans font-bold">Acceleration</span>
-                <span className="font-semibold text-slate-800 dark:text-zinc-200">DirectML / CUDA</span>
-              </div>
-            </div>
-
-            {/* Features (Exactly 3 Lines) */}
-            <div className="space-y-1.5 text-xs text-slate-800 dark:text-zinc-300 font-medium">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-slate-900 dark:text-white shrink-0" />
-                <span>DirectML & NVIDIA GPU acceleration</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-slate-900 dark:text-white shrink-0" />
-                <span>Windows Tab Audio and Screen Recorder</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-slate-900 dark:text-white shrink-0" />
-                <span>Portable standalone execution mode</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Download Buttons */}
-          <div className="pt-6 space-y-2 mt-auto">
-            <button
-              onClick={() => handleDownload('HuskyNote-Setup-x64.exe', 'Windows')}
-              className="w-full py-2.5 px-4 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-slate-800 dark:hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 shadow-sm"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Download Installer (.EXE)</span>
-            </button>
-            <button
-              onClick={() => handleDownload('HuskyNote-Windows-Portable.zip', 'Windows Portable')}
-              className="w-full py-2 px-4 rounded-lg bg-white dark:bg-canvas border border-slate-300 dark:border-zinc-800 text-slate-800 dark:text-zinc-300 text-xs font-semibold hover:border-slate-500 dark:hover:border-zinc-600 hover:text-black dark:hover:text-white transition-colors flex items-center justify-center gap-2"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Download Portable (.ZIP)</span>
-            </button>
-            <a
-              href="https://github.com/ChristianJayCuevas/HuskyNote/releases"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-1.5 px-3 rounded-lg border border-dashed border-slate-300 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 text-[11px] font-medium hover:border-slate-500 dark:hover:border-zinc-600 hover:text-black dark:hover:text-white transition-colors flex items-center justify-center gap-1.5"
-            >
-              <ExternalLink className="w-3 h-3" />
-              <span>Official GitHub Releases (.EXE)</span>
-            </a>
-          </div>
-        </div>
-
-        {/* Linux Card */}
-        <div
-          className={`rounded-2xl p-6 flex flex-col justify-between h-full transition-all duration-500 ${
-            selectedOS === 'linux'
-              ? 'bg-white dark:bg-zinc-950 border-2 border-slate-900 dark:border-zinc-400 shadow-xl dark:shadow-none'
-              : 'bg-white/80 dark:bg-zinc-950/70 border border-slate-200 dark:border-zinc-850 hover:border-slate-400 dark:hover:border-zinc-600'
-          }`}
-        >
-          <div className="space-y-4">
-            {/* Header */}
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <img
-                  src="/official_huskynote.png"
-                  alt="HuskyNote Linux"
-                  className="w-10 h-10 rounded-xl shadow-md border border-slate-200 dark:border-zinc-800 object-cover"
-                />
-                <div className="p-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-black shadow-sm">
-                  <LinuxTuxIcon className="w-6 h-6" />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {detectedOS === 'linux' && (
-                  <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-black">
-                    Your System
-                  </span>
-                )}
-                <span className="text-[11px] text-slate-600 dark:text-zinc-400 font-mono font-semibold">glibc 2.31+</span>
-              </div>
-            </div>
-
-            {/* Title */}
-            <div>
-              <h3 className="text-xl font-bold text-slate-950 dark:text-white tracking-tight">Linux</h3>
-              <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1 font-medium">
-                Universal AppImage and Debian/Ubuntu package for modern distributions.
-              </p>
-            </div>
-
-            {/* Balanced Hardware Compatibility Grid */}
-            <div className="p-3 rounded-xl bg-slate-100/80 dark:bg-canvas-inset/60 border border-slate-200 dark:border-zinc-800 grid grid-cols-2 gap-2 text-[11px] font-mono">
-              <div>
-                <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-zinc-500 block font-sans font-bold">Architecture</span>
-                <span className="font-semibold text-slate-800 dark:text-zinc-200">x86_64 / aarch64</span>
-              </div>
-              <div>
-                <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-zinc-500 block font-sans font-bold">Minimum RAM</span>
-                <span className="font-semibold text-slate-800 dark:text-zinc-200">8 GB System RAM</span>
-              </div>
-              <div>
-                <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-zinc-500 block font-sans font-bold">OS Version</span>
-                <span className="font-semibold text-slate-800 dark:text-zinc-200">glibc 2.31+ Modern</span>
-              </div>
-              <div>
-                <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-zinc-500 block font-sans font-bold">Display Server</span>
-                <span className="font-semibold text-slate-800 dark:text-zinc-200">Wayland / X11</span>
-              </div>
-            </div>
-
-            {/* Features (Exactly 3 Lines) */}
-            <div className="space-y-1.5 text-xs text-slate-800 dark:text-zinc-300 font-medium">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-slate-900 dark:text-white shrink-0" />
-                <span>Sandboxed universal AppImage binary</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-slate-900 dark:text-white shrink-0" />
-                <span>PipeWire & PulseAudio capture integration</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-slate-900 dark:text-white shrink-0" />
-                <span>1-line terminal curl installer script</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Download Buttons */}
-          <div className="pt-6 space-y-2 mt-auto">
-            <button
-              onClick={() => handleDownload('HuskyNote-Linux-x86_64.AppImage', 'Linux AppImage')}
-              className="w-full py-2.5 px-4 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-slate-800 dark:hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 shadow-sm"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Download AppImage (.AppImage)</span>
-            </button>
-            <button
-              onClick={() => handleDownload('huskynote_1.0.0_amd64.deb', 'Debian/Ubuntu')}
-              className="w-full py-2 px-4 rounded-lg bg-white dark:bg-canvas border border-slate-300 dark:border-zinc-800 text-slate-800 dark:text-zinc-300 text-xs font-semibold hover:border-slate-500 dark:hover:border-zinc-600 hover:text-black dark:hover:text-white transition-colors flex items-center justify-center gap-2"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Download Debian Package (.DEB)</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* macOS Gatekeeper First-Launch Resolution Card */}
-      <div className="mb-8 rounded-2xl bg-amber-500/10 border border-amber-500/20 p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-xs">
-            <AlertCircle className="w-4 h-4" />
-            <span>macOS Gatekeeper First-Launch Fix (Resolves "App is damaged / cannot be opened")</span>
-          </div>
-          <p className="text-xs text-slate-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
-            macOS Gatekeeper automatically quarantines open-source software downloaded via browsers. If macOS reports the app is damaged, run this single terminal command to remove the quarantine flag, or double-click the included <span className="font-semibold text-slate-900 dark:text-white">Open HuskyNote.command</span>:
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <code className="text-xs font-mono bg-white dark:bg-canvas p-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white select-all">
-            xattr -cr /Applications/HuskyNote.app
-          </code>
-          <button
-            onClick={() => copyCommand('xattr -cr /Applications/HuskyNote.app', 'gatekeeper')}
-            className="px-3 py-2 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-slate-800 dark:hover:bg-zinc-200 transition-colors flex items-center gap-1.5 shadow-sm"
+          <OsCard
+            name="Windows"
+            icon={<WindowsIcon className="size-4" />}
+            requirement="Win 10/11 64-bit"
+            description="Standard desktop installer and portable archive for Windows 10/11."
+            specs={[
+              ['Architecture', '64-bit (x64)'],
+              ['Minimum RAM', '8 GB System RAM'],
+              ['OS Version', 'Win 10 / 11 64-bit'],
+              ['Acceleration', 'Optional GPU'],
+            ]}
+            features={['GPU-accelerated transcription (optional)', 'Windows Tab Audio and Screen Recorder', 'Portable standalone execution mode']}
+            selected={selectedOS === 'windows'}
+            recommended={detectedOS === 'windows'}
           >
-            {copiedCmd === 'gatekeeper' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copiedCmd === 'gatekeeper' ? 'Copied' : 'Copy'}</span>
-          </button>
-        </div>
-      </div>
+            <Button variant={selectedOS === 'windows' ? 'default' : 'secondary'} className="w-full" onClick={() => handleDownload('HuskyNote-Setup-x64.exe', 'Windows')}>
+              <Download />
+              <span>Download Installer (.EXE)</span>
+            </Button>
+            <Button variant="outline" className="w-full" onClick={() => handleDownload('HuskyNote-Windows-Portable.zip', 'Windows Portable')}>
+              <Download />
+              <span>Download Portable (.ZIP)</span>
+            </Button>
+            <Button variant="ghost" size="sm" className="w-full text-muted-foreground" asChild>
+              <a href="https://github.com/ChristianJayCuevas/HuskyNote/releases" target="_blank" rel="noopener noreferrer">
+                <ExternalLink />
+                <span>Official GitHub Releases (.EXE)</span>
+              </a>
+            </Button>
+          </OsCard>
 
-      {/* macOS "Can't download / app is damaged" Expanded Fix Card */}
-      <div className="mb-8 rounded-2xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 p-6 space-y-4 shadow-sm dark:shadow-none">
-        <div className="flex items-center gap-2 flex-wrap">
-          <AppleIcon className="w-5 h-5 text-slate-700 dark:text-zinc-300 shrink-0" />
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
-            macOS: Can't download or open the app?
-          </h3>
-          <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
-            Intel &amp; Apple Silicon
-          </span>
+          <OsCard
+            name="Linux"
+            icon={<LinuxTuxIcon className="size-5" />}
+            requirement="glibc 2.31+"
+            description="Single-file AppImage and portable .tar.gz for 64-bit Linux."
+            specs={[
+              ['Architecture', 'x86_64'],
+              ['Minimum RAM', '8 GB System RAM'],
+              ['OS Version', 'glibc 2.31+ Modern'],
+              ['Display Server', 'Wayland / X11'],
+            ]}
+            features={['Single-file AppImage, no install needed', 'PipeWire & PulseAudio capture integration', 'Portable .tar.gz archive']}
+            selected={selectedOS === 'linux'}
+            recommended={detectedOS === 'linux'}
+          >
+            <Button variant={selectedOS === 'linux' ? 'default' : 'secondary'} className="w-full" onClick={() => handleDownload('HuskyNote-Linux-x86_64.AppImage', 'Linux AppImage')}>
+              <Download />
+              <span>Download AppImage (.AppImage)</span>
+            </Button>
+            <Button variant="outline" className="w-full" onClick={() => handleDownload('HuskyNote-Linux-x64.tar.gz', 'Linux tar.gz')}>
+              <Download />
+              <span>Download Portable (.tar.gz)</span>
+            </Button>
+          </OsCard>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 space-y-2">
-            <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-              <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              Issue: Browser blocks download
-            </div>
-            <p className="text-slate-600 dark:text-zinc-400 leading-relaxed">
-              Chrome/Safari may warn <em>"may damage your computer"</em>. This is a Gatekeeper false positive for unsigned open-source apps.
+
+        {/* macOS Gatekeeper first-launch fix */}
+        <Alert variant="warning" className="mb-8">
+          <AlertCircle />
+          <AlertTitle>macOS Gatekeeper First-Launch Fix (Resolves "App is damaged / cannot be opened")</AlertTitle>
+          <AlertDescription className="space-y-3">
+            <p className="max-w-2xl">
+              macOS Gatekeeper automatically quarantines open-source software downloaded via browsers. If macOS reports the app is damaged, run this single terminal command to remove the quarantine flag, or double-click the included <span className="font-medium text-foreground">Open HuskyNote.command</span>:
             </p>
-            <div className="font-semibold text-slate-800 dark:text-zinc-300 mt-1">Fix:</div>
-            <ol className="space-y-1 text-slate-600 dark:text-zinc-400 list-none pl-0">
-              <li className="flex gap-1.5"><span className="text-zinc-500 shrink-0">1.</span>Click the arrow next to the blocked download</li>
-              <li className="flex gap-1.5"><span className="text-zinc-500 shrink-0">2.</span>Select <strong className="text-slate-800 dark:text-zinc-200">"Keep"</strong> or <strong className="text-slate-800 dark:text-zinc-200">"Keep Anyway"</strong></li>
-              <li className="flex gap-1.5"><span className="text-zinc-500 shrink-0">3.</span>Or use the <strong>→ GitHub</strong> button to download directly from GitHub Releases</li>
-            </ol>
+            <CommandBlock
+              command="xattr -cr /Applications/HuskyNote.app"
+              copied={copiedCmd === 'gatekeeper'}
+              onCopy={() => copyCommand('xattr -cr /Applications/HuskyNote.app', 'gatekeeper')}
+              className="max-w-md bg-background"
+            />
+          </AlertDescription>
+        </Alert>
+
+        {/* macOS "can't download / app is damaged" help */}
+        <section className="mb-8 space-y-4 rounded-lg border p-5" aria-labelledby="mac-help-title">
+          <div className="flex flex-wrap items-center gap-2">
+            <AppleIcon className="size-4 shrink-0 text-muted-foreground" />
+            <h2 id="mac-help-title" className="text-base font-semibold text-foreground">
+              macOS: Can't download or open the app?
+            </h2>
+            <Badge variant="outline">Intel &amp; Apple Silicon</Badge>
           </div>
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 space-y-2">
-            <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-              <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              Issue: "Apple could not verify HuskyNote" / Not Opened
+          <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+            <div className="space-y-2 rounded-md bg-muted/50 p-4">
+              <h3 className="flex items-center gap-1.5 font-medium text-foreground">
+                <AlertCircle className="size-3.5 shrink-0 text-warning" />
+                Issue: Browser blocks download
+              </h3>
+              <p className="leading-6 text-muted-foreground">
+                Chrome/Safari may warn <em>"may damage your computer"</em>. This is a Gatekeeper false positive for unsigned open-source apps.
+              </p>
+              <div className="font-medium text-foreground">Fix:</div>
+              <ol className="list-decimal space-y-1 pl-5 text-muted-foreground marker:text-muted-foreground">
+                <li>Click the arrow next to the blocked download</li>
+                <li>Select <strong className="font-medium text-foreground">"Keep"</strong> or <strong className="font-medium text-foreground">"Keep Anyway"</strong></li>
+                <li>Or use the <strong className="font-medium text-foreground">→ GitHub</strong> button to download directly from GitHub Releases</li>
+              </ol>
             </div>
-            <p className="text-slate-600 dark:text-zinc-400 leading-relaxed">
-              Standard Apple Gatekeeper check for free open-source software without a paid $99/yr Apple certificate. Quick 5-second fix:
+            <div className="space-y-2 rounded-md bg-muted/50 p-4">
+              <h3 className="flex items-center gap-1.5 font-medium text-foreground">
+                <AlertCircle className="size-3.5 shrink-0 text-warning" />
+                Issue: "Apple could not verify HuskyNote" / Not Opened
+              </h3>
+              <p className="leading-6 text-muted-foreground">
+                Standard Apple Gatekeeper check for free open-source software without a paid $99/yr Apple certificate. Quick 5-second fix:
+              </p>
+              <div className="space-y-2.5">
+                <div>
+                  <div className="mb-0.5 font-medium text-foreground">Method 1 — System Settings (Easiest):</div>
+                  <p className="text-muted-foreground">Click <strong className="font-medium text-foreground">Done</strong> → Open <strong className="font-medium text-foreground">System Settings</strong> → <strong className="font-medium text-foreground">Privacy &amp; Security</strong> → scroll to Security → click <strong className="font-medium text-foreground">Open Anyway</strong>.</p>
+                </div>
+                <div>
+                  <div className="mb-0.5 font-medium text-foreground">Method 2 — Right-Click Bypass:</div>
+                  <p className="text-muted-foreground">In Applications, <strong className="font-medium text-foreground">Right-Click (or Control-Click)</strong> HuskyNote.app → select <strong className="font-medium text-foreground">Open</strong> → click <strong className="font-medium text-foreground">Open</strong>.</p>
+                </div>
+                <div>
+                  <div className="mb-1 font-medium text-foreground">Method 3 — Terminal 1-Liner:</div>
+                  <CommandBlock command="xattr -cr /Applications/HuskyNote.app" className="bg-background" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2 rounded-md bg-muted/50 p-4 text-sm">
+            <div className="flex items-center gap-1.5 font-medium text-foreground">
+              <Terminal className="size-3.5 shrink-0 text-muted-foreground" />
+              Always-working alternative — Terminal (no binary required, Intel &amp; Silicon):
+            </div>
+            <CommandBlock command={`git clone https://github.com/ChristianJayCuevas/HuskyNote.git && cd HuskyNote && ./start.sh`} className="bg-background" />
+            <p className="text-xs text-muted-foreground">
+              Requires Node.js 18+ from <a href="https://nodejs.org" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">nodejs.org</a>.
             </p>
-            <div className="space-y-2">
-              <div>
-                <div className="font-semibold text-slate-700 dark:text-zinc-300 mb-0.5">Method 1 — System Settings (Easiest):</div>
-                <p className="text-slate-600 dark:text-zinc-400">Click <strong>Done</strong> → Open <strong>System Settings</strong> → <strong>Privacy &amp; Security</strong> → scroll to Security → click <strong>Open Anyway</strong>.</p>
+          </div>
+        </section>
+
+        {/* Chrome extension and side panel */}
+        <section className="mb-8 flex flex-col items-start justify-between gap-5 rounded-lg border p-5 md:flex-row md:items-center" aria-labelledby="extension-title">
+          <div className="flex items-start gap-4">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+              <Layers className="size-5" />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="secondary">Browser Companion</Badge>
+                <Badge variant="outline">100% Standalone Access</Badge>
               </div>
-              <div>
-                <div className="font-semibold text-slate-700 dark:text-zinc-300 mb-0.5">Method 2 — Right-Click Bypass:</div>
-                <p className="text-slate-600 dark:text-zinc-400">In Applications, <strong>Right-Click (or Control-Click)</strong> HuskyNote.app → select <strong>Open</strong> → click <strong>Open</strong>.</p>
-              </div>
-              <div>
-                <div className="font-semibold text-slate-700 dark:text-zinc-300 mb-0.5">Method 3 — Terminal 1-Liner:</div>
-                <code className="block font-mono text-[10px] bg-black/10 dark:bg-zinc-900 px-2.5 py-1.5 rounded border border-slate-200 dark:border-zinc-800 select-all text-slate-900 dark:text-zinc-200">xattr -cr /Applications/HuskyNote.app</code>
-              </div>
+              <h2 id="extension-title" className="mt-2 text-base font-semibold text-foreground">
+                HuskyNote Chrome Extension & Side Panel
+              </h2>
+              <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">
+                Use notes, voice dictation, local Ollama AI summarization, and screen capture right inside your browser without opening the full desktop app.
+              </p>
             </div>
           </div>
-        </div>
-        <div className="p-3 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs">
-          <div className="font-semibold text-slate-800 dark:text-zinc-300 mb-1.5 flex items-center gap-1.5">
-            <Terminal className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400" />
-            Always-working alternative — Terminal (no binary required, Intel &amp; Silicon):
-          </div>
-          <code className="block font-mono text-[11px] bg-white dark:bg-canvas p-2.5 rounded border border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white select-all whitespace-pre">{`git clone https://github.com/ChristianJayCuevas/HuskyNote.git && cd HuskyNote && ./start.sh`}</code>
-          <p className="text-slate-500 dark:text-zinc-600 mt-1.5">Requires Node.js 18+ from <a href="https://nodejs.org" target="_blank" rel="noopener noreferrer" className="underline hover:text-black dark:hover:text-white">nodejs.org</a>.</p>
-        </div>
-      </div>
 
-      {/* Chrome Extension & Side Panel Standalone Card */}
-      <div className="mb-8 rounded-2xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm dark:shadow-none">
-        <div className="flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-black shrink-0 shadow-md">
-            <Layers className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-zinc-300">
-                Browser Companion
-              </span>
-              <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                100% Standalone Access
-              </span>
-            </div>
-            <h3 className="text-lg font-bold text-slate-950 dark:text-white mt-1">
-              HuskyNote Chrome Extension & Side Panel
-            </h3>
-            <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1 max-w-xl leading-relaxed">
-              Use notes, voice dictation, local Ollama AI summarization, and screen capture right inside your browser without opening the full desktop app.
-            </p>
-          </div>
-        </div>
+          <Button variant="default" className="shrink-0" onClick={() => setIsExtensionModalOpen(true)}>
+            <Sparkles />
+            <span>1-Click Extension Setup</span>
+          </Button>
+        </section>
 
-        <button
-          onClick={() => setIsExtensionModalOpen(true)}
-          className="px-5 py-2.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-slate-800 dark:hover:bg-zinc-200 transition-colors flex items-center gap-2 shadow-md shrink-0"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span>1-Click Extension Setup</span>
-        </button>
-      </div>
-
-      {/* Terminal / One-Line Quick Install Section */}
-      <div className="rounded-2xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 p-6 space-y-5 shadow-sm dark:shadow-none transition-colors duration-500">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Terminal className="w-4 h-4 text-slate-900 dark:text-white" />
-            <h3 className="text-sm font-bold text-slate-950 dark:text-white tracking-tight">
+        {/* One-line terminal installation */}
+        <section className="space-y-4 rounded-lg border p-5" aria-labelledby="terminal-install-title">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h2 id="terminal-install-title" className="flex items-center gap-2 text-base font-semibold text-foreground">
+              <Terminal className="size-4 text-muted-foreground" />
               One-Line Automated Terminal Installation
-            </h3>
+            </h2>
+            <span className="text-xs text-muted-foreground">Clone & Run with Native Hardware Access</span>
           </div>
-          <span className="text-[11px] font-mono text-slate-600 dark:text-zinc-400 font-semibold">Clone & Run with Native Hardware Access</span>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Mac Terminal */}
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-canvas border border-slate-200 dark:border-zinc-850 space-y-2 transition-colors duration-500">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-950 dark:text-white flex items-center gap-1.5">
-                <AppleIcon className="w-3.5 h-3.5" /> macOS Terminal
-              </span>
-              <button
-                onClick={() =>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                <AppleIcon className="size-3.5" /> macOS Terminal
+              </div>
+              <CommandBlock
+                command="git clone https://github.com/ChristianJayCuevas/HuskyNote.git && cd HuskyNote && ./start.sh"
+                copied={copiedCmd === 'mac'}
+                onCopy={() =>
                   copyCommand(
                     'git clone https://github.com/ChristianJayCuevas/HuskyNote.git && cd HuskyNote && ./start.sh',
                     'mac'
                   )
                 }
-                className="text-[10px] text-slate-600 dark:text-zinc-400 hover:text-black dark:hover:text-white flex items-center gap-1 cursor-pointer font-semibold"
-              >
-                {copiedCmd === 'mac' ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                <span>{copiedCmd === 'mac' ? 'Copied' : 'Copy'}</span>
-              </button>
+              />
             </div>
-            <code className="block text-[11px] text-slate-800 dark:text-zinc-300 font-mono bg-slate-100 dark:bg-zinc-900/60 p-2.5 rounded border border-slate-200 dark:border-zinc-800 overflow-x-auto whitespace-pre font-medium">
-              git clone https://github.com/ChristianJayCuevas/HuskyNote.git && cd HuskyNote && ./start.sh
-            </code>
-          </div>
 
-          {/* Windows PowerShell */}
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-canvas border border-slate-200 dark:border-zinc-850 space-y-2 transition-colors duration-500">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-950 dark:text-white flex items-center gap-1.5">
-                <WindowsIcon className="w-3.5 h-3.5" /> Windows PowerShell
-              </span>
-              <button
-                onClick={() =>
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                <WindowsIcon className="size-3" /> Windows PowerShell
+              </div>
+              <CommandBlock
+                command="git clone https://github.com/ChristianJayCuevas/HuskyNote.git; cd HuskyNote; npm install; npm run dev"
+                copied={copiedCmd === 'win'}
+                onCopy={() =>
                   copyCommand(
                     'git clone https://github.com/ChristianJayCuevas/HuskyNote.git; cd HuskyNote; npm install; npm run dev',
                     'win'
                   )
                 }
-                className="text-[10px] text-slate-600 dark:text-zinc-400 hover:text-black dark:hover:text-white flex items-center gap-1 cursor-pointer font-semibold"
-              >
-                {copiedCmd === 'win' ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                <span>{copiedCmd === 'win' ? 'Copied' : 'Copy'}</span>
-              </button>
+              />
             </div>
-            <code className="block text-[11px] text-slate-800 dark:text-zinc-300 font-mono bg-slate-100 dark:bg-zinc-900/60 p-2.5 rounded border border-slate-200 dark:border-zinc-800 overflow-x-auto whitespace-pre font-medium">
-              git clone https://github.com/ChristianJayCuevas/HuskyNote.git; cd HuskyNote; npm install; npm run dev
-            </code>
-          </div>
 
-          {/* Linux Shell */}
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-canvas border border-slate-200 dark:border-zinc-850 space-y-2 transition-colors duration-500">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-950 dark:text-white flex items-center gap-1.5">
-                <LinuxTuxIcon className="w-3.5 h-3.5" /> Linux Bash
-              </span>
-              <button
-                onClick={() =>
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                <LinuxTuxIcon className="size-3.5" /> Linux Bash
+              </div>
+              <CommandBlock
+                command="git clone https://github.com/ChristianJayCuevas/HuskyNote.git && cd HuskyNote && bash start.sh"
+                copied={copiedCmd === 'linux'}
+                onCopy={() =>
                   copyCommand(
                     'git clone https://github.com/ChristianJayCuevas/HuskyNote.git && cd HuskyNote && bash start.sh',
                     'linux'
                   )
                 }
-                className="text-[10px] text-slate-600 dark:text-zinc-400 hover:text-black dark:hover:text-white flex items-center gap-1 cursor-pointer font-semibold"
-              >
-                {copiedCmd === 'linux' ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                <span>{copiedCmd === 'linux' ? 'Copied' : 'Copy'}</span>
-              </button>
+              />
             </div>
-            <code className="block text-[11px] text-slate-800 dark:text-zinc-300 font-mono bg-slate-100 dark:bg-zinc-900/60 p-2.5 rounded border border-slate-200 dark:border-zinc-800 overflow-x-auto whitespace-pre font-medium">
-              git clone https://github.com/ChristianJayCuevas/HuskyNote.git && cd HuskyNote && bash start.sh
-            </code>
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* Footer verification note */}
-      <div className="mt-8 pt-6 border-t border-slate-200 dark:border-zinc-850 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-600 dark:text-zinc-500 transition-colors duration-500">
-        <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-slate-500 dark:text-zinc-400" />
-          <span className="font-medium">All releases are cryptographically signed, secure, and open-source under the MIT License.</span>
-        </div>
-        <div className="flex items-center gap-4 font-semibold">
-          <button onClick={() => setActiveView('privacy')} className="hover:text-black dark:hover:text-white transition-colors">
-            Privacy Architecture
-          </button>
-          <button onClick={() => setActiveView('about')} className="hover:text-black dark:hover:text-white transition-colors">
-            About HuskyNote
-          </button>
-          <a
-            href="https://github.com/ChristianJayCuevas/HuskyNote/releases"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-black dark:hover:text-white transition-colors flex items-center gap-1"
-          >
-            <span>GitHub Releases</span>
-            <ExternalLink className="w-3 h-3" />
-          </a>
-        </div>
-      </div>
+        {/* Footer */}
+        <footer className="mt-10 flex flex-col items-center justify-between gap-3 border-t pt-6 text-xs text-muted-foreground sm:flex-row">
+          <div className="flex items-center gap-2 text-center sm:text-left">
+            <Shield className="size-4 shrink-0" />
+            <span>Open source under the MIT License. Builds aren't code-signed yet, so your system may ask you to confirm the first launch.</span>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-1">
+            <Button variant="ghost" size="xs" className="text-muted-foreground" onClick={() => setActiveView('privacy')}>
+              Privacy Architecture
+            </Button>
+            <Button variant="ghost" size="xs" className="text-muted-foreground" onClick={() => setActiveView('about')}>
+              About HuskyNote
+            </Button>
+            <Button variant="ghost" size="xs" className="text-muted-foreground" asChild>
+              <a href="https://github.com/ChristianJayCuevas/HuskyNote/releases" target="_blank" rel="noopener noreferrer">
+                <span>GitHub Releases</span>
+                <ExternalLink />
+              </a>
+            </Button>
+          </div>
+        </footer>
+      </PageContainer>
 
-      {/* 1-Click Automated Chrome Extension Modal */}
+      {/* 1-click automated Chrome extension setup */}
       <ChromeExtensionModal
         isOpen={isExtensionModalOpen}
         onClose={() => setIsExtensionModalOpen(false)}

@@ -2,42 +2,54 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db';
 import { useWorkspace } from '../context/workspace-context';
-import { useSound } from '../context/sound-context';
 import { useAI } from '../context/ai-context';
 import { ai } from '../services/ai/active-provider';
+import { cn } from '@/lib/utils';
 import { Button } from '../components/ui/button';
-import { TiltCard } from '../components/ui/tilt-card';
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { Badge } from '../components/ui/badge';
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Checkbox } from '../components/ui/checkbox';
+import { EmptyState } from '../components/ui/empty-state';
+import { Field } from '../components/ui/field';
+import { Input } from '../components/ui/input';
+import { NativeSelect } from '../components/ui/native-select';
+import { PageContainer, PageHeader } from '../components/ui/page';
+import { Textarea } from '../components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import type { ScheduleEvent, ScheduleCategory, GoogleCalendarConfig } from '../types';
 import { downloadIcsFile, downloadMultipleEventsIcs } from '../services/calendar/ics-generator';
 import {
   getGoogleCalendarConfig,
-  saveGoogleCalendarConfig,
   disconnectGoogleCalendar,
   authenticateGoogleCalendar,
   createGoogleCalendarEvent,
   fetchUpcomingGoogleCalendarEvents,
-  getGoogleCalendarWebTemplateUrl,
 } from '../services/calendar/google-calendar';
 import {
   Calendar as CalendarIcon,
-  Clock,
   Plus,
   Trash2,
-  CheckCircle,
   Sparkles,
   Laptop,
   Globe,
   ChevronLeft,
   ChevronRight,
-  RotateCcw,
   Check,
-  ExternalLink,
-  CalendarCheck,
-  Tag,
   Download,
-  Flame,
   ShieldCheck,
 } from 'lucide-react';
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+/** Categorical data colors for schedule categories (dots only; labels stay in text tokens) */
+const CATEGORY_DOT: Record<ScheduleCategory, string> = {
+  meeting: 'bg-chart-1',
+  'deep-work': 'bg-chart-3',
+  review: 'bg-chart-4',
+  manual: 'bg-chart-5',
+  deadline: 'bg-chart-2',
+};
 
 function formatIso(d: Date): string {
   const y = d.getFullYear();
@@ -47,8 +59,24 @@ function formatIso(d: Date): string {
 }
 
 export const ScheduleView: React.FC = () => {
-  const { addToast } = useWorkspace();
-  const { playThock, playChime, playPop } = useSound();
+  const { addToast, setActiveView } = useWorkspace();
+
+  const openGoogleSettings = () => {
+    try {
+      localStorage.setItem('huskynote-settings-tab', 'integrations');
+    } catch {
+      /* storage unavailable */
+    }
+    try {
+      // A stale ?tab= in the address bar would win over the tab chosen above
+      const url = new URL(window.location.href);
+      url.searchParams.delete('tab');
+      window.history.replaceState(window.history.state, '', url.toString());
+    } catch {
+      /* ignore */
+    }
+    setActiveView('settings');
+  };
   const { isConnected: isAIOfflineOrOnline, selectedModel } = useAI();
 
   // Reactive IndexedDB events
@@ -60,7 +88,6 @@ export const ScheduleView: React.FC = () => {
 
   // Google Calendar integration state
   const [gcalConfig, setGcalConfig] = useState<GoogleCalendarConfig>(() => getGoogleCalendarConfig());
-  const [customClientId, setCustomClientId] = useState('');
   const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
   const [isSyncingGoogle, setIsSyncingGoogle] = useState(false);
 
@@ -108,6 +135,17 @@ export const ScheduleView: React.FC = () => {
     const map = new Map<string, number>();
     for (const ev of dbEvents) {
       map.set(ev.date, (map.get(ev.date) || 0) + 1);
+    }
+    return map;
+  }, [dbEvents]);
+
+  // Events grouped by date, in time order (titles shown in the month grid)
+  const eventsByDate = useMemo(() => {
+    const map = new Map<string, ScheduleEvent[]>();
+    for (const ev of [...dbEvents].sort((a, b) => a.time.localeCompare(b.time))) {
+      const list = map.get(ev.date);
+      if (list) list.push(ev);
+      else map.set(ev.date, [ev]);
     }
     return map;
   }, [dbEvents]);
@@ -176,17 +214,14 @@ export const ScheduleView: React.FC = () => {
   }, [calendarMonth, todayStr, selectedDate, eventCountsByDate]);
 
   const handlePrevMonth = () => {
-    playPop();
     setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1));
   };
 
   const handleNextMonth = () => {
-    playPop();
     setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1));
   };
 
   const handleJumpToToday = () => {
-    playPop();
     const now = new Date();
     setCalendarMonth(now);
     setSelectedDate(formatIso(now));
@@ -196,7 +231,6 @@ export const ScheduleView: React.FC = () => {
     e.preventDefault();
     if (!newEventTitle.trim()) return;
 
-    playPop();
     const item: ScheduleEvent = {
       id: `ev-${Date.now()}`,
       title: newEventTitle.trim(),
@@ -216,28 +250,23 @@ export const ScheduleView: React.FC = () => {
   };
 
   const toggleEventComplete = async (ev: ScheduleEvent) => {
-    playChime();
     await db.schedule.update(ev.id, { completed: !ev.completed });
   };
 
   const handleDeleteEvent = async (id: string) => {
-    playThock();
     await db.schedule.delete(id);
     addToast('Event removed from schedule.', 'info');
   };
 
   const handleAddToComputerCalendar = async (ev: ScheduleEvent) => {
-    playPop();
     downloadIcsFile(ev);
     await db.schedule.update(ev.id, { addedToComputerCalendar: true });
     addToast(`Generated .ics for "${ev.title}". Opening in Computer Calendar.`, 'success');
   };
 
   const handleSyncToGoogleCalendar = async (ev: ScheduleEvent) => {
-    playPop();
     const res = await createGoogleCalendarEvent(ev);
     if (res.success) {
-      playChime();
       await db.schedule.update(ev.id, {
         syncedToGoogle: true,
         googleCalendarEventId: res.eventId,
@@ -249,7 +278,6 @@ export const ScheduleView: React.FC = () => {
   };
 
   const handleExportMonthIcs = () => {
-    playPop();
     if (dbEvents.length === 0) {
       addToast('No events to export.', 'info');
       return;
@@ -261,12 +289,10 @@ export const ScheduleView: React.FC = () => {
   // Google Calendar Connect via OAuth
   const handleConnectGoogle = async () => {
     setIsConnectingGoogle(true);
-    playThock();
     try {
-      const res = await authenticateGoogleCalendar(customClientId.trim() || undefined);
+      const res = await authenticateGoogleCalendar();
       if (res.success) {
         setGcalConfig(getGoogleCalendarConfig());
-        playChime();
         addToast(`Connected to Google Calendar (${res.userEmail}).`, 'success');
       } else {
         addToast(res.error || 'Google authentication was cancelled.', 'warning');
@@ -277,7 +303,6 @@ export const ScheduleView: React.FC = () => {
   };
 
   const handleDisconnectGoogle = () => {
-    playThock();
     disconnectGoogleCalendar();
     setGcalConfig(getGoogleCalendarConfig());
     addToast('Disconnected Google Calendar.', 'info');
@@ -285,7 +310,6 @@ export const ScheduleView: React.FC = () => {
 
   const handleSyncGoogleEvents = async () => {
     setIsSyncingGoogle(true);
-    playThock();
     try {
       const res = await fetchUpcomingGoogleCalendarEvents();
       if (res.success && res.events) {
@@ -300,7 +324,6 @@ export const ScheduleView: React.FC = () => {
           }
         }
         setGcalConfig(getGoogleCalendarConfig());
-        playChime();
         addToast(`Pulled ${addedCount} upcoming event(s) from Google Calendar.`, 'success');
       } else {
         addToast(res.error || 'Failed to pull Google Calendar events.', 'warning');
@@ -318,12 +341,11 @@ export const ScheduleView: React.FC = () => {
     }
 
     setIsGeneratingSchedule(true);
-    playThock();
 
     try {
       const [recentNotes, recentMeetings] = await Promise.all([
         db.notes.orderBy('updatedAt').reverse().limit(4).toArray(),
-        db.meetings.orderBy('startTime').reverse().limit(3).toArray(),
+        db.meetings.orderBy('startTime').reverse().filter((m) => !m.mergedInto).limit(3).toArray(),
       ]);
 
       const context = [
@@ -365,7 +387,6 @@ Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Re
           };
           await db.schedule.put(newEv);
         }
-        playChime();
         addToast(`AI generated and plotted ${parsed.length} slots for ${selectedDate}.`, 'success');
       } else {
         throw new Error('Could not parse AI response JSON.');
@@ -395,520 +416,425 @@ Valid categories are: "meeting", "deep-work", "review", "manual", "deadline". Re
   }, [selectedDate]);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas text-slate-900 dark:text-white p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-7xl mx-auto w-full select-none font-sans transition-colors duration-500">
-      {/* Sticky Top Header */}
-      <div className="sticky top-0 z-20 bg-slate-50/95 dark:bg-canvas/95 backdrop-blur-md pb-5 pt-1 -mt-2 mb-8 border-b border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors duration-500">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-              <CalendarIcon className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-950 dark:text-white tracking-tight">
-                Calendar & Automated Schedule
-              </h1>
-              <p className="text-xs text-slate-700 dark:text-zinc-300 mt-0.5 font-medium">
-                Live speech date plotting, Computer Calendar (.ics) sync, and Google Calendar integration.
-              </p>
-            </div>
-          </div>
-        </div>
+    <PageContainer width="wide">
+      <PageHeader
+        title="Calendar & Automated Schedule"
+        description="Add events by voice, import .ics files, or connect Google Calendar."
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportMonthIcs}
+              title="Export all plotted events to Computer Calendar (.ics)"
+            >
+              <Download />
+              <span>Export to Computer (.ics)</span>
+            </Button>
+            <Button variant="default" size="sm" onClick={handleGenerateAISchedule} disabled={isGeneratingSchedule}>
+              <Sparkles className={cn(isGeneratingSchedule && 'animate-spin')} />
+              <span>{isGeneratingSchedule ? 'Optimizing...' : 'AI Plot Schedule'}</span>
+            </Button>
+          </>
+        }
+      />
 
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportMonthIcs}
-            className="text-xs font-mono"
-            title="Export all plotted events to Computer Calendar (.ics)"
-          >
-            <Download className="w-3.5 h-3.5 mr-1" />
-            <span>Export to Computer (.ics)</span>
-          </Button>
-
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleGenerateAISchedule}
-            disabled={isGeneratingSchedule}
-            className="text-xs font-mono"
-          >
-            <Sparkles className={`w-3.5 h-3.5 mr-1 ${isGeneratingSchedule ? 'animate-spin' : ''}`} />
-            <span>{isGeneratingSchedule ? 'Optimizing...' : 'AI Plot Schedule'}</span>
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-        {/* Left 7 Cols: Calendar Grid & Agenda List */}
-        <div className="lg:col-span-7 space-y-6">
-          {/* Interactive Month Calendar Card */}
-          <div className="p-5 sm:p-6 rounded-2xl border border-slate-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm dark:shadow-xl transition-all">
-            {/* Calendar Controls */}
-            <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
-              <div className="flex items-center gap-2">
-                <CalendarCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                <h3 className="text-base font-bold text-slate-950 dark:text-white tracking-tight">
-                  {monthLabel}
-                </h3>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleJumpToToday}
-                  className="text-xs px-2.5 py-1 font-mono font-bold"
-                >
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+        {/* Left: Calendar Grid & Agenda List */}
+        <div className="min-w-0 space-y-8">
+          {/* Month Calendar */}
+          <Card className="overflow-hidden">
+            <div className="flex items-center justify-between gap-3 px-4 py-3">
+              <h2 className="text-base font-semibold text-foreground">{monthLabel}</h2>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" onClick={handleJumpToToday}>
                   Today
                 </Button>
-                <button
+                <Button
+                  variant="outline"
+                  size="icon-sm"
                   onClick={handlePrevMonth}
-                  className="p-1.5 rounded-lg border border-slate-300 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
                   title="Previous Month"
+                  aria-label="Previous Month"
                 >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={handleNextMonth}
-                  className="p-1.5 rounded-lg border border-slate-300 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
-                  title="Next Month"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                  <ChevronLeft />
+                </Button>
+                <Button variant="outline" size="icon-sm" onClick={handleNextMonth} title="Next Month" aria-label="Next Month">
+                  <ChevronRight />
+                </Button>
               </div>
             </div>
 
             {/* Days of week header */}
-            <div className="grid grid-cols-7 gap-1 text-center font-mono text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-2">
-              <span>SUN</span>
-              <span>MON</span>
-              <span>TUE</span>
-              <span>WED</span>
-              <span>THU</span>
-              <span>FRI</span>
-              <span>SAT</span>
+            <div className="grid grid-cols-7 border-t">
+              {WEEKDAYS.map((day) => (
+                <span key={day} className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                  {day}
+                </span>
+              ))}
             </div>
 
             {/* Calendar Date Cells */}
-            <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+            <div className="grid grid-cols-7 border-t">
               {calendarDays.map((cell, idx) => {
+                const cellEvents = eventsByDate.get(cell.dateStr) || [];
                 return (
                   <button
                     key={`${cell.dateStr}-${idx}`}
+                    type="button"
                     onClick={() => {
-                      playPop();
                       setSelectedDate(cell.dateStr);
                     }}
-                    className={`relative min-h-[3rem] sm:min-h-[3.6rem] p-1.5 rounded-xl border flex flex-col justify-between text-left transition-all ${
-                      cell.isSelected
-                        ? 'border-emerald-600 dark:border-emerald-400 bg-emerald-500/10 shadow-xs ring-1 ring-emerald-500'
-                        : cell.isToday
-                        ? 'border-slate-400 dark:border-zinc-400 bg-slate-100 dark:bg-zinc-900 font-extrabold'
-                        : cell.isCurrentMonth
-                        ? 'border-slate-200 dark:border-zinc-850 hover:border-slate-400 dark:hover:border-zinc-700 bg-slate-50/50 dark:bg-zinc-900/40'
-                        : 'border-transparent text-slate-400 dark:text-zinc-600 opacity-40 hover:opacity-80'
-                    }`}
+                    aria-pressed={cell.isSelected}
+                    aria-current={cell.isToday ? 'date' : undefined}
+                    className={cn(
+                      'flex min-h-16 min-w-0 flex-col items-start gap-1 border-b border-r p-1 text-left transition-colors duration-100 hover:bg-accent/50 focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:min-h-20 sm:p-1.5 [&:nth-child(7n)]:border-r-0 [&:nth-last-child(-n+7)]:border-b-0',
+                      cell.isSelected && 'bg-accent hover:bg-accent'
+                    )}
                   >
-                    <div className="flex items-center justify-between w-full">
-                      <span
-                        className={`text-xs font-mono ${
-                          cell.isSelected
-                            ? 'font-bold text-emerald-700 dark:text-emerald-400'
-                            : cell.isToday
-                            ? 'font-bold text-slate-950 dark:text-white'
-                            : cell.isCurrentMonth
-                            ? 'text-slate-800 dark:text-zinc-300'
-                            : 'text-slate-400 dark:text-zinc-600'
-                        }`}
-                      >
-                        {cell.dayNumber}
-                      </span>
-                      {cell.isToday && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Today" />
+                    <span
+                      className={cn(
+                        'flex size-6 shrink-0 items-center justify-center rounded-full text-xs tabular-nums',
+                        cell.isToday
+                          ? 'bg-primary font-semibold text-primary-foreground'
+                          : cell.isCurrentMonth
+                          ? 'text-foreground'
+                          : 'text-muted-foreground/60',
+                        cell.isSelected && !cell.isToday && 'font-semibold'
                       )}
-                    </div>
+                    >
+                      {cell.dayNumber}
+                    </span>
 
-                    {/* Event Pill Indicator */}
+                    {/* Event indicators: titles from sm, category dots on phones */}
                     {cell.eventCount > 0 && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30">
+                      <>
+                        <div aria-hidden="true" className="flex flex-wrap gap-0.5 px-1 sm:hidden">
+                          {cellEvents.slice(0, 3).map((ev) => (
+                            <span key={ev.id} className={cn('size-1.5 rounded-full', CATEGORY_DOT[ev.category] ?? 'bg-muted-foreground')} />
+                          ))}
+                        </div>
+                        <div className="hidden w-full min-w-0 space-y-0.5 sm:block">
+                          {cellEvents.slice(0, 2).map((ev) => (
+                            <div
+                              key={ev.id}
+                              className={cn(
+                                'flex w-full min-w-0 items-center gap-1 rounded-sm border bg-card px-1 py-px text-xs text-foreground shadow-xs',
+                                ev.completed && 'text-muted-foreground line-through',
+                                !cell.isCurrentMonth && 'opacity-60'
+                              )}
+                            >
+                              <span className={cn('size-1.5 shrink-0 rounded-full', CATEGORY_DOT[ev.category] ?? 'bg-muted-foreground')} />
+                              <span className="truncate">{ev.title}</span>
+                            </div>
+                          ))}
+                          {cell.eventCount > 2 && (
+                            <div className="px-1 text-xs text-muted-foreground">+{cell.eventCount - 2} more</div>
+                          )}
+                        </div>
+                        <span className="sr-only">
                           {cell.eventCount} {cell.eventCount === 1 ? 'event' : 'events'}
                         </span>
-                      </div>
+                      </>
                     )}
                   </button>
                 );
               })}
             </div>
-          </div>
+          </Card>
 
           {/* Agenda / Plotted Events List */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-zinc-800">
-              <div>
-                <h3 className="text-sm font-bold text-slate-950 dark:text-white tracking-tight">
-                  {selectedDateLabel}
-                </h3>
-                <span className="text-[11px] font-mono text-slate-600 dark:text-zinc-400 font-medium">
+          <section className="space-y-3">
+            <div className="flex flex-col gap-3 border-b pb-3 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold text-foreground">{selectedDateLabel}</h2>
+                <span className="text-xs text-muted-foreground">
                   {eventsForSelectedDate.length} plotted event(s) •{' '}
                   {eventsForSelectedDate.filter((e) => e.completed).length} completed
                 </span>
               </div>
 
-              <div className="flex items-center gap-1 bg-slate-200/80 dark:bg-zinc-850 p-0.5 rounded-lg text-xs font-mono">
-                <button
-                  onClick={() => setActiveFilter('selected-day')}
-                  className={`px-2.5 py-1 rounded-md transition-colors ${
-                    activeFilter === 'selected-day'
-                      ? 'bg-white dark:bg-zinc-800 text-slate-950 dark:text-white font-bold shadow-2xs'
-                      : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900'
-                  }`}
-                >
-                  This Day
-                </button>
-                <button
-                  onClick={() => setActiveFilter('all')}
-                  className={`px-2.5 py-1 rounded-md transition-colors ${
-                    activeFilter === 'all'
-                      ? 'bg-white dark:bg-zinc-800 text-slate-950 dark:text-white font-bold shadow-2xs'
-                      : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900'
-                  }`}
-                >
-                  All Plotted ({dbEvents.length})
-                </button>
-              </div>
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                size="sm"
+                value={activeFilter}
+                onValueChange={(value) => value && setActiveFilter(value as 'selected-day' | 'all')}
+                aria-label="Agenda filter"
+              >
+                <ToggleGroupItem value="selected-day">This Day</ToggleGroupItem>
+                <ToggleGroupItem value="all">All Plotted ({dbEvents.length})</ToggleGroupItem>
+              </ToggleGroup>
             </div>
 
             {displayedEvents.length === 0 ? (
-              <div className="p-8 rounded-2xl border border-dashed border-slate-300 dark:border-zinc-800 text-center bg-white/60 dark:bg-zinc-950/60">
-                <CalendarIcon className="w-8 h-8 text-slate-400 dark:text-zinc-600 mx-auto mb-2 opacity-60" />
-                <p className="text-xs text-slate-700 dark:text-zinc-300 font-medium">
-                  No events plotted for {selectedDate}.
-                </p>
-                <p className="text-[11px] text-slate-500 dark:text-zinc-500 mt-1">
-                  Mention dates and times during meetings, or use the form on the right to plot an event.
-                </p>
-              </div>
+              <EmptyState
+                icon={CalendarIcon}
+                title={`No events plotted for ${selectedDate}.`}
+                description="Mention dates and times during meetings, or use the form on the right to plot an event."
+                className="py-10"
+              />
             ) : (
-              <div className="space-y-3">
-                {displayedEvents.map((ev) => {
-                  const categoryBadge = 'bg-slate-100 text-slate-900 border-slate-300 dark:bg-zinc-850 dark:text-white dark:border-zinc-800';
+              <ul className="-mx-2">
+                {displayedEvents.map((ev) => (
+                  <li
+                    key={ev.id}
+                    className="group flex flex-col gap-2 rounded-md px-2 py-2.5 transition-colors duration-100 hover:bg-accent/50 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                  >
+                    <div className="flex min-w-0 items-start gap-3">
+                      <Checkbox
+                        checked={ev.completed}
+                        onCheckedChange={() => toggleEventComplete(ev)}
+                        title="Toggle completion"
+                        aria-label="Toggle completion"
+                        className="mt-0.5"
+                      />
 
-                  return (
-                    <div
-                      key={ev.id}
-                      className={`p-4 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                        ev.completed
-                          ? 'bg-slate-100/60 dark:bg-zinc-950/40 border-slate-200 dark:border-zinc-900 opacity-60'
-                          : 'bg-white dark:bg-zinc-950 border-slate-300 dark:border-zinc-800 shadow-xs hover:border-slate-400 dark:hover:border-zinc-600'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3 min-w-0">
-                        <button
-                          onClick={() => toggleEventComplete(ev)}
-                          className={`w-5 h-5 mt-0.5 rounded-md border flex items-center justify-center transition-colors shrink-0 ${
-                            ev.completed
-                              ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:border-white dark:text-black'
-                              : 'border-slate-300 dark:border-zinc-700 hover:border-slate-500 dark:hover:border-zinc-400'
-                          }`}
-                          title="Toggle completion"
-                        >
-                          {ev.completed && <Check className="w-3.5 h-3.5" />}
-                        </button>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                            {ev.date} @ {ev.time}
+                          </span>
+                          <span className="text-xs tabular-nums text-muted-foreground">({ev.durationMin}m)</span>
+                          <Badge variant="secondary" className="font-normal">
+                            <span className={cn('size-1.5 rounded-full', CATEGORY_DOT[ev.category] ?? 'bg-muted-foreground')} />
+                            {ev.category}
+                          </Badge>
 
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono text-xs font-bold text-slate-800 dark:text-zinc-200">
-                              {ev.date} @ {ev.time}
-                            </span>
-                            <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-400">
-                              ({ev.durationMin}m)
-                            </span>
-                            <span className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded border font-bold ${categoryBadge}`}>
-                              {ev.category}
-                            </span>
-
-                            {ev.detectedFrom && (
-                              <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-slate-200 text-slate-900 dark:bg-zinc-850 dark:text-white border border-slate-300 dark:border-zinc-800 flex items-center gap-1 font-bold">
-                                <Sparkles className="w-2.5 h-2.5 text-slate-900 dark:text-white" />
-                                AI DETECTED
-                              </span>
-                            )}
-                          </div>
-
-                          <h4
-                            className={`text-sm font-bold tracking-tight mt-1 truncate ${
-                              ev.completed
-                                ? 'line-through text-slate-400 dark:text-zinc-600'
-                                : 'text-slate-950 dark:text-white'
-                            }`}
-                          >
-                            {ev.title}
-                          </h4>
-
-                          {ev.notes && (
-                            <p className="text-xs text-slate-600 dark:text-zinc-400 mt-0.5 line-clamp-1">
-                              {ev.notes}
-                            </p>
+                          {ev.detectedFrom && (
+                            <Badge variant="outline" className="font-normal">
+                              <Sparkles />
+                              AI DETECTED
+                            </Badge>
                           )}
                         </div>
-                      </div>
 
-                      {/* Action buttons */}
-                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                        <button
-                          onClick={() => handleAddToComputerCalendar(ev)}
-                          className={`p-1.5 rounded-lg border text-xs font-mono flex items-center gap-1 transition-colors ${
-                            ev.addedToComputerCalendar
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-700/50'
-                              : 'bg-white dark:bg-zinc-900 border-slate-300 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
-                          }`}
-                          title="Add to Computer Calendar (.ics)"
+                        <h3
+                          className={cn(
+                            'mt-0.5 truncate text-sm font-medium',
+                            ev.completed ? 'text-muted-foreground line-through' : 'text-foreground'
+                          )}
                         >
-                          <Laptop className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">.ics</span>
-                        </button>
+                          {ev.title}
+                        </h3>
 
-                        <button
-                          onClick={() => handleSyncToGoogleCalendar(ev)}
-                          className={`p-1.5 rounded-lg border text-xs font-mono flex items-center gap-1 transition-colors ${
-                            ev.syncedToGoogle
-                              ? 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-700/50'
-                              : 'bg-white dark:bg-zinc-900 border-slate-300 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
-                          }`}
-                          title="Sync to Google Calendar"
-                        >
-                          <Globe className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">Google</span>
-                        </button>
-
-                        <button
-                          onClick={() => handleDeleteEvent(ev.id)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
-                          title="Delete Event"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {ev.notes && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{ev.notes}</p>}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+
+                    {/* Action buttons */}
+                    <div className="flex shrink-0 items-center gap-1 self-end pl-7 sm:self-center sm:pl-0">
+                      <Button
+                        variant="ghost"
+                        size="xs"
+                        onClick={() => handleAddToComputerCalendar(ev)}
+                        className={cn('text-muted-foreground', ev.addedToComputerCalendar && 'text-success hover:text-success')}
+                        title="Add to Computer Calendar (.ics)"
+                      >
+                        {ev.addedToComputerCalendar ? <Check /> : <Laptop />}
+                        <span className="hidden sm:inline">.ics</span>
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="xs"
+                        onClick={() => handleSyncToGoogleCalendar(ev)}
+                        className={cn('text-muted-foreground', ev.syncedToGoogle && 'text-success hover:text-success')}
+                        title="Sync to Google Calendar"
+                      >
+                        {ev.syncedToGoogle ? <Check /> : <Globe />}
+                        <span className="hidden sm:inline">Google</span>
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => handleDeleteEvent(ev.id)}
+                        className="size-6 text-muted-foreground hover:text-destructive"
+                        title="Delete Event"
+                        aria-label="Delete Event"
+                      >
+                        <Trash2 />
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             )}
-          </div>
+          </section>
         </div>
 
-        {/* Right 5 Cols: Add Event Form & Google Calendar Sync */}
-        <div className="lg:col-span-5 space-y-6">
+        {/* Right: Add Event Form, Google Calendar Sync, privacy note */}
+        <div className="space-y-4">
           {/* Quick Add Event Form */}
-          <form
-            onSubmit={handleAddEvent}
-            className="p-5 sm:p-6 rounded-2xl border border-slate-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 space-y-4 shadow-sm dark:shadow-xl transition-all"
-          >
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-zinc-800">
-              <h3 className="text-sm font-bold text-slate-950 dark:text-white tracking-tight flex items-center gap-2">
-                <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span>Plot Schedule Event</span>
-              </h3>
-              <span className="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-bold">
-                {selectedDate}
-              </span>
-            </div>
+          <Card>
+            <form onSubmit={handleAddEvent}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Plus className="size-4 text-muted-foreground" />
+                  <span>Plot Schedule Event</span>
+                </CardTitle>
+                <CardAction>
+                  <span className="font-mono text-xs tabular-nums text-muted-foreground">{selectedDate}</span>
+                </CardAction>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Field label="Event / Task Title" htmlFor="schedule-event-title">
+                  <Input
+                    id="schedule-event-title"
+                    type="text"
+                    value={newEventTitle}
+                    onChange={(e) => setNewEventTitle(e.target.value)}
+                    placeholder="e.g. Architecture Sync & Code Review"
+                  />
+                </Field>
 
-            <div>
-              <label className="text-[10px] font-mono text-slate-700 dark:text-zinc-400 uppercase block mb-1 font-bold">
-                Event / Task Title
-              </label>
-              <input
-                type="text"
-                value={newEventTitle}
-                onChange={(e) => setNewEventTitle(e.target.value)}
-                placeholder="e.g. Architecture Sync & Code Review"
-                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 text-xs text-slate-950 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 outline-none focus:border-emerald-500 font-medium"
-              />
-            </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Date (YYYY-MM-DD)" htmlFor="schedule-event-date">
+                    <Input
+                      id="schedule-event-date"
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                    />
+                  </Field>
+                  <Field label="Start Time" htmlFor="schedule-event-time">
+                    <Input
+                      id="schedule-event-time"
+                      type="time"
+                      value={newEventTime}
+                      onChange={(e) => setNewEventTime(e.target.value)}
+                    />
+                  </Field>
+                </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[10px] font-mono text-slate-700 dark:text-zinc-400 uppercase block mb-1 font-bold">
-                  Date (YYYY-MM-DD)
-                </label>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 text-xs text-slate-950 dark:text-white outline-none focus:border-emerald-500 font-mono"
-                />
-              </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Duration (min)" htmlFor="schedule-event-duration">
+                    <Input
+                      id="schedule-event-duration"
+                      type="number"
+                      value={newEventDuration}
+                      onChange={(e) => setNewEventDuration(Number(e.target.value))}
+                      min={15}
+                      step={15}
+                      className="tabular-nums"
+                    />
+                  </Field>
+                  <Field label="Category" htmlFor="schedule-event-category">
+                    <NativeSelect
+                      id="schedule-event-category"
+                      value={newEventCategory}
+                      onChange={(e) => setNewEventCategory(e.target.value as any)}
+                    >
+                      <option value="meeting">Meeting</option>
+                      <option value="deep-work">Deep Work</option>
+                      <option value="review">Review</option>
+                      <option value="manual">Manual / SOP</option>
+                      <option value="deadline">Deadline</option>
+                    </NativeSelect>
+                  </Field>
+                </div>
 
-              <div>
-                <label className="text-[10px] font-mono text-slate-700 dark:text-zinc-400 uppercase block mb-1 font-bold">
-                  Start Time
-                </label>
-                <input
-                  type="time"
-                  value={newEventTime}
-                  onChange={(e) => setNewEventTime(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 text-xs text-slate-950 dark:text-white outline-none focus:border-emerald-500 font-mono"
-                />
-              </div>
-            </div>
+                <Field label="Notes & Agenda" htmlFor="schedule-event-notes">
+                  <Textarea
+                    id="schedule-event-notes"
+                    value={newEventNotes}
+                    onChange={(e) => setNewEventNotes(e.target.value)}
+                    placeholder="Optional meeting agenda, attendees, or details..."
+                    rows={2}
+                    className="min-h-14 resize-none"
+                  />
+                </Field>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[10px] font-mono text-slate-700 dark:text-zinc-400 uppercase block mb-1 font-bold">
-                  Duration (min)
-                </label>
-                <input
-                  type="number"
-                  value={newEventDuration}
-                  onChange={(e) => setNewEventDuration(Number(e.target.value))}
-                  min={15}
-                  step={15}
-                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 text-xs text-slate-950 dark:text-white outline-none focus:border-emerald-500 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-mono text-slate-700 dark:text-zinc-400 uppercase block mb-1 font-bold">
-                  Category
-                </label>
-                <select
-                  value={newEventCategory}
-                  onChange={(e) => setNewEventCategory(e.target.value as any)}
-                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 text-xs text-slate-950 dark:text-white outline-none focus:border-emerald-500"
-                >
-                  <option value="meeting">Meeting</option>
-                  <option value="deep-work">Deep Work</option>
-                  <option value="review">Review</option>
-                  <option value="manual">Manual / SOP</option>
-                  <option value="deadline">Deadline</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-[10px] font-mono text-slate-700 dark:text-zinc-400 uppercase block mb-1 font-bold">
-                Notes & Agenda
-              </label>
-              <textarea
-                value={newEventNotes}
-                onChange={(e) => setNewEventNotes(e.target.value)}
-                placeholder="Optional meeting agenda, attendees, or details..."
-                rows={2}
-                className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 text-xs text-slate-950 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 outline-none focus:border-emerald-500 resize-none font-medium"
-              />
-            </div>
-
-            <Button variant="primary" size="sm" type="submit" className="w-full">
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              <span>Insert into Schedule</span>
-            </Button>
-          </form>
+                <Button variant="default" type="submit" className="w-full">
+                  <Plus />
+                  <span>Insert into Schedule</span>
+                </Button>
+              </CardContent>
+            </form>
+          </Card>
 
           {/* Google Calendar Sync & Auth Panel */}
-          <div className="p-5 sm:p-6 rounded-2xl border border-slate-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm dark:shadow-xl space-y-4 transition-all">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-zinc-800">
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                <h3 className="text-sm font-bold text-slate-950 dark:text-white tracking-tight">
-                  Google Calendar Sync
-                </h3>
-              </div>
-              <span
-                className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full font-bold flex items-center gap-1.5 ${
-                  gcalConfig.isConnected
-                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300 border border-blue-300 dark:border-blue-500/40'
-                    : 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700'
-                }`}
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    gcalConfig.isConnected ? 'bg-blue-600 animate-pulse' : 'bg-slate-400'
-                  }`}
-                />
-                {gcalConfig.isConnected ? 'CONNECTED' : 'DISCONNECTED'}
-              </span>
-            </div>
-
-            {gcalConfig.isConnected ? (
-              <div className="space-y-3">
-                <div className="p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/40 text-xs space-y-1">
-                  <div className="font-bold text-blue-900 dark:text-blue-200">
-                    Account: {gcalConfig.userEmail || 'Active Google Token'}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Globe className="size-4 text-muted-foreground" />
+                <span>Google Calendar Sync</span>
+              </CardTitle>
+              <CardAction>
+                <Badge variant={gcalConfig.isConnected ? 'success' : 'secondary'} dot>
+                  {gcalConfig.isConnected ? 'Connected' : 'Disconnected'}
+                </Badge>
+              </CardAction>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {gcalConfig.isConnected ? (
+                <>
+                  <div className="space-y-1 rounded-md bg-muted p-3 text-xs">
+                    <div className="font-medium text-foreground">Account: {gcalConfig.userEmail || 'Active Google Token'}</div>
+                    <p className="text-muted-foreground">
+                      Direct two-way calendar sync active. Detected events can be pushed directly to Google Calendar.
+                    </p>
                   </div>
-                  <p className="text-[11px] text-blue-700 dark:text-blue-300">
-                    Direct two-way calendar sync active. Detected events can be pushed directly to Google Calendar.
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSyncGoogleEvents}
+                      disabled={isSyncingGoogle}
+                      className="flex-1"
+                    >
+                      <Globe />
+                      <span>{isSyncingGoogle ? 'Syncing...' : 'Pull Google Events'}</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleDisconnectGoogle}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      Disconnect
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    Connect your Google account to sync detected meeting events directly to Google Calendar.
                   </p>
-                </div>
 
-                <div className="flex items-center gap-2">
+                  {!gcalConfig.clientId && (
+                    <Button type="button" variant="link" size="xs" onClick={openGoogleSettings} className="h-auto px-0 text-muted-foreground underline hover:text-foreground">
+                      Connect Google Calendar in Settings
+                    </Button>
+                  )}
+
                   <Button
-                    variant="outline"
+                    variant="default"
                     size="sm"
-                    onClick={handleSyncGoogleEvents}
-                    disabled={isSyncingGoogle}
-                    className="flex-1 text-xs"
+                    onClick={handleConnectGoogle}
+                    disabled={isConnectingGoogle}
+                    className="w-full"
                   >
-                    <Globe className="w-3.5 h-3.5 mr-1" />
-                    <span>{isSyncingGoogle ? 'Syncing...' : 'Pull Google Events'}</span>
+                    <Globe />
+                    <span>{isConnectingGoogle ? 'Authorizing...' : 'Connect Google Calendar'}</span>
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleDisconnectGoogle}
-                    className="text-xs text-red-600 dark:text-red-400"
-                  >
-                    Disconnect
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-xs text-slate-600 dark:text-zinc-400">
-                  Connect your Google account to sync detected meeting events directly to Google Calendar.
-                </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-mono text-slate-700 dark:text-zinc-400 uppercase block font-bold">
-                    Google OAuth Client ID (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={customClientId}
-                    onChange={(e) => setCustomClientId(e.target.value)}
-                    placeholder="e.g. 123456789-abc.apps.googleusercontent.com"
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 text-xs text-slate-950 dark:text-white placeholder-slate-400 dark:placeholder-zinc-600 outline-none font-mono"
-                  />
-                </div>
-
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={handleConnectGoogle}
-                  disabled={isConnectingGoogle}
-                  className="w-full text-xs"
-                >
-                  <Globe className="w-3.5 h-3.5 mr-1" />
-                  <span>{isConnectingGoogle ? 'Authorizing...' : 'Connect Google Calendar'}</span>
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Privacy & Offline Guarantee Card */}
-          <div className="p-4 sm:p-5 rounded-2xl border border-slate-300 dark:border-zinc-800 bg-slate-100/60 dark:bg-zinc-950/60 font-mono text-xs space-y-2 text-slate-700 dark:text-zinc-400">
-            <div className="flex items-center gap-2 text-slate-950 dark:text-zinc-200 font-bold text-xs">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>100% Local Scheduling Engine</span>
-            </div>
-            <p className="text-[11px] leading-relaxed">
+          {/* Privacy & Offline Guarantee */}
+          <Alert>
+            <ShieldCheck />
+            <AlertTitle>100% Local Scheduling Engine</AlertTitle>
+            <AlertDescription className="text-xs">
               Date detection from audio and meeting transcripts runs completely on-device. Computer Calendar (.ics) downloads launch Apple Calendar or Outlook locally without sending data to any remote server.
-            </p>
-          </div>
+            </AlertDescription>
+          </Alert>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 };

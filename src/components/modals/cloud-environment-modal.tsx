@@ -1,16 +1,26 @@
 import React, { useState } from 'react';
 import { useWorkspace } from '../../context/workspace-context';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
+import { Disclosure } from '../ui/disclosure';
 import {
   CloudOff,
   Download,
   Copy,
   Check,
   X,
-  Laptop,
   Terminal,
   Shield,
-  ExternalLink,
 } from 'lucide-react';
 import { GithubIcon } from '../ui/github-icon';
 
@@ -23,10 +33,8 @@ export const CloudEnvironmentModal: React.FC<CloudEnvironmentModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { activeView, setActiveView, isCloudHost } = useWorkspace();
+  const { setActiveView, isCloudHost } = useWorkspace();
   const [copied, setCopied] = useState(false);
-
-  if (!isOpen) return null;
 
   const cloneCommand = 'git clone https://github.com/ChristianJayCuevas/HuskyNote.git && cd HuskyNote && ./start.sh';
 
@@ -54,99 +62,89 @@ export const CloudEnvironmentModal: React.FC<CloudEnvironmentModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 select-none">
-      <div className="relative w-full max-w-xl rounded-2xl bg-zinc-950 border-2 border-white p-6 sm:p-8 shadow-2xl shadow-white/10 space-y-6 text-white">
-        {/* Close Button */}
-        <button
-          onClick={handleClose}
-          className="absolute top-4 right-4 p-1.5 rounded-lg bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
-          title="Close and return to landing page"
-          aria-label="Close"
-        >
-          <X className="w-4 h-4" />
-        </button>
+    // Escape and the overlay close the dialog the same way as the close button
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent size="xl" hideClose aria-describedby="cloud-environment-description">
+        <DialogClose asChild>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="absolute right-3 top-3 text-muted-foreground"
+            title="Close and return to landing page"
+            aria-label="Close"
+          >
+            <X />
+          </Button>
+        </DialogClose>
 
-        {/* Header with Monochrome Cloud Off Icon */}
-        <div className="flex items-start gap-4">
-          <div className="p-3.5 rounded-xl bg-white text-black shrink-0">
-            <CloudOff className="w-6 h-6" />
+        {/* Header */}
+        <DialogHeader className="flex-row items-start gap-4 space-y-0">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-lg border bg-muted text-muted-foreground">
+            <CloudOff className="size-6" strokeWidth={1.75} />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white text-black">
-                Cloud Web Host Detected (Vercel)
-              </span>
-            </div>
-            <h2 className="text-xl font-bold tracking-tight text-white mt-1">
-              Local Desktop App Required
-            </h2>
-            <p className="text-xs text-zinc-400 mt-1">
-              HuskyNote is a private, local-first app designed to run exclusively on your physical computer.
+          <div className="min-w-0 space-y-1.5">
+            <Badge variant="secondary">Viewing the hosted website</Badge>
+            <DialogTitle className="text-lg">The desktop app is required</DialogTitle>
+            <DialogDescription id="cloud-environment-description">
+              HuskyNote is a private app that runs on your own computer.
+            </DialogDescription>
+          </div>
+        </DialogHeader>
+
+        {/* Explanation */}
+        <Alert>
+          <Shield />
+          <AlertTitle>Why is the workspace unavailable here?</AlertTitle>
+          <AlertDescription className="space-y-2">
+            <p>
+              A website cannot reach the AI running on your computer, keep your recordings and notes on your device, or record meeting audio without sending it to someone else's servers. The desktop app does all of this privately.
             </p>
-          </div>
-        </div>
+            <Disclosure summary="Details" contentClassName="pt-1">
+              <p className="leading-relaxed text-muted-foreground">
+                Hosted servers cannot connect to a local Ollama instance (<code className="font-mono text-xs">localhost:11434</code>) or to the
+                browser storage where HuskyNote keeps audio and notes.
+              </p>
+            </Disclosure>
+          </AlertDescription>
+        </Alert>
 
-        {/* Informative Explanation */}
-        <div className="p-4 rounded-xl bg-black border border-zinc-800 space-y-2.5 text-xs text-zinc-300">
-          <div className="flex items-center gap-2 font-semibold text-white">
-            <Shield className="w-4 h-4 text-zinc-400" />
-            <span>Why is the workspace unavailable on Vercel?</span>
-          </div>
-          <p className="leading-relaxed text-zinc-400">
-            Hosted cloud web servers cannot connect to your local Ollama AI daemon (<code className="text-zinc-200 font-mono">localhost:11434</code>),
-            cannot store encrypted audio blobs in your local IndexedDB filesystem, and cannot record native multi-tab meetings or screens without exposing private data to third-party cloud infrastructure.
-          </p>
-        </div>
-
-        {/* Quick Start Terminal Snippet */}
+        {/* Quick start command */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-zinc-300 flex items-center gap-1.5">
-              <Terminal className="w-3.5 h-3.5" />
-              <span>Clone & Run Locally (Zero Config)</span>
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+              <Terminal className="size-4 text-muted-foreground" aria-hidden="true" />
+              <span>Run it on your computer</span>
             </span>
-            <button
-              onClick={handleCopy}
-              className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5" />}
+            <Button variant="ghost" size="xs" className="-mr-1 text-muted-foreground" onClick={handleCopy}>
+              {copied ? <Check className="text-success" /> : <Copy />}
               <span>{copied ? 'Copied command' : 'Copy command'}</span>
-            </button>
+            </Button>
           </div>
-          <code className="block text-[11px] text-zinc-200 font-mono bg-black p-3 rounded-lg border border-zinc-800 overflow-x-auto whitespace-pre">
+          <code className="block whitespace-pre-wrap break-words rounded-md border bg-muted px-3 py-2.5 font-mono text-xs leading-5 text-foreground">
             {cloneCommand}
           </code>
         </div>
 
-        {/* Action Buttons */}
-        <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <a
-            href="https://github.com/ChristianJayCuevas/HuskyNote"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-black border dark:border-zinc-850 text-xs font-medium text-zinc-300 hover:text-white hover:border-white/40 transition-colors flex items-center justify-center gap-2"
-          >
-            <GithubIcon className="w-4 h-4" />
-            <span>GitHub Repository</span>
-          </a>
+        {/* Actions */}
+        <DialogFooter className="items-stretch gap-2 pt-2 sm:items-center sm:justify-between">
+          <Button variant="outline" size="sm" asChild>
+            <a href="https://github.com/ChristianJayCuevas/HuskyNote" target="_blank" rel="noopener noreferrer">
+              <GithubIcon className="size-4" />
+              <span>GitHub Repository</span>
+            </a>
+          </Button>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button
-              onClick={handleGoToLanding}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-lg text-xs text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition-colors flex items-center justify-center gap-1.5"
-            >
+          <div className="flex flex-col-reverse gap-2 sm:flex-row">
+            <Button variant="ghost" size="sm" onClick={handleGoToLanding}>
               <span>Back to Landing Page</span>
-            </button>
-            <button
-              onClick={handleGoToDownload}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-white text-black text-xs font-bold hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 shadow-lg"
-            >
-              <Download className="w-4 h-4" />
+            </Button>
+            <Button variant="default" size="sm" onClick={handleGoToDownload}>
+              <Download />
               <span>Download Desktop App</span>
-            </button>
+            </Button>
           </div>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

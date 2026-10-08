@@ -46,10 +46,16 @@ export interface MeetingSummary {
   actionItems: Array<{
     task: string;
     owner?: string;
+    /** Ticked off on Home or in the meeting report */
+    done?: boolean;
   }>;
   topics: string[];
   followUpTasks: string[];
   summaryLanguage?: string;
+  /** True when an AI wrote this summary; false for the placeholder saved when it could not */
+  aiGenerated?: boolean;
+  /** Why the AI could not write the summary, shown next to the retry button */
+  aiError?: string;
 }
 
 /** A screenshot captured during a live meeting recording session. */
@@ -77,6 +83,32 @@ export interface Meeting {
   createdAt: number;
   spokenLanguage?: string;
   translationLanguage?: string;
+  /** Set on a recording that was combined into another meeting; hidden from lists */
+  mergedInto?: string;
+  /** On a merged meeting: the recordings it was built from, in time order */
+  parts?: MeetingPart[];
+  /** The transcript before it was supplemented with another transcript (for Restore) */
+  originalTranscript?: TranscriptSegment[];
+  /** Set when the transcript was supplemented with the Teams transcript */
+  transcriptSupplement?: {
+    at: number;
+    fileName: string;
+    offsetSeconds: number;
+    windows: number;
+    aiWindows: number;
+    addedFromTeams: number;
+  };
+}
+
+/** One recording inside a merged meeting */
+export interface MeetingPart {
+  meetingId: string;
+  startTime: number;
+  endTime: number;
+  audioBlobId?: string;
+  /** Seconds from the merged meeting's start to this part's start */
+  offsetSeconds: number;
+  durationSeconds: number;
 }
 
 export interface ExtractedPage {
@@ -196,11 +228,13 @@ export interface AppSettings {
   theme: 'dark';
   autoSaveIntervalSeconds: number;
   speechLanguage: string;
-  /** Which AI answers requests: local Ollama (default) or Claude via the Anthropic API */
-  aiProvider?: 'ollama' | 'claude';
+  /** Which AI answers requests: local Ollama (default), Claude via the Anthropic API, or ChatGPT through Codex */
+  aiProvider?: 'ollama' | 'claude' | 'codex';
   /** User's own Anthropic API key; stays on this device and is excluded from workspace exports */
   claudeApiKey?: string;
   claudeModel?: string;
+  /** Codex model id; empty lets Codex pick its default */
+  codexModel?: string;
   /** Speech-to-text engine id (see services/audio/transcription-engines) */
   transcriptionEngine?: string;
 }

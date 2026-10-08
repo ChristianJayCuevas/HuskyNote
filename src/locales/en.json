@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "HuskyNote",
-    "tagline": "Your Personal AI Secretary"
+    "tagline": "A local-first AI secretary for meetings, documents, and notes."
   },
   "nav": {
     "home": "Home",
@@ -22,12 +22,17 @@
     "changelog": "Changelog",
     "privacy": "Privacy",
     "localAi": "Personal Secretary",
-    "localWorkspace": "Local Workspace"
+    "localWorkspace": "Local Workspace",
+    "search": "Search",
+    "sectionWorkspace": "Workspace",
+    "help": "Help & about"
   },
   "theme": {
     "light": "Light",
     "dark": "Dark",
-    "toggle": "Toggle theme"
+    "toggle": "Toggle theme",
+    "system": "System",
+    "appearance": "Appearance"
   },
   "language": {
     "select": "Language",
@@ -35,121 +40,6 @@
     "zh": "中文",
     "ja": "日本語",
     "fr": "Français"
-  },
-  "landing": {
-    "hero": {
-      "benefitPrivate": "Private & On-Device",
-      "benefitOffline": "Runs on Your Computer",
-      "headlinePrefix": "Notes, meetings, and documents.",
-      "headlineDynamic": "organized by your personal AI secretary.",
-      "subheadline": "Your personal AI secretary for notes, meetings, and documents. Capture conversations, summarize complex files, and turn screen tasks into step-by-step guides — completely private, with no sign-ups or cloud servers.",
-      "openWorkspace": "Open Workspace",
-      "downloadApp": "Download App",
-      "downloadAll": "Download (Mac / Win / Linux)",
-      "screenStudio": "Screen Studio",
-      "quickSetup": "Quick Setup",
-      "star": "Star",
-      "clientDb": "100% Private on Your Device",
-      "autoAnnotation": "Automatic Step-by-Step Guides",
-      "zeroCloudLatency": "Works Completely Offline"
-    },
-    "demo": {
-      "badge": "INTERACTIVE LIVE DEMO",
-      "title": "See HuskyNote in action",
-      "description": "Explore real-time call speech recording, local AI summarizing with Ollama, dynamic border-only document annotation, and structured meeting notes—all running locally on your device.",
-      "interactiveStudio": "Interactive Studio",
-      "walkthroughVideo": "Walkthrough Video",
-      "watchDemo": "Watch Demo",
-      "replay": "Replay"
-    },
-    "howItWorks": {
-      "badge": "HOW IT WORKS",
-      "title": "From conversation to organized notes.",
-      "description": "Most meeting conversations are forgotten once the call ends. HuskyNote preserves what was said, highlights key decisions, and turns them into lasting notes right on your computer.",
-      "step1Title": "Voice Recording",
-      "step1Desc": "Speech recorded locally via your browser. Spoken words appear in real time with clickable timestamps.",
-      "step2Title": "Key Decisions & Highlights",
-      "step2Desc": "Meaningful statements, decisions, and action commitments are identified without transmitting data outside.",
-      "step3Title": "Action Items",
-      "step3Desc": "Extracting task descriptions, assignees, and deadlines into an organized checklist.",
-      "step4Title": "Clean Notes",
-      "step4Desc": "Conversation becomes clean, durable knowledge saved to your workspace.",
-      "preview": "Preview",
-      "next": "Next",
-      "prev": "Prev",
-      "restart": "Restart Flow (01)"
-    },
-    "summaries": {
-      "badge": "AUTOMATIC SUMMARIES",
-      "title": "From messy conversation to clear action items.",
-      "description": "Drag the slider to see how raw speech transcripts become structured executive decisions and deliverables."
-    },
-    "features": {
-      "badge": "FEATURES",
-      "title": "Built for real everyday work.",
-      "description": "Everything runs right on your computer. Private, fast, and works without an internet connection.",
-      "showcase": "Feature Showcase",
-      "panelMeetingsTitle": "Voice Recording & Instant Notes",
-      "panelMeetingsDesc": "Record meetings directly in your browser. Get clear transcripts, highlighted decisions, and structured action items automatically.",
-      "panelDocumentsTitle": "Document Reader & Analysis",
-      "panelDocumentsDesc": "Upload PDFs, Word docs, presentations, and text files. Ask questions across your documents, highlight passages, and extract summaries.",
-      "panelOperationsTitle": "Screen Recording & Step Manuals",
-      "panelOperationsDesc": "Record your screen during complex workflows. HuskyNote extracts screenshots, captures steps, and builds a standard operating manual.",
-      "panelAiTitle": "Private AI Assistant",
-      "panelAiDesc": "Run AI models completely on your computer with Ollama. Ask questions across your notes, meetings, and documents without sending data to third parties.",
-      "panelAnnotationTitle": "Automatic Step-by-Step Guides",
-      "panelAnnotationDesc": "Easily captures steps and screenshots as you work to create clear, illustrated guides.",
-      "panelVaultTitle": "Private On-Device Storage",
-      "panelVaultDesc": "All your notes, audio transcripts, and documents stay strictly inside your browser. Fast, offline, and completely private.",
-      "panelZenTitle": "Distraction-Free Husky Notes",
-      "panelZenDesc": "A calm, distraction-free space for focused writing with full markdown support, version history, and soothing sounds.",
-      "panelExportTitle": "Easy One-Click Export",
-      "panelExportDesc": "Export meeting minutes, guides, and notes into clean PDF, Markdown, or JSON files anytime."
-    },
-    "setup": {
-      "badge": "QUICK SETUP",
-      "title": "One command to initialize everything.",
-      "description": "HuskyNote includes an automated launcher that checks your local Ollama setup, enables browser permissions, pulls recommended models, and opens your workspace.",
-      "oneClickInit": "ONE-CLICK INITIALIZATION",
-      "whatLauncherAutomates": "What the launcher automates:",
-      "checkOllama": "Checks if Ollama is installed (prompts installation if missing)",
-      "configCors": "Configures cross-origin settings for local browser communication",
-      "pullModels": "Pulls lightweight models automatically if none exist",
-      "startServer": "Starts the development server and launches your workspace in browser",
-      "supportedModels": "Supported Local Models",
-      "supportedModelsDesc": "Compatible with any model running on Ollama, including llama3.2, gemma, mistral, qwen2.5, phi3, and llava.",
-      "privacyBoundaries": "Privacy Boundaries",
-      "privacyBoundariesDesc": "Your notes and recordings never leave your device. AI requests travel exclusively between your web browser and http://localhost:11434."
-    },
-    "why": {
-      "badge": "WHY HUSKYNOTE",
-      "title": "Built for privacy, speed, and ownership",
-      "card1Tag": "Private by Default",
-      "card1Title": "Your Data Stays With You",
-      "card1Desc": "Everything is stored directly in your browser using IndexedDB. No remote servers ever read or store your content.",
-      "card2Tag": "Zero Tracking",
-      "card2Title": "No Ads or Tracking",
-      "card2Desc": "No tracking scripts, cookies, or analytics. Your notes, meetings, and thoughts remain completely confidential.",
-      "card3Tag": "Universal Formats",
-      "card3Title": "Export Anytime",
-      "card3Desc": "Export your notes, meeting minutes, and manuals to clean Markdown and PDF files with one click.",
-      "card4Tag": "Open Source",
-      "card4Title": "Free and Auditable",
-      "card4Desc": "Free to use under the MIT license. You can inspect the source code, run it anywhere, or contribute improvements."
-    },
-    "cta": {
-      "title": "Start organizing with your personal AI secretary.",
-      "description": "No account creation required. No credit card. Your workspace lives entirely inside your browser and local storage.",
-      "openApp": "Open HuskyNote",
-      "downloadApp": "Download App"
-    },
-    "footer": {
-      "copyright": "HuskyNote. Your Personal AI Secretary.",
-      "description": "Your personal AI secretary for notes, meetings, and documents. Everything stays strictly on your computer — no accounts, no tracking, and no cloud needed.",
-      "privacyNotice": "Your personal AI secretary that runs privately on your computer. No accounts, no tracking, and nothing sent to the cloud.",
-      "licenseNotice": "MIT License • Open Source • Runs on Your Device",
-      "privateByDefault": "Private by Default"
-    }
   },
   "dashboard": {
     "greeting": "Your Workspace",
@@ -159,7 +49,7 @@
     "uploadDoc": "Upload Document",
     "captureOperation": "Create Guide",
     "askAi": "Ask AI",
-    "welcomeBanner": "Welcome back. All recordings, documents, and notes stay 100% private on your device.",
+    "welcomeBanner": "Welcome back. All recordings, documents, and notes are saved on your device.",
     "recentNotes": "Recent Notes",
     "recentMeetings": "Recorded Meetings",
     "recentDocuments": "Documents",

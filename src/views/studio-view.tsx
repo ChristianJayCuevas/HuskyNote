@@ -2,34 +2,36 @@ import React, { useState, useRef, useEffect } from 'react';
 import { db } from '../db';
 import type { Manual, ManualStep, Note } from '../types';
 import { useWorkspace } from '../context/workspace-context';
-import { useSound } from '../context/sound-context';
 import { useAI } from '../context/ai-context';
 import { ai } from '../services/ai/active-provider';
 import { screenAnnotator, grabFrameFromStreamOrVideo } from '../services/screen/annotator';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
+import { Alert, AlertDescription } from '../components/ui/alert';
+import { EmptyState } from '../components/ui/empty-state';
+import { Markdown } from '../components/ui/markdown';
+import { PageContainer, PageHeader } from '../components/ui/page';
+import { Dialog, DialogBody, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { cn } from '../lib/utils';
 import { AudioRecorder } from '../services/audio/recorder';
 import { LiveSpeechTranscriber, type TranscriptSegment } from '../services/audio/transcriber';
 import {
-  Video,
   Camera,
   Square,
   Play,
   Download,
   CameraOff,
   Sparkles,
-  ArrowRight,
   Monitor,
   CheckCircle,
   Copy,
   FileText,
-  Clock,
   Crosshair,
-  Sliders,
-  X,
   Mic,
   MicOff,
-  Volume2,
+  ChevronLeft,
 } from 'lucide-react';
 
 interface RecordedKeyframeStep {
@@ -44,7 +46,6 @@ interface RecordedKeyframeStep {
 
 export const StudioView: React.FC = () => {
   const { addToast, setActiveView, setActiveManualId } = useWorkspace();
-  const { playThock, playChime, playPop } = useSound();
   const { isConnected, selectedModel } = useAI();
 
   const [isRecording, setIsRecording] = useState(false);
@@ -147,7 +148,6 @@ export const StudioView: React.FC = () => {
   // Request display media for screen capture
   const handleStartScreenStream = async () => {
     try {
-      playPop();
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: { frameRate: { ideal: 30 } },
         audio: true,
@@ -199,10 +199,8 @@ export const StudioView: React.FC = () => {
       webcamStreamRef.current?.getTracks().forEach((t) => t.stop());
       webcamStreamRef.current = null;
       setEnableWebcam(false);
-      playThock();
     } else {
       try {
-        playPop();
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: 320, height: 240 },
           audio: false,
@@ -229,7 +227,6 @@ export const StudioView: React.FC = () => {
 
   // Capture an annotated step (manual, automated, click-based, or simulated)
   const captureAnnotatedStep = async (explicitCoords?: { x: number; y: number }, customNote?: string) => {
-    playThock(1.2);
     const stepNum = capturedSteps.length + 1;
 
     try {
@@ -357,7 +354,6 @@ CRITICAL RULES:
 
   // Simulate a demonstration workflow with 4 pristine annotated keyframes
   const handleSimulateWorkflow = () => {
-    playPop();
     const demoSteps: RecordedKeyframeStep[] = [
       {
         id: `step-demo-1`,
@@ -437,7 +433,6 @@ CRITICAL RULES:
 
   // Stop recording and open documentation generator modal
   const handleStopRecording = () => {
-    playChime();
     setIsRecording(false);
     if (autoCaptureTimerRef.current) clearInterval(autoCaptureTimerRef.current);
     screenStreamRef.current?.getTracks().forEach((t) => t.stop());
@@ -493,6 +488,7 @@ CRITICAL RULES:
             pageNumber: 1,
             type: 'marker',
             coords: { x: s.coords.x, y: s.coords.y, width: 4, height: 4 },
+            // design-exception: marker color is stored annotation data, not UI styling
             color: '#ffffff',
             label: `Step ${s.stepNumber}`,
             stepNumber: s.stepNumber,
@@ -549,7 +545,6 @@ CRITICAL RULES:
 
   // Download Markdown file
   const handleDownloadMarkdown = () => {
-    playPop();
     const blob = new Blob([generatedMarkdown], { type: 'text/markdown;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -562,7 +557,6 @@ CRITICAL RULES:
 
   // Copy Markdown to clipboard
   const handleCopyMarkdown = async () => {
-    playPop();
     try {
       await navigator.clipboard.writeText(generatedMarkdown);
       addToast('SOP Documentation copied to clipboard.', 'success');
@@ -578,117 +572,124 @@ CRITICAL RULES:
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas text-slate-900 dark:text-white p-6 sm:p-8 overflow-y-auto max-w-6xl mx-auto w-full select-none font-sans transition-colors duration-500">
-      {/* Top Header Controls Card */}
-      <div className="border-b border-slate-200 dark:border-zinc-850 pb-5 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Video className="w-5 h-5 text-slate-900 dark:text-white" />
-            <h1 className="text-2xl font-bold text-slate-950 dark:text-white tracking-tight">
-              Screen Recording Studio
-            </h1>
-            <Badge variant="outline">STEP RECORDER</Badge>
-          </div>
-          <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1">
-            Record your screen step-by-step with automatic screenshots and create helpful how-to guides.
-          </p>
-        </div>
+    <PageContainer width="wide">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setActiveView('manuals')}
+        className="-ml-2.5 mb-3 text-muted-foreground"
+      >
+        <ChevronLeft />
+        Manuals
+      </Button>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          {isRecording ? (
-            <>
-              <div className="flex items-center gap-2 px-3 py-1 rounded bg-red-950/80 border border-red-800 text-red-400 font-mono text-xs animate-pulse">
-                <span className="w-2 h-2 rounded-full bg-red-500" />
-                <span>REC {formatTimer(elapsedSeconds)}</span>
-              </div>
+      <PageHeader
+        title={
+          <span className="inline-flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            Screen Recording Studio
+            <Badge variant="outline" className="font-normal text-muted-foreground">
+              Step recorder
+            </Badge>
+          </span>
+        }
+        description="Record your screen step-by-step with automatic screenshots and create helpful how-to guides."
+        className="mb-6"
+      />
 
-              {/* Auto-Annotate Toggle */}
-              <button
-                onClick={() => setAutoAnnotateEnabled(!autoAnnotateEnabled)}
-                className={`px-3 py-1.5 rounded text-xs font-mono border transition-all flex items-center gap-1.5 ${
-                  autoAnnotateEnabled
-                    ? 'bg-slate-50 dark:bg-zinc-900 border-slate-300 dark:border-zinc-700 text-emerald-400 shadow-sm'
-                    : 'bg-white dark:bg-zinc-950 dark:border-zinc-850 text-slate-500 dark:text-zinc-500'
-                }`}
-              >
-                <Crosshair className="w-3.5 h-3.5" />
-                <span>AUTO-ANNOTATE: {autoAnnotateEnabled ? `ON (${autoIntervalSec}s)` : 'OFF'}</span>
-              </button>
+      {/* Session controls */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {isRecording ? (
+          <>
+            <Badge variant="destructive" dot className="h-7 px-2">
+              Recording <span className="font-mono tabular-nums">{formatTimer(elapsedSeconds)}</span>
+            </Badge>
 
-              {/* Mic Toggle & Audio Level */}
-              <button
-                onClick={handleToggleMic}
-                className={`px-3 py-1.5 rounded text-xs font-mono border transition-all flex items-center gap-1.5 ${
-                  !isMicMuted
-                    ? 'bg-slate-50 dark:bg-zinc-900 border-slate-300 dark:border-zinc-700 text-slate-950 dark:text-white shadow-sm'
-                    : 'bg-white dark:bg-zinc-950 dark:border-zinc-850 text-slate-500 dark:text-zinc-500'
-                }`}
-                title={isMicMuted ? 'Unmute microphone narration' : 'Mute microphone narration'}
-              >
-                {!isMicMuted ? <Mic className="w-3.5 h-3.5 text-slate-950 dark:text-white" /> : <MicOff className="w-3.5 h-3.5" />}
-                <span>MIC: {!isMicMuted ? 'LIVE' : 'MUTED'}</span>
-                {!isMicMuted && (
-                  <span className="flex items-center gap-0.5 ml-1">
-                    <span
-                      className="w-1 rounded-full bg-slate-900 dark:bg-white transition-all"
-                      style={{ height: `${Math.max(4, Math.min(12, (audioLevel / 100) * 12))}px` }}
-                    />
-                  </span>
-                )}
-              </button>
+            {/* Auto-annotate toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              aria-pressed={autoAnnotateEnabled}
+              onClick={() => setAutoAnnotateEnabled(!autoAnnotateEnabled)}
+              className={cn(!autoAnnotateEnabled && 'text-muted-foreground')}
+            >
+              <Crosshair />
+              <span>Auto-annotate: {autoAnnotateEnabled ? `on (${autoIntervalSec}s)` : 'off'}</span>
+            </Button>
 
+            {/* Mic toggle and audio level */}
+            <Button
+              variant="outline"
+              size="sm"
+              aria-pressed={!isMicMuted}
+              onClick={handleToggleMic}
+              className={cn(isMicMuted && 'text-muted-foreground')}
+              title={isMicMuted ? 'Unmute microphone narration' : 'Mute microphone narration'}
+            >
+              {!isMicMuted ? <Mic /> : <MicOff />}
+              <span>Mic: {!isMicMuted ? 'live' : 'muted'}</span>
+              {!isMicMuted && (
+                <span aria-hidden="true" className="flex h-3 w-1 items-end overflow-hidden rounded-full bg-muted">
+                  <span
+                    className="w-full rounded-full bg-foreground transition-[height] duration-100"
+                    style={{ height: `${Math.max(25, Math.min(100, audioLevel))}%` }}
+                  />
+                </span>
+              )}
+            </Button>
+
+            <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
               <Button variant="outline" size="sm" onClick={() => captureAnnotatedStep()}>
-                <Camera className="w-3.5 h-3.5" />
+                <Camera />
                 <span>Snap Step ({capturedSteps.length})</span>
               </Button>
 
-              <Button variant="outline" size="sm" onClick={handleToggleWebcam}>
-                {enableWebcam ? <CameraOff className="w-3.5 h-3.5" /> : <Camera className="w-3.5 h-3.5" />}
+              <Button variant="outline" size="sm" onClick={handleToggleWebcam} aria-pressed={enableWebcam}>
+                {enableWebcam ? <CameraOff /> : <Camera />}
                 <span>PIP Camera</span>
               </Button>
 
-              <Button variant="danger" size="sm" onClick={handleStopRecording}>
-                <Square className="w-3.5 h-3.5 fill-current" />
+              <Button variant="destructive" size="sm" onClick={handleStopRecording}>
+                <Square className="fill-current" />
                 <span>Stop & Generate Documentation</span>
               </Button>
-            </>
-          ) : (
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={sessionTitle}
-                onChange={(e) => setSessionTitle(e.target.value)}
-                placeholder="Procedure Session Title..."
-                className="px-3 py-1.5 rounded bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs text-slate-950 dark:text-white placeholder-slate-500 dark:placeholder-zinc-500 focus:outline-none focus:border-slate-300 dark:focus:border-zinc-600 w-56"
-              />
-
-              <button
-                onClick={() => setEnableMic(!enableMic)}
-                className={`px-2.5 py-1.5 rounded text-xs font-mono border transition-all flex items-center gap-1.5 ${
-                  enableMic
-                    ? 'bg-slate-50 dark:bg-zinc-900 border-slate-300 dark:border-zinc-700 text-slate-950 dark:text-white'
-                    : 'bg-white dark:bg-zinc-950 dark:border-zinc-850 text-slate-500 dark:text-zinc-500'
-                }`}
-                title={enableMic ? 'Microphone audio enabled' : 'Microphone audio disabled'}
-              >
-                {enableMic ? <Mic className="w-3.5 h-3.5 text-slate-950 dark:text-white" /> : <MicOff className="w-3.5 h-3.5" />}
-                <span>MIC {enableMic ? 'ON' : 'OFF'}</span>
-              </button>
-
-              <Button variant="primary" size="md" onClick={handleStartScreenStream}>
-                <Monitor className="w-4 h-4" />
-                <span>Start Screen Capture</span>
-              </Button>
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <>
+            <Input
+              type="text"
+              value={sessionTitle}
+              onChange={(e) => setSessionTitle(e.target.value)}
+              placeholder="Procedure Session Title..."
+              aria-label="Procedure session title"
+              className="w-full sm:w-56"
+            />
+
+            <Button
+              variant="outline"
+              aria-pressed={enableMic}
+              onClick={() => setEnableMic(!enableMic)}
+              className={cn(!enableMic && 'text-muted-foreground')}
+              title={enableMic ? 'Microphone audio enabled' : 'Microphone audio disabled'}
+            >
+              {enableMic ? <Mic /> : <MicOff />}
+              <span>{enableMic ? 'Mic on' : 'Mic off'}</span>
+            </Button>
+
+            <Button onClick={handleStartScreenStream}>
+              <Monitor />
+              <span>Start Screen Capture</span>
+            </Button>
+          </>
+        )}
       </div>
 
-      {/* Main Studio Canvas & Stream Box */}
-      <div className="relative rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden shadow-2xl min-h-[460px] flex items-center justify-center">
+      {/* Studio stage */}
+      <div className="relative flex min-h-[460px] items-center justify-center overflow-hidden rounded-xl border bg-muted/40">
         {hasScreenStream ? (
-          <div className="relative w-full h-full flex items-center justify-center bg-slate-50 dark:bg-black">
-            {/* Interactive Video Stream with Click-to-Annotate */}
+          // design-exception: media stage is black in both themes so recorded footage keeps its true colors
+          <div className="relative flex h-full w-full items-center justify-center bg-black">
+            {/* Interactive video stream with click-to-annotate */}
             <video
               ref={(el) => {
                 (screenVideoRef as any).current = el;
@@ -698,7 +699,7 @@ CRITICAL RULES:
                   el.play().catch(() => {});
                 }
               }}
-              className="max-h-[600px] w-auto max-w-full rounded-lg cursor-crosshair"
+              className="max-h-[600px] w-auto max-w-full cursor-crosshair"
               autoPlay
               muted
               playsInline
@@ -708,209 +709,225 @@ CRITICAL RULES:
 
             {/* Live speech transcription subtitle bar */}
             {!isMicMuted && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 max-w-xl w-[92%] px-4 py-2.5 rounded-xl bg-black/90 backdrop-blur-md border border-slate-900/20 dark:border-white/20 text-center z-20 shadow-2xl transition-all">
-                <div className="flex items-center justify-center gap-2 text-[10px] font-mono text-slate-600 dark:text-zinc-400 mb-1">
-                  <span className={`w-2 h-2 rounded-full ${audioLevel > 15 ? 'bg-emerald-400 animate-ping' : 'bg-slate-400 dark:bg-zinc-500'}`} />
-                  <span className="uppercase tracking-widest text-slate-700 dark:text-zinc-300 font-semibold">Live Speech Narration</span>
-                  <span className="text-slate-400 dark:text-zinc-600">•</span>
-                  <span className="text-[9px] text-slate-600 dark:text-zinc-400">Audio Level: {audioLevel}%</span>
+              // design-exception: caption bar over video uses a dark scrim with light text in both themes
+              <div className="absolute bottom-4 left-1/2 z-20 w-[92%] max-w-xl -translate-x-1/2 rounded-lg bg-black/80 px-4 py-2.5 text-center text-white shadow-lg">
+                <div className="mb-1 flex items-center justify-center gap-2 text-xs opacity-75">
+                  <span
+                    // design-exception: speaking indicator on the dark caption scrim
+                    className={cn('size-2 rounded-full', audioLevel > 15 ? 'bg-success animate-pulse motion-reduce:animate-none' : 'bg-white/40')}
+                  />
+                  <span className="font-medium">Live Speech Narration</span>
+                  <span aria-hidden="true">•</span>
+                  <span className="tabular-nums">Audio Level: {audioLevel}%</span>
                 </div>
-                <p className="text-xs text-slate-950 dark:text-white line-clamp-2 font-medium">
-                  {currentInterimSpeech
-                    ? `"${currentInterimSpeech}..."`
-                    : liveTranscript.length > 0
-                    ? `"${liveTranscript[liveTranscript.length - 1].text}"`
-                    : <span className="text-slate-500 dark:text-zinc-500 italic">Speak into microphone to narrate action points in real time...</span>}
+                <p className="line-clamp-2 text-sm font-medium">
+                  {currentInterimSpeech ? (
+                    `"${currentInterimSpeech}..."`
+                  ) : liveTranscript.length > 0 ? (
+                    `"${liveTranscript[liveTranscript.length - 1].text}"`
+                  ) : (
+                    <span className="italic opacity-60">Speak into microphone to narrate action points in real time...</span>
+                  )}
                 </p>
               </div>
             )}
 
-            {/* Visual Click Reticle Feedback */}
+            {/* Visual click reticle feedback */}
             {clickIndicator && (
               <div
-                className="absolute pointer-events-none transform -translate-x-1/2 -translate-y-1/2 z-30"
+                className="pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-1/2"
                 style={{ left: clickIndicator.x, top: clickIndicator.y }}
               >
-                <span className="flex h-10 w-10 relative items-center justify-center">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-900 dark:bg-white opacity-50" />
-                  <span className="relative inline-flex rounded-full h-6 w-6 border-2 border-white bg-black/80 text-[10px] text-white font-mono items-center justify-center">
+                <span className="relative flex size-10 items-center justify-center">
+                  {/* design-exception: click reticle drawn over live video */}
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-white opacity-50" />
+                  {/* design-exception: click reticle drawn over live video */}
+                  <span className="relative inline-flex size-6 items-center justify-center rounded-full border-2 border-white bg-black/80 font-mono text-xs text-white">
                     {capturedSteps.length + 1}
                   </span>
                 </span>
               </div>
             )}
 
-            {/* Instruction Overlay Pill */}
-            <div className="absolute top-4 left-4 bg-white/90 dark:bg-zinc-950/90 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 px-3 py-1.5 rounded-full text-xs font-mono shadow-xl flex items-center gap-2 backdrop-blur-md">
-              <Crosshair className="w-3.5 h-3.5 text-emerald-400 animate-spin" />
+            {/* Instruction overlay pill */}
+            <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border bg-popover px-3 py-1.5 text-xs text-popover-foreground shadow-lg">
+              <Crosshair className="size-3.5 text-muted-foreground" />
               <span>Click stream to stamp annotation marker</span>
-              <span className="text-slate-400 dark:text-zinc-600">•</span>
-              <span className="text-slate-600 dark:text-zinc-400">Auto-captures every {autoIntervalSec}s</span>
+              <span aria-hidden="true" className="text-muted-foreground">•</span>
+              <span className="text-muted-foreground">Auto-captures every {autoIntervalSec}s</span>
             </div>
 
-            {/* Picture-in-Picture Webcam Box */}
+            {/* Picture-in-picture webcam */}
             {enableWebcam && (
-              <div className="absolute bottom-6 right-6 w-48 h-36 rounded-xl border border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-black overflow-hidden shadow-2xl z-20">
-                <video
-                  ref={webcamVideoRef}
-                  className="w-full h-full object-cover"
-                  autoPlay
-                  muted
-                />
-                <span className="absolute top-1.5 left-2 text-[9px] font-mono text-white/80 bg-black/60 px-1.5 py-0.5 rounded">
+              // design-exception: camera preview sits on a black media background
+              <div className="absolute bottom-6 right-6 z-20 h-36 w-48 overflow-hidden rounded-lg border bg-black shadow-lg">
+                <video ref={webcamVideoRef} className="h-full w-full object-cover" autoPlay muted />
+                {/* design-exception: label over camera video */}
+                <span className="absolute left-2 top-1.5 rounded bg-black/60 px-1.5 py-0.5 font-mono text-xs text-white/80">
                   CAM PIP
                 </span>
               </div>
             )}
           </div>
         ) : (
-          <div className="p-12 text-center max-w-md space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-700 dark:text-zinc-300 mx-auto">
-              <Monitor className="w-7 h-7" />
-            </div>
-            <h3 className="text-lg font-bold text-slate-950 dark:text-white tracking-tight">
-              Screen Recording Studio
-            </h3>
-            <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
-              Start recording your screen or window. As you demonstrate tasks,
-              HuskyNote automatically captures steps and screenshots into an easy-to-follow guide.
-            </p>
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-2.5">
-              <Button variant="primary" size="md" onClick={handleStartScreenStream}>
-                <Play className="w-4 h-4" />
+          <EmptyState
+            icon={Monitor}
+            title="Screen Recording Studio"
+            description="Start recording your screen or window. As you demonstrate tasks, HuskyNote automatically captures steps and screenshots into an easy-to-follow guide."
+            className="py-12"
+          >
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+              <Button onClick={handleStartScreenStream}>
+                <Play />
                 <span>Start Screen Recording</span>
               </Button>
-              <Button variant="outline" size="md" onClick={handleSimulateWorkflow}>
-                <Sparkles className="w-4 h-4" />
+              <Button variant="outline" onClick={handleSimulateWorkflow}>
+                <Sparkles />
                 <span>Try Sample Guide</span>
               </Button>
             </div>
-          </div>
+          </EmptyState>
         )}
       </div>
 
-      {/* Captured Keyframes Strip */}
+      {/* Captured keyframes */}
       {capturedSteps.length > 0 && (
-        <div className="mt-8 space-y-3">
-          <div className="flex items-center justify-between text-xs font-mono text-slate-600 dark:text-zinc-400 uppercase">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Captured Steps ({capturedSteps.length})</span>
-            </div>
-            <span className="text-[10px] text-slate-500 dark:text-zinc-500">Edit titles & notes before saving</span>
+        <section className="mt-10 space-y-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-base font-semibold text-foreground">
+              Captured Steps <span className="font-normal tabular-nums text-muted-foreground">({capturedSteps.length})</span>
+            </h2>
+            <span className="text-xs text-muted-foreground">Edit titles & notes before saving</span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-x-auto pb-2">
+          <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {capturedSteps.map((step, idx) => (
-              <div
-                key={step.id}
-                className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 space-y-2 shadow-lg transition-transform hover:scale-[1.01]"
-              >
-                <div className="flex items-center justify-between text-[10px] font-mono text-slate-600 dark:text-zinc-400 border-b dark:border-zinc-850 pb-1">
-                  <span className="font-bold text-slate-950 dark:text-white">STEP {step.stepNumber}</span>
-                  <span className="text-slate-500 dark:text-zinc-500">{formatTimer(step.timestampSeconds)}</span>
+              <div key={step.id} className="space-y-2 rounded-lg border bg-card p-2.5">
+                <div className="flex items-center justify-between px-0.5 text-xs">
+                  <span className="font-medium text-foreground">STEP {step.stepNumber}</span>
+                  <span className="font-mono tabular-nums text-muted-foreground">{formatTimer(step.timestampSeconds)}</span>
                 </div>
                 <img
                   src={step.screenshotDataUrl}
                   alt={`Step ${step.stepNumber}`}
-                  className="w-full h-24 object-cover rounded border dark:border-zinc-850"
+                  className="h-28 w-full rounded-md border object-cover"
                 />
-                <input
+                <Input
                   type="text"
                   value={step.title}
                   onChange={(e) => {
                     const newTitle = e.target.value;
-                    setCapturedSteps((prev) =>
-                      prev.map((s, i) => (i === idx ? { ...s, title: newTitle } : s))
-                    );
+                    setCapturedSteps((prev) => prev.map((s, i) => (i === idx ? { ...s, title: newTitle } : s)));
                   }}
-                  className="w-full bg-slate-50/80 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded px-1.5 py-0.5 text-[11px] font-semibold text-slate-950 dark:text-white focus:outline-none focus:border-slate-300 dark:focus:border-zinc-600 truncate"
+                  aria-label={`Step ${step.stepNumber} title`}
+                  className="h-7 text-sm font-medium"
                   placeholder="Step title..."
                 />
-                <textarea
+                <Textarea
                   value={step.description}
                   onChange={(e) => {
                     const newDesc = e.target.value;
-                    setCapturedSteps((prev) =>
-                      prev.map((s, i) => (i === idx ? { ...s, description: newDesc } : s))
-                    );
+                    setCapturedSteps((prev) => prev.map((s, i) => (i === idx ? { ...s, description: newDesc } : s)));
                   }}
-                  rows={2}
-                  className="w-full bg-slate-50/40 dark:bg-zinc-900/40 border border-slate-200/80 dark:border-zinc-800/80 rounded p-1.5 text-[10px] text-slate-700 dark:text-zinc-300 font-mono focus:outline-none focus:border-slate-300 dark:focus:border-zinc-600 resize-none leading-tight"
+                  rows={3}
+                  aria-label={`Step ${step.stepNumber} instruction`}
+                  className="min-h-0 resize-none px-2 py-1.5 text-xs leading-5"
                   placeholder="Step instruction..."
                 />
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Documentation Generation Modal */}
-      {showDocModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-            {/* Modal Header */}
-            <div className="p-4 border-b dark:border-zinc-850 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-slate-950 dark:text-white" />
-                <h3 className="font-bold text-sm text-slate-950 dark:text-white">
-                  Generated Standard Operating Documentation
-                </h3>
-              </div>
-              <button
-                onClick={() => setShowDocModal(false)}
-                className="p-1 rounded text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
+      {/* Generated documentation */}
+      <Dialog open={showDocModal} onOpenChange={(open) => !open && setShowDocModal(false)}>
+        <DialogContent size="3xl" className="gap-0 p-0">
+          <DialogHeader className="border-b px-6 py-4">
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="size-4 text-muted-foreground" />
+              Generated Standard Operating Documentation
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Review the generated documentation, then copy, download, or save it to Manuals and Notes.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogBody className="mx-0 space-y-4 px-6 py-5">
+            <Alert variant="success">
+              <CheckCircle />
+              <AlertDescription className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-foreground">
+                <span>Captured {capturedSteps.length} steps with dynamic coordinate callouts.</span>
+                <span className="text-xs text-muted-foreground">Status: Ready to Export</span>
+              </AlertDescription>
+            </Alert>
+
+            <div className="rounded-lg border bg-card px-5 py-4">
+              <SopPreview markdown={generatedMarkdown} />
+            </div>
+          </DialogBody>
+
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t px-6 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleCopyMarkdown}>
+                <Copy />
+                <span>Copy Markdown</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleDownloadMarkdown}>
+                <Download />
+                <span>Download .md</span>
+              </Button>
             </div>
 
-            {/* Modal Content / Markdown View */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 text-left">
-              <div className="p-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg flex items-center justify-between text-xs text-slate-700 dark:text-zinc-300">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Captured {capturedSteps.length} steps with dynamic coordinate callouts.</span>
-                </div>
-                <span className="text-slate-500 dark:text-zinc-500 font-mono">Status: Ready to Export</span>
-              </div>
-
-              <div className="bg-slate-50 dark:bg-black border dark:border-zinc-850 rounded-xl p-4 font-mono text-xs text-slate-700 dark:text-zinc-300 whitespace-pre-wrap max-h-[420px] overflow-y-auto leading-relaxed">
-                {generatedMarkdown}
-              </div>
-            </div>
-
-            {/* Modal Footer Actions */}
-            <div className="p-4 border-t dark:border-zinc-850 bg-slate-50/60 dark:bg-zinc-900/60 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handleCopyMarkdown}>
-                  <Copy className="w-3.5 h-3.5" />
-                  <span>Copy Markdown</span>
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleDownloadMarkdown}>
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download .md</span>
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setShowDocModal(false)}>
-                  Close
-                </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={handleSaveDocumentation}
-                  disabled={isSavingDoc}
-                >
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  <span>{isSavingDoc ? 'Saving...' : 'Save to Manuals & Notes'}</span>
-                </Button>
-              </div>
+            <div className="ml-auto flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setShowDocModal(false)}>
+                Close
+              </Button>
+              <Button size="sm" onClick={handleSaveDocumentation} disabled={isSavingDoc}>
+                <CheckCircle />
+                <span>{isSavingDoc ? 'Saving...' : 'Save to Manuals & Notes'}</span>
+              </Button>
             </div>
           </div>
-        </div>
+        </DialogContent>
+      </Dialog>
+    </PageContainer>
+  );
+};
+
+/**
+ * Renders the generated SOP Markdown. Step screenshots are embedded as data: URLs, which the
+ * shared Markdown renderer drops as unsafe, so they are split out and shown as images here.
+ */
+const SOP_IMAGE = /!\[([^\]]*)\]\((data:image\/[a-zA-Z+.-]+;base64,[A-Za-z0-9+/=]+)\)/g;
+
+function SopPreview({ markdown }: { markdown: string }) {
+  const parts = React.useMemo(() => {
+    const out: Array<{ kind: 'md'; text: string } | { kind: 'img'; alt: string; src: string }> = [];
+    let last = 0;
+    for (const match of markdown.matchAll(SOP_IMAGE)) {
+      const index = match.index ?? 0;
+      if (index > last) out.push({ kind: 'md', text: markdown.slice(last, index) });
+      out.push({ kind: 'img', alt: match[1], src: match[2] });
+      last = index + match[0].length;
+    }
+    if (last < markdown.length) out.push({ kind: 'md', text: markdown.slice(last) });
+    return out;
+  }, [markdown]);
+
+  return (
+    <div className="space-y-4">
+      {parts.map((part, i) =>
+        part.kind === 'md' ? (
+          part.text.trim() ? (
+            <Markdown key={i} size="sm">
+              {part.text}
+            </Markdown>
+          ) : null
+        ) : (
+          <img key={i} src={part.src} alt={part.alt} className="w-full max-w-lg rounded-md border" />
+        )
       )}
     </div>
   );
-};
+}

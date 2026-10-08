@@ -3,11 +3,21 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db';
 import { useWorkspace } from '../../context/workspace-context';
 import { Modal } from '../ui/modal';
-import { Search, FileText, Mic, FileUp, Video, ArrowRight } from 'lucide-react';
+import { Input } from '../ui/input';
+import { Search, FileText, Mic, FileUp, Video, CornerDownLeft } from 'lucide-react';
+
+const GROUPS: Array<{ type: SearchResultType; heading: string; icon: typeof FileText }> = [
+  { type: 'note', heading: 'Notes', icon: FileText },
+  { type: 'meeting', heading: 'Meetings', icon: Mic },
+  { type: 'document', heading: 'Documents', icon: FileUp },
+  { type: 'manual', heading: 'Guides', icon: Video },
+];
+
+type SearchResultType = 'note' | 'meeting' | 'document' | 'manual';
 
 interface SearchResult {
   id: string;
-  type: 'note' | 'meeting' | 'document' | 'manual';
+  type: SearchResultType;
   title: string;
   snippet: string;
   targetId: string;
@@ -27,7 +37,7 @@ export const GlobalSearchModal: React.FC = () => {
   const [query, setQuery] = useState('');
 
   const rawNotes = useLiveQuery(() => db.notes.toArray(), []);
-  const rawMeetings = useLiveQuery(() => db.meetings.toArray(), []);
+  const rawMeetings = useLiveQuery(() => db.meetings.filter((m) => !m.mergedInto).toArray(), []);
   const rawDocuments = useLiveQuery(() => db.documents.toArray(), []);
   const rawManuals = useLiveQuery(() => db.manuals.toArray(), []);
 
@@ -137,54 +147,52 @@ export const GlobalSearchModal: React.FC = () => {
       isOpen={isSearchOpen}
       onClose={() => setIsSearchOpen(false)}
       maxWidth="2xl"
+      title="Search workspace"
+      description="Find notes, meetings, documents, and guides in this profile."
     >
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div className="relative">
-          <Search className="w-4 h-4 text-slate-500 dark:text-zinc-500 absolute left-3.5 top-3" />
-          <input
+          <Search aria-hidden="true" className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
             type="text"
             placeholder="Search across all notes, meetings, documents, and manuals..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
-            className="w-full bg-slate-100 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-950 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-slate-400 dark:focus:border-zinc-700"
+            data-dialog-autofocus
+            aria-label="Search workspace content"
+            className="h-9 pl-8"
           />
         </div>
 
-        <div className="max-h-96 overflow-y-auto space-y-2">
+        <div className="-mx-2 max-h-96 overflow-y-auto px-0.5">
           {query.trim() && results.length === 0 ? (
-            <div className="py-12 text-center text-xs text-slate-500 dark:text-zinc-500">
-              No matches found for "{query}".
-            </div>
+            <div className="py-12 text-center text-sm text-muted-foreground">No matches found for "{query}".</div>
+          ) : !query.trim() ? (
+            <p className="px-2 py-6 text-center text-sm text-muted-foreground">Type to search titles, text, transcripts, and pages.</p>
           ) : (
-            results.map((hit) => {
-              const icons = {
-                note: FileText,
-                meeting: Mic,
-                document: FileUp,
-                manual: Video,
-              };
-              const Icon = icons[hit.type];
-
+            GROUPS.map((group) => {
+              const hits = results.filter((hit) => hit.type === group.type);
+              if (hits.length === 0) return null;
+              const Icon = group.icon;
               return (
-                <div
-                  key={hit.id}
-                  onClick={() => handleSelect(hit)}
-                  className="p-3.5 rounded-lg bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-850 hover:bg-slate-100 dark:hover:bg-zinc-850 hover:border-slate-300 dark:hover:border-zinc-700 cursor-pointer transition-colors text-xs flex items-center justify-between"
-                >
-                  <div className="flex items-start gap-3 min-w-0">
-                    <Icon className="w-4 h-4 text-slate-600 dark:text-zinc-400 mt-0.5 shrink-0" />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="font-semibold text-slate-950 dark:text-zinc-100 truncate">{hit.title}</span>
-                        <span className="text-[10px] text-slate-700 dark:text-zinc-400 bg-slate-200 dark:bg-zinc-950 px-1.5 py-0.2 rounded border border-slate-300 dark:border-zinc-850 uppercase font-semibold">
-                          {hit.type}
-                        </span>
-                      </div>
-                      <p className="text-slate-600 dark:text-zinc-400 line-clamp-1">{hit.snippet}</p>
-                    </div>
-                  </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-500 shrink-0 ml-2" />
+                <div key={group.type} className="py-1">
+                  <div className="px-2 pb-1 pt-1.5 text-xs font-medium text-muted-foreground">{group.heading}</div>
+                  {hits.map((hit) => (
+                    <button
+                      type="button"
+                      key={hit.id}
+                      onClick={() => handleSelect(hit)}
+                      className="group flex w-full items-start gap-2.5 rounded-md px-2 py-2 text-left text-sm transition-colors duration-100 hover:bg-accent focus-visible:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    >
+                      <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium text-foreground">{hit.title}</span>
+                        <span className="block truncate text-xs text-muted-foreground">{hit.snippet}</span>
+                      </span>
+                      <CornerDownLeft aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100" />
+                    </button>
+                  ))}
                 </div>
               );
             })

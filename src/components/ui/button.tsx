@@ -1,48 +1,71 @@
-import React from 'react';
-import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+/**
+ * Exports: Button, buttonVariants, ButtonProps
+ *
+ * variant: default | secondary | outline | ghost | destructive | link
+ *          (deprecated aliases kept permanently: primary -> default, danger -> destructive)
+ * size:    default (h-8) | xs (h-6) | sm (h-7) | lg (h-10) | icon (size-8) | icon-sm (size-7) | icon-lg (size-10)
+ *          (deprecated alias: md -> default)
+ * asChild: render the single child (e.g. <a>) with button styles via Radix Slot.
+ * Icons without a size-* class are sized automatically (size-4; 3.5 for xs/sm/icon-sm).
+ * Use size-* (not w-/h-) on icons inside buttons when you need another size.
+ */
+import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@/lib/utils';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
-  size?: 'sm' | 'md' | 'lg' | 'icon';
-}
+const defaultVariant = 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90';
+const destructiveVariant =
+  'bg-destructive text-destructive-foreground shadow-xs hover:bg-destructive/90 dark:bg-destructive/70 dark:hover:bg-destructive/60';
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'secondary', size = 'md', children, disabled, ...props }, ref) => {
-    const baseStyles =
-      'inline-flex items-center justify-center font-medium rounded-md whitespace-nowrap shrink-0 transition-all duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-slate-500 dark:focus-visible:ring-zinc-400 disabled:opacity-40 disabled:cursor-not-allowed select-none';
-
-    const variants = {
-      primary:
-        'bg-slate-950 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 active:scale-[0.98] shadow-sm',
-      secondary:
-        'bg-white text-slate-950 border border-slate-300 hover:bg-slate-100 dark:bg-zinc-900 dark:text-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-800 active:bg-slate-200 dark:active:bg-zinc-850',
-      outline:
-        'bg-white text-slate-950 border border-slate-300 hover:bg-slate-100 hover:text-black dark:bg-transparent dark:text-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-850 dark:hover:text-white',
-      ghost:
-        'bg-transparent text-slate-900 hover:text-black hover:bg-slate-100 dark:text-zinc-300 dark:hover:text-white dark:hover:bg-zinc-900',
-      danger:
-        'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 dark:bg-zinc-900 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-950/40 dark:hover:border-red-800',
-    };
-
-    const sizes = {
-      sm: 'text-xs px-2.5 py-1.5 gap-1.5',
-      md: 'text-sm px-3.5 py-2 gap-2',
-      lg: 'text-base px-4 py-2.5 gap-2.5',
-      icon: 'p-2 text-sm',
-    };
-
-    return (
-      <button
-        ref={ref}
-        disabled={disabled}
-        className={twMerge(clsx(baseStyles, variants[variant], sizes[size], className))}
-        {...props}
-      >
-        {children}
-      </button>
-    );
+const buttonVariants = cva(
+  "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md text-sm font-medium transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 coarse:min-h-10 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  {
+    variants: {
+      variant: {
+        default: defaultVariant,
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        outline:
+          'border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:hover:bg-input/50',
+        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        destructive: destructiveVariant,
+        link: 'text-foreground underline-offset-4 hover:underline',
+        /** @deprecated use "default" */
+        primary: defaultVariant,
+        /** @deprecated use "destructive" */
+        danger: destructiveVariant,
+      },
+      size: {
+        default: 'h-8 px-3',
+        xs: "h-6 gap-1 px-2 text-xs [&_svg:not([class*='size-'])]:size-3.5",
+        sm: "h-7 gap-1 px-2.5 [&_svg:not([class*='size-'])]:size-3.5",
+        lg: 'h-10 px-4',
+        icon: 'size-8',
+        'icon-sm': "size-7 [&_svg:not([class*='size-'])]:size-3.5",
+        'icon-lg': 'size-10',
+        /** @deprecated use "default" */
+        md: 'h-8 px-3',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
   }
 );
 
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'button';
+    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+  }
+);
 Button.displayName = 'Button';
+
+export { Button, buttonVariants };

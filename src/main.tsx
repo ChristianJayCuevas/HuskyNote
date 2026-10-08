@@ -5,10 +5,10 @@ import { ThemeProvider } from './context/theme-context';
 import { LanguageProvider } from './context/language-context';
 import { WorkspaceProvider } from './context/workspace-context';
 import { AIProviderContext } from './context/ai-context';
-import { SoundProvider } from './context/sound-context';
 import { migrateLegacyData } from './services/legacy-migration';
 import { setPreferredTranscriptionEngine } from './services/audio/transcription-engines';
 import { db } from './db';
+import './brand/fonts';
 import './index.css';
 
 async function loadTranscriptionPreference(): Promise<void> {
@@ -26,13 +26,11 @@ migrateLegacyData().then(loadTranscriptionPreference).finally(() => {
     <React.StrictMode>
       <ThemeProvider>
         <LanguageProvider>
-          <SoundProvider>
-            <AIProviderContext>
-              <WorkspaceProvider>
-                <App />
-              </WorkspaceProvider>
-            </AIProviderContext>
-          </SoundProvider>
+          <AIProviderContext>
+            <WorkspaceProvider>
+              <App />
+            </WorkspaceProvider>
+          </AIProviderContext>
         </LanguageProvider>
       </ThemeProvider>
     </React.StrictMode>

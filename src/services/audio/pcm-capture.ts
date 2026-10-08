@@ -3,6 +3,8 @@
  * natural pauses, resampled to the 16 kHz mono input Whisper expects.
  */
 
+import { SpeechHighPass, normalizeSpeech } from './speech-dsp';
+
 export const WHISPER_SAMPLE_RATE = 16000;
 
 export interface SpeechChunk {
@@ -112,6 +114,7 @@ export class SpeechChunker {
   private totalSamples = 0;
   private frameRemainder: number[] = [];
   private readonly frameSize: number;
+  private readonly highPass: SpeechHighPass;
   private readonly opts: Required<ChunkerOptions>;
 
   constructor(
@@ -120,6 +123,7 @@ export class SpeechChunker {
     options: ChunkerOptions = {}
   ) {
     this.frameSize = Math.round(sampleRate * 0.03);
+    this.highPass = new SpeechHighPass(sampleRate);
     this.opts = {
       speechThreshold: options.speechThreshold ?? 0.01,
       endSilenceSeconds: options.endSilenceSeconds ?? 0.8,
@@ -129,6 +133,7 @@ export class SpeechChunker {
   }
 
   push(samples: Float32Array): void {
+    samples = this.highPass.process(samples);
     this.buffers.push(samples);
     this.bufferedSamples += samples.length;
     this.totalSamples += samples.length;
@@ -176,7 +181,7 @@ export class SpeechChunker {
   }
 
   private emit(): void {
-    const audio = resample(this.collect(), this.sampleRate, WHISPER_SAMPLE_RATE);
+    const audio = normalizeSpeech(resample(this.collect(), this.sampleRate, WHISPER_SAMPLE_RATE));
     const startSeconds = this.chunkStartSample / this.sampleRate;
     this.reset();
     this.onChunk({ audio, startSeconds });
@@ -237,10 +242,21 @@ export function locateInBatch<T>(batch: ChunkBatch<T>, seconds: number): { captu
 }
 
 // AudioWorklet that mixes input channels to mono and posts ~4096-sample blocks
-const TAP_WORKLET = `
+export const TAP_WORKLET = `
 class PcmTap extends AudioWorkletProcessor {
-  constructor() { super(); this.buf = new Float32Array(4096); this.len = 0; }
+  constructor() {
+    super(); this.buf = new Float32Array(4096); this.len = 0; this.stopped = false;
+    this.port.onmessage = (event) => {
+      if (event.data === 'stop') {
+        this.stopped = true;
+        if (this.len) this.port.postMessage(this.buf.slice(0, this.len));
+        this.len = 0;
+        this.port.postMessage({ type: 'flushed' });
+      }
+    };
+  }
   process(inputs) {
+    if (this.stopped) return false;
     const channels = inputs[0];
     if (channels && channels.length && channels[0]) {
       const n = channels[0].length;
@@ -265,7 +281,7 @@ export interface PcmCapture {
   pause(): void;
   resume(): void;
   /** Stops capture and flushes any buffered speech as a final chunk. */
-  stop(): void;
+  stop(): Promise<void>;
 }
 
 export async function startPcmCapture(
@@ -292,8 +308,12 @@ export async function startPcmCapture(
   mute.connect(ctx.destination);
 
   let paused = false;
-  tap.port.onmessage = (event: MessageEvent<Float32Array>) => {
-    if (!paused) chunker.push(event.data);
+  let acknowledge: (() => void) | undefined;
+  let stopping: Promise<void> | undefined;
+  tap.port.onmessage = (event: MessageEvent<Float32Array | { type: 'flushed' }>) => {
+    if (event.data instanceof Float32Array) {
+      if (!paused) chunker.push(event.data);
+    } else if (event.data.type === 'flushed') acknowledge?.();
   };
   if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
 
@@ -306,13 +326,23 @@ export async function startPcmCapture(
       paused = false;
     },
     stop() {
-      paused = true;
-      tap.port.onmessage = null;
-      chunker.flush();
-      source.disconnect();
-      tap.disconnect();
-      mute.disconnect();
-      ctx.close().catch(() => {});
+      if (stopping) return stopping;
+      stopping = (async () => {
+        try {
+          await new Promise<void>((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error('Audio capture did not flush its final samples. Saved recording can be retried.')), 2000);
+            acknowledge = () => { clearTimeout(timer); resolve(); };
+            tap.port.postMessage('stop');
+          });
+        } finally {
+          paused = true;
+          tap.port.onmessage = null;
+          chunker.flush();
+          source.disconnect(); tap.disconnect(); mute.disconnect();
+          await ctx.close().catch(() => {});
+        }
+      })();
+      return stopping;
     },
   };
 }

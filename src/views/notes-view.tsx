@@ -15,7 +15,7 @@ export const NotesView: React.FC = () => {
 
   // Auto-select first note if none selected and notes exist
   useEffect(() => {
-    if (!activeNoteId && notes.length > 0) {
+    if (window.matchMedia('(min-width: 768px)').matches && !activeNoteId && notes.length > 0) {
       setActiveNoteId(notes[0].id);
     }
   }, [notes, activeNoteId, setActiveNoteId]);
@@ -42,7 +42,7 @@ export const NotesView: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-slate-50 dark:bg-canvas transition-colors duration-500">
+    <div className="flex h-full w-full overflow-hidden bg-background">
       <ResizableListPanel storageKey="notes" label="Notes" hiddenOnMobile={!!activeNoteId}>
         <NoteList
           selectedNoteId={activeNoteId}
@@ -51,9 +51,10 @@ export const NotesView: React.FC = () => {
         />
       </ResizableListPanel>
 
-      <div className={`${activeNoteId ? 'flex' : 'hidden md:flex'} flex-1 h-full min-w-0 flex-col`}>
+      <div className={`${activeNoteId ? 'flex' : 'hidden md:flex'} h-full min-w-0 flex-1 flex-col`}>
         {activeNoteId ? (
           <NoteEditor
+            key={activeNoteId}
             noteId={activeNoteId}
             onBackToList={() => setActiveNoteId(null)}
             onDeleted={() => {
@@ -62,7 +63,7 @@ export const NotesView: React.FC = () => {
             }}
           />
         ) : (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-1 items-center justify-center">
             <EmptyState
               icon={FileText}
               title="No note selected"

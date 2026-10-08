@@ -2,32 +2,28 @@ import React, { useState, useEffect } from 'react';
 import type { Manual, ManualStep } from '../../types';
 import { db } from '../../db';
 import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { Spinner } from '../ui/spinner';
+import { Toolbar, ToolbarGroup } from '../ui/toolbar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { cn } from '../../lib/utils';
 import { exportManualToPdf } from '../../services/export/pdf';
 import { exportManualToMarkdown } from '../../services/export/markdown';
 import { downloadJsonFile } from '../../services/export/json';
 import { useWorkspace } from '../../context/workspace-context';
 import { useAI } from '../../context/ai-context';
 import { ai } from '../../services/ai/active-provider';
-import {
-  Download,
-  Plus,
-  Trash2,
-  ChevronUp,
-  ChevronDown,
-  FileCode,
-  FileText,
-  AlertTriangle,
-  CheckCircle,
-  Save,
-  Sparkles,
-} from 'lucide-react';
+import { Download, Plus, Trash2, ChevronUp, ChevronDown, ChevronLeft, FileCode, FileText, Sparkles } from 'lucide-react';
 
 interface ManualBuilderProps {
   manualId: string;
   onDeleted?: () => void;
+  /** Phones: return to the manuals list (the button is hidden from md up) */
+  onBack?: () => void;
 }
 
-export const ManualBuilder: React.FC<ManualBuilderProps> = ({ manualId, onDeleted }) => {
+export const ManualBuilder: React.FC<ManualBuilderProps> = ({ manualId, onDeleted, onBack }) => {
   const { addToast } = useWorkspace();
   const { isConnected, selectedModel } = useAI();
   const [manual, setManual] = useState<Manual | null>(null);
@@ -275,212 +271,266 @@ CRITICAL RULE:
 
   if (!manual) {
     return (
-      <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-zinc-500 text-xs">
+      <div className="flex flex-1 items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Spinner aria-hidden="true" />
         Loading manual...
       </div>
     );
   }
 
+  // Borderless, document-style fields (Notion-like inline editing)
+  const inlineField =
+    'w-full resize-none rounded-md bg-transparent outline-none transition-colors duration-100 placeholder:text-muted-foreground/60 hover:bg-accent/50 focus-visible:bg-accent/40 focus-visible:outline-none';
+
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas p-8 overflow-y-auto max-w-5xl mx-auto w-full">
-      {/* Header with Title & Export Actions */}
-      <div className="border-b dark:border-zinc-850 pb-5 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex-1 min-w-0">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
+      {/* Detail header */}
+      <Toolbar className="gap-1 px-2 sm:px-4">
+        {onBack && (
+          <Button variant="ghost" size="sm" onClick={onBack} className="-ml-1 text-muted-foreground md:hidden" title="Back to manuals list">
+            <ChevronLeft />
+            <span>Manuals</span>
+          </Button>
+        )}
+        <span className="hidden min-w-0 truncate text-xs tabular-nums text-muted-foreground sm:inline">
+          Version {manual.version} • Updated {new Date(manual.updatedAt).toLocaleDateString()}
+        </span>
+
+        <ToolbarGroup className="ml-auto">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handlePolishSteps}
+            disabled={isPolishing}
+            title="Clean and polish step descriptions (replaces any static boilerplate)"
+          >
+            {isPolishing ? <Spinner className="text-current" aria-hidden="true" /> : <Sparkles />}
+            <span>{isPolishing ? 'Polishing...' : 'Polish Steps'}</span>
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline">
+                <Download />
+                <span>Export</span>
+                <ChevronDown className="size-3.5 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem onSelect={handleExportPdf}>
+                <Download />
+                <span>Export PDF</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={handleExportMarkdown}>
+                <FileText />
+                <span>Export MD</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={handleExportJson}>
+                <FileCode />
+                <span>Export JSON</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            onClick={handleDeleteManual}
+            className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            title="Delete Manual"
+            aria-label="Delete Manual"
+          >
+            <Trash2 />
+          </Button>
+        </ToolbarGroup>
+      </Toolbar>
+
+      {/* Document body */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-3xl px-6 py-8 lg:px-12 lg:py-10">
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onBlur={() => saveManualChanges({ title })}
-            className="bg-transparent text-2xl font-bold text-slate-950 dark:text-white tracking-tight focus:outline-none placeholder-slate-400 dark:placeholder-zinc-600 w-full"
+            aria-label="Manual title"
+            className={cn(inlineField, '-mx-2 px-2 py-1 text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl')}
             placeholder="Manual Title..."
           />
-          <div className="text-xs text-slate-600 dark:text-zinc-400 mt-1">
+          <p className="mt-2 text-xs tabular-nums text-muted-foreground sm:hidden">
             Version {manual.version} • Updated {new Date(manual.updatedAt).toLocaleDateString()}
-          </div>
-        </div>
+          </p>
 
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handlePolishSteps}
-            disabled={isPolishing}
-            title="Clean and polish step descriptions (replaces any static boilerplate)"
-          >
-            <Sparkles className={`w-3.5 h-3.5 text-emerald-400 ${isPolishing ? 'animate-spin' : ''}`} />
-            <span>{isPolishing ? 'Polishing...' : 'Polish Steps'}</span>
-          </Button>
-          <Button size="sm" variant="primary" onClick={handleExportPdf}>
-            <Download className="w-3.5 h-3.5" />
-            <span>Export PDF</span>
-          </Button>
-          <Button size="sm" variant="outline" onClick={handleExportMarkdown}>
-            <FileText className="w-3.5 h-3.5" />
-            <span>Export MD</span>
-          </Button>
-          <Button size="sm" variant="outline" onClick={handleExportJson}>
-            <FileCode className="w-3.5 h-3.5" />
-            <span>Export JSON</span>
-          </Button>
-          <Button size="icon" variant="ghost" onClick={handleDeleteManual} title="Delete Manual">
-            <Trash2 className="w-3.5 h-3.5 text-slate-600 dark:text-zinc-400 hover:text-red-400" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        {/* Purpose */}
-        <div className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 space-y-2">
-          <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase tracking-wider block">
-            Purpose & Objective
-          </label>
-          <textarea
-            value={purpose}
-            onChange={(e) => setPurpose(e.target.value)}
-            onBlur={() => saveManualChanges({ purpose })}
-            rows={2}
-            className="w-full bg-slate-50/50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-md p-3 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-slate-300 dark:focus:border-zinc-700 leading-relaxed resize-none"
-            placeholder="State the objective of this operation procedure..."
-          />
-        </div>
-
-        {/* Requirements & Prerequisites */}
-        <div className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 space-y-3">
-          <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase tracking-wider block">
-            Prerequisites & Requirements
-          </label>
-          <ul className="space-y-1.5">
-            {requirements.map((req, i) => (
-              <li key={i} className="flex items-center justify-between text-xs text-slate-800 dark:text-zinc-200 bg-slate-50/60 dark:bg-zinc-900/60 px-3 py-1.5 rounded border dark:border-zinc-850">
-                <span>• {req}</span>
-                <button
-                  onClick={() => {
-                    const next = requirements.filter((_, idx) => idx !== i);
-                    setRequirements(next);
-                    saveManualChanges({ requirements: next });
-                  }}
-                  className="text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              </li>
-            ))}
-          </ul>
-          <input
-            type="text"
-            placeholder="Type prerequisite and press Enter..."
-            value={reqInput}
-            onChange={(e) => setReqInput(e.target.value)}
-            onKeyDown={addRequirement}
-            className="w-full bg-slate-50/40 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs text-slate-700 dark:text-zinc-300 placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none"
-          />
-        </div>
-
-        {/* Reorderable Steps */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
-              Operation Steps ({steps.length})
-            </h3>
-            <Button size="sm" variant="outline" onClick={addEmptyStep}>
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Step</span>
-            </Button>
+          {/* Purpose */}
+          <div className="mt-6 space-y-1">
+            <label htmlFor={`manual-purpose-${manualId}`} className="text-xs font-medium text-muted-foreground">
+              Purpose & Objective
+            </label>
+            <textarea
+              id={`manual-purpose-${manualId}`}
+              value={purpose}
+              onChange={(e) => setPurpose(e.target.value)}
+              onBlur={() => saveManualChanges({ purpose })}
+              rows={2}
+              className={cn(inlineField, '-mx-2 px-2 py-1.5 text-base leading-7 text-muted-foreground [field-sizing:content]')}
+              placeholder="State the objective of this operation procedure..."
+            />
           </div>
 
-          {steps.map((step, idx) => (
-            <div
-              key={step.id}
-              className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 space-y-4"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="w-7 h-7 rounded-full bg-slate-900 dark:bg-white text-white dark:text-black font-bold text-xs flex items-center justify-center">
+          {/* Requirements & prerequisites */}
+          <section className="mt-10 space-y-3">
+            <h2 className="text-base font-semibold text-foreground">Prerequisites & Requirements</h2>
+            {requirements.length > 0 && (
+              <ul className="space-y-0.5">
+                {requirements.map((req, i) => (
+                  <li
+                    key={i}
+                    className="group -mx-2 flex min-h-8 items-center gap-2.5 rounded-md px-2 text-sm text-foreground transition-colors duration-100 hover:bg-accent/50"
+                  >
+                    <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-muted-foreground/60" />
+                    <span className="min-w-0 flex-1">{req}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => {
+                        const next = requirements.filter((_, idx) => idx !== i);
+                        setRequirements(next);
+                        saveManualChanges({ requirements: next });
+                      }}
+                      className="size-6 text-muted-foreground opacity-0 focus-visible:opacity-100 group-hover:opacity-100 coarse:opacity-100"
+                      title="Remove prerequisite"
+                      aria-label={`Remove prerequisite: ${req}`}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Input
+              type="text"
+              placeholder="Type prerequisite and press Enter..."
+              aria-label="Add prerequisite"
+              value={reqInput}
+              onChange={(e) => setReqInput(e.target.value)}
+              onKeyDown={addRequirement}
+            />
+          </section>
+
+          {/* Reorderable steps */}
+          <section className="mt-10 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-base font-semibold text-foreground">
+                Operation Steps <span className="font-normal tabular-nums text-muted-foreground">({steps.length})</span>
+              </h2>
+              <Button size="sm" variant="ghost" onClick={addEmptyStep}>
+                <Plus />
+                <span>Add Step</span>
+              </Button>
+            </div>
+
+            <ol className="space-y-1">
+              {steps.map((step, idx) => (
+                <li key={step.id} className="group -mx-2 flex gap-4 rounded-lg px-2 py-4">
+                  <span className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium tabular-nums text-foreground">
                     {step.stepNumber}
                   </span>
-                  <input
-                    type="text"
-                    value={step.title}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      const next = steps.map((s, i) => (i === idx ? { ...s, title: val } : s));
-                      setSteps(next);
-                    }}
-                    onBlur={() => saveManualChanges({ steps })}
-                    className="bg-transparent text-sm font-semibold text-slate-950 dark:text-white focus:outline-none"
-                  />
-                </div>
 
-                <div className="flex items-center gap-1">
-                  <button
-                    disabled={idx === 0}
-                    onClick={() => moveStep(idx, 'up')}
-                    className="p-1 text-slate-500 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-200 disabled:opacity-20"
-                    title="Move Up"
-                  >
-                    <ChevronUp className="w-4 h-4" />
-                  </button>
-                  <button
-                    disabled={idx === steps.length - 1}
-                    onClick={() => moveStep(idx, 'down')}
-                    className="p-1 text-slate-500 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-200 disabled:opacity-20"
-                    title="Move Down"
-                  >
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => deleteStep(idx)}
-                    className="p-1 text-slate-500 dark:text-zinc-500 hover:text-red-400 ml-2"
-                    title="Delete Step"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <div className="flex items-start gap-2">
+                      <input
+                        type="text"
+                        value={step.title}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const next = steps.map((s, i) => (i === idx ? { ...s, title: val } : s));
+                          setSteps(next);
+                        }}
+                        onBlur={() => saveManualChanges({ steps })}
+                        aria-label={`Step ${step.stepNumber} title`}
+                        className={cn(inlineField, '-mx-1.5 min-w-0 flex-1 px-1.5 py-0.5 text-base font-semibold text-foreground')}
+                      />
 
-              {step.screenshotDataUrl && (
-                <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 max-w-md">
-                  <img
-                    src={step.screenshotDataUrl}
-                    alt={`Step ${step.stepNumber}`}
-                    className="w-full h-auto object-cover"
-                  />
-                </div>
-              )}
+                      <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-100 focus-within:opacity-100 group-hover:opacity-100 coarse:opacity-100">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          disabled={idx === 0}
+                          onClick={() => moveStep(idx, 'up')}
+                          className="text-muted-foreground"
+                          title="Move Up"
+                          aria-label="Move Up"
+                        >
+                          <ChevronUp />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          disabled={idx === steps.length - 1}
+                          onClick={() => moveStep(idx, 'down')}
+                          className="text-muted-foreground"
+                          title="Move Down"
+                          aria-label="Move Down"
+                        >
+                          <ChevronDown />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => deleteStep(idx)}
+                          className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          title="Delete Step"
+                          aria-label="Delete Step"
+                        >
+                          <Trash2 />
+                        </Button>
+                      </div>
+                    </div>
 
-              <div className="space-y-1">
-                <label className="text-[10px] text-slate-600 dark:text-zinc-400 uppercase font-semibold">
-                  Instruction Description
-                </label>
-                <textarea
-                  value={step.description}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const next = steps.map((s, i) => (i === idx ? { ...s, description: val } : s));
-                    setSteps(next);
-                  }}
-                  onBlur={() => saveManualChanges({ steps })}
-                  rows={2}
-                  className="w-full bg-slate-50/60 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-md p-2.5 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-slate-300 dark:focus:border-zinc-700 leading-relaxed font-mono resize-none"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+                    {step.screenshotDataUrl && (
+                      <div className="max-w-md overflow-hidden rounded-md border bg-muted/40">
+                        <img src={step.screenshotDataUrl} alt={`Step ${step.stepNumber}`} className="h-auto w-full object-cover" />
+                      </div>
+                    )}
 
-        {/* Expected Result */}
-        <div className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 space-y-2">
-          <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase tracking-wider block">
-            Verification & Expected Result
-          </label>
-          <textarea
-            value={expectedResult}
-            onChange={(e) => setExpectedResult(e.target.value)}
-            onBlur={() => saveManualChanges({ expectedResult })}
-            rows={2}
-            className="w-full bg-slate-50/50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-md p-3 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-slate-300 dark:focus:border-zinc-700 leading-relaxed resize-none"
-            placeholder="How to verify the procedure succeeded..."
-          />
+                    <div className="space-y-1">
+                      <label htmlFor={`manual-step-${step.id}`} className="text-xs font-medium text-muted-foreground">
+                        Instruction Description
+                      </label>
+                      <Textarea
+                        id={`manual-step-${step.id}`}
+                        value={step.description}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const next = steps.map((s, i) => (i === idx ? { ...s, description: val } : s));
+                          setSteps(next);
+                        }}
+                        onBlur={() => saveManualChanges({ steps })}
+                        rows={2}
+                        className="min-h-0 resize-none leading-6 [field-sizing:content]"
+                      />
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          {/* Expected result */}
+          <section className="mt-8 space-y-2">
+            <label htmlFor={`manual-result-${manualId}`} className="block text-base font-semibold text-foreground">
+              Verification & Expected Result
+            </label>
+            <Textarea
+              id={`manual-result-${manualId}`}
+              value={expectedResult}
+              onChange={(e) => setExpectedResult(e.target.value)}
+              onBlur={() => saveManualChanges({ expectedResult })}
+              rows={2}
+              className="min-h-0 resize-none leading-6 [field-sizing:content]"
+              placeholder="How to verify the procedure succeeded..."
+            />
+          </section>
         </div>
       </div>
     </div>

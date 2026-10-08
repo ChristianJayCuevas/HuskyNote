@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { useSpeechStatus } from '../ui/speech-status-indicator';
 import type { TranscriptSegment, Meeting, MeetingScreenshot, ScheduleEvent } from '../../types';
 import { AudioRecorder } from '../../services/audio/recorder';
@@ -23,8 +24,18 @@ import { CalendarEventPromptModal } from '../calendar/calendar-event-prompt-moda
 import { db } from '../../db';
 import { useAI } from '../../context/ai-context';
 import { useWorkspace } from '../../context/workspace-context';
-import { Button } from '../ui/button';
+import { Button, buttonVariants } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { Toolbar, ToolbarGroup } from '../ui/toolbar';
+import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { NativeSelect } from '../ui/native-select';
+import { Field } from '../ui/field';
+import { Spinner } from '../ui/spinner';
+import { StatusDot } from '../ui/status-dot';
+import { cn } from '@/lib/utils';
+import { ScreenshotLightbox } from './screenshot-lightbox';
+import { speakerColorMap, speakerDotClass } from './speaker-colors';
 import { GoogleMeetGuideModal } from './google-meet-guide-modal';
 import { FloatingMeetingController } from './floating-meeting-controller';
 import { MicrophonePicker } from '../ui/microphone-picker';
@@ -41,7 +52,6 @@ import {
 } from '../../services/ai/translation';
 import {
   Mic,
-  MicOff,
   Square,
   Radio,
   FileText,
@@ -50,13 +60,12 @@ import {
   Camera,
   X,
   Image,
-  Calendar,
-  User,
   Users,
   Wand2,
   Languages,
-  ArrowRightLeft,
   ExternalLink,
+  HardDrive,
+  ChevronDown,
 } from 'lucide-react';
 
 interface MeetingRecorderProps {
@@ -82,6 +91,8 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
   const [isPaused, setIsPaused] = useState(false);
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [isSnipping, setIsSnipping] = useState(false);
+  const [recordSource, setRecordSource] = useState<'mic' | 'tab'>('mic');
+  const [isLangOpen, setIsLangOpen] = useState(false);
 
   // Scheduled events detected by Local AI / speech transcription
   const [detectedEvents, setDetectedEvents] = useState<ScheduleEvent[]>([]);
@@ -103,8 +114,31 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
   const [shouldAutoOpenPiP, setShouldAutoOpenPiP] = useState<boolean>(false);
 
   const audioRecorderRef = useRef<AudioRecorder | null>(null);
+  const meetingIdRef = useRef<string | null>(null);
+  const pendingSpeech = useLiveQuery(async () => {
+    if (!meetingIdRef.current) return { count: 0, seconds: 0 };
+    let count = 0; let seconds = 0;
+    await db.speechJobs.where('meetingId').equals(meetingIdRef.current).each((job) => { count++; seconds += job.audio.length / 16000; });
+    return { count, seconds };
+  }, [isRecording]);
   const speechTranscriberRef = useRef<LiveSpeechTranscriber | null>(null);
   const timerIntervalRef = useRef<any>(null);
+  // The timer reads the wall clock: duplicate intervals once ticked it 2-3x too fast
+  const clockStartRef = useRef(0);
+  const pausedMsRef = useRef(0);
+  const pauseStartedRef = useRef<number | null>(null);
+  const stoppingRef = useRef(false);
+  const stopAndSaveRef = useRef<() => Promise<void>>(async () => {});
+  const readElapsed = () => {
+    if (!clockStartRef.current) return 0;
+    const pausedNow = pauseStartedRef.current ? Date.now() - pauseStartedRef.current : 0;
+    return Math.max(0, Math.floor((Date.now() - clockStartRef.current - pausedMsRef.current - pausedNow) / 1000));
+  };
+  const resetClock = () => {
+    clockStartRef.current = Date.now();
+    pausedMsRef.current = 0;
+    pauseStartedRef.current = null;
+  };
   const transcriptBottomRef = useRef<HTMLDivElement>(null);
   const screenVideoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -312,7 +346,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
         sourceTitle: meetingTitle.trim() || 'Meeting Title',
       });
       if (announceDetectedEvent(ev)) {
-        addToast(`📅 Scheduled Event detected: "${ev.title}" on ${ev.date} at ${ev.time}`, 'info');
+        addToast(`Scheduled Event detected: "${ev.title}" on ${ev.date} at ${ev.time}`, 'info');
       }
     }
 
@@ -341,7 +375,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
               sourceTitle: meetingTitle.trim() || 'Meeting Title',
             });
             if (announceDetectedEvent(ev)) {
-              addToast(`📅 Scheduled Event detected from translation: "${ev.title}" on ${ev.date} at ${ev.time}`, 'info');
+              addToast(`Scheduled Event detected from translation: "${ev.title}" on ${ev.date} at ${ev.time}`, 'info');
             }
           }
         })
@@ -410,7 +444,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       if (audioRecorderRef.current?.isRecording()) {
-        audioRecorderRef.current.stop();
+        void audioRecorderRef.current.stop().catch(() => {});
       }
       speechTranscriberRef.current?.stop();
       if (screenStream) {
@@ -427,11 +461,36 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
     transcriptRef.current = transcript;
   }, [transcript]);
 
-  // Auto-scroll transcript
   useEffect(() => {
-    if (transcriptBottomRef.current) {
-      transcriptBottomRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (!meetingIdRef.current || !isRecording) return;
+    const id = meetingIdRef.current;
+    const timer = setTimeout(() => {
+      void db.meetings.update(id, { title: meetingTitle, manualNotes, screenshots, durationSeconds: elapsedSeconds }).catch(() => {
+        addToast('Could not save meeting notes. Check available storage.', 'error');
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [meetingTitle, manualNotes, screenshots, elapsedSeconds, isRecording]);
+
+  const prepareMeeting = async () => {
+    const id = crypto.randomUUID();
+    meetingIdRef.current = id;
+    const audioBlobId = `audio-${id}`;
+    const now = Date.now();
+    await db.meetings.put({ id, title: meetingTitle.trim() || 'Meeting recording', startTime: now,
+      createdAt: now, durationSeconds: 0, audioBlobId, transcript: [], manualNotes, timeline: [], screenshots: [], spokenLanguage });
+    stoppingRef.current = false;
+    audioRecorderRef.current?.setPersistence(audioBlobId, () => {
+      addToast('Audio storage stopped responding. Saving the meeting with the audio recorded so far.', 'error');
+      void stopAndSaveRef.current();
+    }, id);
+    speechTranscriberRef.current?.setMeetingId(id);
+  };
+
+  // Auto-scroll transcript (only its own list: scrollIntoView would also scroll the page past the setup controls)
+  useEffect(() => {
+    const list = transcriptBottomRef.current?.parentElement;
+    if (list) list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
   }, [transcript]);
 
   // Timer interval handling pause / resume
@@ -441,7 +500,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
       return;
     }
     timerIntervalRef.current = setInterval(() => {
-      setElapsedSeconds((s) => s + 1);
+      setElapsedSeconds(readElapsed());
     }, 1000);
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
@@ -472,8 +531,10 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
     try {
       setTranscript([]);
       setElapsedSeconds(0);
+      resetClock();
       setScreenshots([]);
 
+      await prepareMeeting();
       // Start audio stream & visualizer
       await audioRecorderRef.current?.start((level) => {
         setAudioLevel(level);
@@ -485,10 +546,6 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
       speechTranscriberRef.current?.start(handleIncomingSegment, handleIncomingInterim);
 
       setIsRecording(true);
-
-      timerIntervalRef.current = setInterval(() => {
-        setElapsedSeconds((s) => s + 1);
-      }, 1000);
 
       addToast(`Recording started (${getLanguageName(spokenLanguage)}).`, 'info');
     } catch (err: any) {
@@ -536,6 +593,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
 
       setTranscript([]);
       setElapsedSeconds(0);
+      resetClock();
       setScreenshots([]);
       setLiveInterimText('');
       setIsRecording(true);
@@ -616,11 +674,8 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
         console.warn('[HuskyNote] Audio diarizer setup error:', e);
       }
 
-      timerIntervalRef.current = setInterval(() => {
-        setElapsedSeconds((s) => s + 1);
-      }, 1000);
-
       // Record and transcribe the mixed tab + mic audio
+      await prepareMeeting();
       await audioRecorderRef.current?.start((level) => setAudioLevel(level), mixedStream);
       speechTranscriberRef.current?.setInputStream(mixedStream);
       speechTranscriberRef.current?.setLanguage(spokenLanguage);
@@ -638,7 +693,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
           visualScannerStopRef.current = startVisualParticipantScanner(
             () => screenVideoRef.current,
             (names, source) => {
-              addToast(`👥 ${names.length} participant(s) detected via screen scan`, 'info');
+              addToast(`${names.length} participant(s) detected via screen scan`, 'info');
             }
           );
         } else {
@@ -731,6 +786,11 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
   const handleTogglePause = () => {
     const nextPaused = !isPaused;
     setIsPaused(nextPaused);
+    if (nextPaused) pauseStartedRef.current = Date.now();
+    else if (pauseStartedRef.current) {
+      pausedMsRef.current += Date.now() - pauseStartedRef.current;
+      pauseStartedRef.current = null;
+    }
     if (nextPaused) {
       speechTranscriberRef.current?.pause();
       addToast('Meeting recording paused.', 'info');
@@ -840,6 +900,11 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
   };
 
   const stopAndSaveMeeting = async () => {
+    // A storage error and the Stop button can both end the meeting; save it once
+    if (stoppingRef.current) return;
+    stoppingRef.current = true;
+    const finalElapsed = readElapsed();
+    let recordingSaved: Meeting | null = null;
     // Stop listening first; phrases already captured keep transcribing while we wrap up
     const transcriptionDone = speechTranscriberRef.current?.stop() ?? Promise.resolve();
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
@@ -870,29 +935,58 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
     }
 
     try {
-      // Stop audio recording and get blob
-      const audioBlob = await audioRecorderRef.current?.stop();
+      // Stop audio recording and get blob. If audio storage failed, still save
+      // the meeting: its saved chunks stay linked and can be finished later.
+      let audioBlob: Blob | undefined;
+      let audioProblem: string | null = null;
+      try {
+        audioBlob = await audioRecorderRef.current?.stop();
+      } catch (error) {
+        audioProblem = error instanceof Error ? error.message : String(error);
+        console.error('[HuskyNote] Audio could not be finalized:', error);
+      }
       tabMicStreamRef.current?.getTracks().forEach((t) => t.stop());
       tabMicStreamRef.current = null;
 
-      // Wait for the last phrases, then let React commit their segments
-      await transcriptionDone;
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      const transcript = transcriptRef.current;
-
-      const meetingId = `meeting-${Date.now()}`;
+      // Wait for the last phrases, but never let a stuck transcription block saving
+      await Promise.race([Promise.resolve(transcriptionDone).catch(() => {}), new Promise((resolve) => setTimeout(resolve, 15000))]);
+      const meetingId = meetingIdRef.current ?? `meeting-${Date.now()}`;
+      const storedMeeting = await db.meetings.get(meetingId);
+      if (meetingIdRef.current && !storedMeeting?.audioBlobId) throw new Error('This recording has been deleted.');
+      const byId = new Map((storedMeeting?.transcript ?? []).map((s) => [s.id, s]));
+      transcriptRef.current.forEach((s) => byId.set(s.id, s));
+      const transcript = [...byId.values()].sort((a, b) => a.timestampSeconds - b.timestampSeconds);
       const now = Date.now();
       let audioBlobId: string | undefined;
 
-      if (audioBlob && audioBlob.size > 0) {
-        audioBlobId = `blob-${Date.now()}`;
-        await db.blobs.put({
-          id: audioBlobId,
-          data: audioBlob,
-          mimeType: audioBlob.type,
-          createdAt: now,
-        });
-      }
+      if (audioBlob && audioBlob.size > 0) audioBlobId = storedMeeting?.audioBlobId ?? `blob-${Date.now()}`;
+      // Keep the link to saved chunks even when the final audio file could not be built
+      else audioBlobId = storedMeeting?.audioBlobId;
+      // Save a usable meeting before optional AI work. A synthesis failure must
+      // not leave audio unlinked or make the transcript disappear.
+      const savedDraft: Meeting = {
+        id: meetingId, title: meetingTitle.trim() || 'Meeting Title',
+        startTime: storedMeeting?.startTime ?? now - finalElapsed * 1000, endTime: now,
+        durationSeconds: finalElapsed, audioBlobId, transcript, manualNotes,
+        timeline: [], screenshots, createdAt: now, spokenLanguage,
+        translationLanguage: translationTarget !== 'none' ? translationTarget : undefined,
+      };
+      await db.transaction('rw', db.meetings, db.blobs, async () => {
+        // The recorder already stored its audio; only store it here if it did not
+        if (audioBlobId && audioBlob && audioBlob.size > 0 && !(await db.blobs.get(audioBlobId))) {
+          await db.blobs.put({ id: audioBlobId, data: audioBlob, mimeType: audioBlob.type, createdAt: now });
+        }
+        const current = await db.meetings.get(meetingId);
+        if (meetingIdRef.current && !current?.audioBlobId) throw new Error('This recording has been deleted.');
+        const merged = new Map((current?.transcript ?? []).map((s) => [s.id, s]));
+        savedDraft.transcript.forEach((s) => merged.set(s.id, s));
+        savedDraft.transcript = [...merged.values()].sort((a, b) => a.timestampSeconds - b.timestampSeconds);
+        await db.meetings.put(savedDraft);
+      });
+      addToast(audioProblem
+        ? 'Transcript saved. Some audio could not be finished; open the meeting and choose Finish saving.'
+        : 'Recording and transcript saved. Preparing meeting insights…', audioProblem ? 'warning' : 'success');
+      recordingSaved = savedDraft;
 
       // Synthesize AI insights & extract events with target language support
       let summaryData;
@@ -935,13 +1029,15 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
         summaryData = {
           overview:
             transcript.length > 0
-              ? `Meeting recorded with ${transcript.length} speech segment(s). (Local AI not connected to extract deeper synthesis).`
-              : 'Meeting ended with manual notes.',
+              ? `Meeting recorded with ${transcript.length} speech segment(s). No AI report yet.`
+              : 'Meeting ended with manual notes. No AI report yet.',
           decisions: [],
           actionItems: [],
           topics: [],
           followUpTasks: [],
           summaryLanguage: targetSummaryLang,
+          aiGenerated: false,
+          aiError: 'No AI was connected when the meeting ended.',
         };
         timelineData = transcript.slice(0, 5).map((s, idx) => ({
           id: `tl-${idx}`,
@@ -963,9 +1059,9 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
       const newMeeting: Meeting = {
         id: meetingId,
         title: meetingTitle.trim() || 'Meeting Title',
-        startTime: now - elapsedSeconds * 1000,
+        startTime: savedDraft.startTime,
         endTime: now,
-        durationSeconds: elapsedSeconds,
+        durationSeconds: finalElapsed,
         audioBlobId,
         transcript,
         manualNotes,
@@ -977,7 +1073,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
         translationLanguage: translationTarget !== 'none' ? translationTarget : undefined,
       };
 
-      await db.meetings.put(newMeeting);
+      await db.meetings.update(meetingId, { summary: summaryData, timeline: timelineData });
       addToast('Meeting recording and AI synthesis complete.', 'success');
 
       if (allDetected.length > 0) {
@@ -988,541 +1084,549 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
       }
     } catch (err: any) {
       console.error('[HuskyNote] Failed to save meeting:', err);
-      addToast('Failed to save meeting data.', 'error');
+      addToast(recordingSaved
+        ? 'Recording and transcript are saved in Meetings. Insights could not be completed; retry from the meeting.'
+        : 'Failed to save meeting data.', recordingSaved ? 'warning' : 'error');
+      if (recordingSaved) onMeetingSaved(recordingSaved);
     } finally {
       setIsProcessingAI(false);
+      clockStartRef.current = 0;
     }
   };
+  stopAndSaveRef.current = stopAndSaveMeeting;
+
+  // Generic "Speaker N" labels are shown as the host; dots use chart-1..5 in order of first appearance
+  const displaySpeakerOf = (speaker: string) => (/^speaker\s*\d*$/i.test(speaker) ? 'You / Host' : speaker);
+  const speakerColors = useMemo(
+    () => speakerColorMap(transcript.map((s) => displaySpeakerOf(s.speaker))),
+    [transcript]
+  );
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas p-8 max-w-5xl mx-auto w-full">
-      {/* Top Controls Card */}
-      <div className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-6 mb-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <div className="flex-1 min-w-0">
-            <input
-              type="text"
-              value={meetingTitle}
-              onChange={(e) => setMeetingTitle(e.target.value)}
-              disabled={isRecording}
-              className="bg-transparent text-xl font-bold text-slate-950 dark:text-white tracking-tight focus:outline-none placeholder-slate-500 dark:placeholder-zinc-500 w-full"
-              placeholder="Meeting Title"
-            />
-            <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-zinc-400 mt-1">
-              <span className="flex items-center gap-1.5 font-mono">
-                <Clock className="w-3.5 h-3.5" />
-                {formatSecondsToTime(elapsedSeconds)}
-              </span>
-              <span>•</span>
-              <span>Local storage</span>
-              {isConnected && (
-                <>
-                  <span>•</span>
-                  <span className="text-slate-700 dark:text-zinc-300">AI: {selectedModel}</span>
-                </>
-              )}
-              {screenshots.length > 0 && (
-                <>
-                  <span>•</span>
-                  <span className="text-slate-700 dark:text-zinc-300 flex items-center gap-1">
-                    <Image className="w-3 h-3" />
-                    {screenshots.length} screenshot{screenshots.length !== 1 ? 's' : ''}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Recording Badge */}
-          <div className="flex items-center gap-3">
-            {isRecording ? (
-              <Badge variant="recording" dot>
-                RECORDING
-              </Badge>
-            ) : (
-              <Badge variant="outline">STANDBY</Badge>
-            )}
-
-            {!isRecording ? (
-              <div className="flex items-center gap-2">
-                <div className="inline-flex items-stretch">
-                  <Button variant="primary" size="md" onClick={startRecording} className="rounded-r-none">
-                    <Mic className="w-4 h-4" />
-                    <span>Start Microphone</span>
-                  </Button>
-                  {/* The chosen microphone is also the host mic for Google Meet / Tab capture */}
-                  <MicrophonePicker
-                    align="right"
-                    triggerClassName="px-2 rounded-r-md border-l border-slate-900/20 bg-slate-950 text-white hover:bg-slate-800 dark:border-black/10 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
-                  />
-                </div>
-                <Button
-                  variant="outline"
-                  size="md"
-                  onClick={() => setIsMeetModalOpen(true)}
-                  title="Capture Google Meet or Tab audio"
-                >
-                  <Radio className="w-4 h-4" />
-                  <span>Google Meet / Tab</span>
-                </Button>
-                {onCancel && (
-                  <Button variant="ghost" size="md" onClick={onCancel}>
-                    Cancel
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                {/* Pop-out Quick Navbar to Meeting Screen */}
-                <Button
-                  variant="outline"
-                  size="md"
-                  onClick={() => setShouldAutoOpenPiP(true)}
-                  title="Pop out Always-on-Top Floating Quick Navbar on your meeting tab or screen"
-                  className="border-slate-300 dark:border-zinc-700 hover:border-slate-400 dark:hover:border-zinc-500"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  <span className="hidden sm:inline">Pop-out HUD</span>
-                </Button>
-
-                {/* Screenshot Capture Button */}
-                <Button
-                  variant="outline"
-                  size="md"
-                  onClick={handleTakeScreenshot}
-                  title="Capture a screenshot of the current screen"
-                  className="border-slate-300 dark:border-zinc-700 hover:border-slate-400 dark:hover:border-zinc-500"
-                >
-                  <Camera className="w-4 h-4" />
-                  <span className="hidden sm:inline">Screenshot</span>
-                </Button>
-
-                <Button
-                  variant="danger"
-                  size="md"
-                  onClick={stopAndSaveMeeting}
-                  disabled={isProcessingAI}
-                >
-                  <Square className="w-4 h-4 fill-current" />
-                  <span>End Meeting</span>
-                </Button>
-              </div>
-            )}
-          </div>
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col bg-background text-foreground">
+      {/* ── Session toolbar: status and capture controls ── */}
+      <Toolbar className="gap-2 px-3 sm:px-4">
+        <div className="flex min-w-0 items-center gap-2.5">
+          {isRecording ? (
+            <Badge variant="destructive" dot>
+              RECORDING
+            </Badge>
+          ) : (
+            <Badge variant="outline">STANDBY</Badge>
+          )}
+          <span className="inline-flex items-center gap-1.5 font-mono text-xs tabular-nums text-muted-foreground">
+            <Clock className="size-3.5" aria-hidden="true" />
+            {formatSecondsToTime(elapsedSeconds)}
+          </span>
         </div>
 
-        {/* Live Audio Meter Waveform */}
-        {isRecording && (
-          <div className="pt-4 border-t dark:border-zinc-850 flex items-center justify-between">
-            <span className="text-xs text-slate-600 dark:text-zinc-400 font-mono">Live Input Level</span>
-            <div className="flex items-center gap-1 h-6">
-              {[...Array(24)].map((_, i) => {
-                const threshold = (i / 24) * 100;
-                const active = audioLevel >= threshold;
-                return (
-                  <div
-                    key={i}
-                    className={`w-1 rounded-full transition-all duration-75 ${
-                      active ? 'bg-slate-800 dark:bg-zinc-200 h-5' : 'bg-slate-100 dark:bg-zinc-800 h-1.5'
-                    }`}
-                  />
-                );
-              })}
+        <ToolbarGroup className="ml-auto">
+          {isRecording ? (
+            <>
+              {/* Pop-out Quick Navbar to Meeting Screen */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShouldAutoOpenPiP(true)}
+                title="Pop out Always-on-Top Floating Quick Navbar on your meeting tab or screen"
+              >
+                <ExternalLink aria-hidden="true" />
+                <span className="hidden sm:inline">Pop-out HUD</span>
+              </Button>
+
+              {/* Screenshot Capture Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTakeScreenshot}
+                title="Capture a screenshot of the current screen"
+              >
+                <Camera aria-hidden="true" />
+                <span className="hidden sm:inline">Screenshot</span>
+              </Button>
+
+              <Button variant="destructive" size="sm" onClick={stopAndSaveMeeting} disabled={isProcessingAI}>
+                <Square className="fill-current" aria-hidden="true" />
+                <span>End Meeting</span>
+              </Button>
+            </>
+          ) : (
+            onCancel && (
+              <Button variant="ghost" size="sm" onClick={onCancel}>
+                Cancel
+              </Button>
+            )
+          )}
+        </ToolbarGroup>
+      </Toolbar>
+
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col px-4 pb-10 pt-8 sm:px-6 lg:px-10">
+          {/* ── Title and meta ── */}
+          <input
+            type="text"
+            value={meetingTitle}
+            onChange={(e) => setMeetingTitle(e.target.value)}
+            disabled={isRecording}
+            className="w-full bg-transparent text-3xl font-bold leading-tight tracking-tight text-foreground placeholder:text-muted-foreground/60 focus-visible:outline-none disabled:cursor-default sm:text-4xl"
+            placeholder="Meeting Title"
+            aria-label="Meeting title"
+          />
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <HardDrive className="size-3.5" aria-hidden="true" />
+              Local storage
+            </span>
+            {isConnected && (
+              <span className="inline-flex min-w-0 items-center gap-1.5">
+                <Sparkles className="size-3.5" aria-hidden="true" />
+                <span className="truncate">AI: {selectedModel}</span>
+              </span>
+            )}
+            {screenshots.length > 0 && (
+              <span className="inline-flex items-center gap-1.5">
+                <Image className="size-3.5" aria-hidden="true" />
+                {screenshots.length} screenshot{screenshots.length !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+
+          {/* ── Setup (before capture) / live input level (while recording) ── */}
+          <div className="mt-6 rounded-lg border bg-card">
+            <div className="p-4">
+              {!isRecording ? (
+                <>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Source choice: microphone or Meet / tab audio */}
+                    <ToggleGroup
+                      type="single"
+                      variant="outline"
+                      value={recordSource}
+                      onValueChange={(source) => source && setRecordSource(source as 'mic' | 'tab')}
+                      aria-label="Recording source"
+                    >
+                      <ToggleGroupItem value="mic" title="Record from your microphone">
+                        <Mic aria-hidden="true" />
+                        <span>Mic</span>
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="tab" title="Capture Google Meet or tab audio">
+                        <Radio aria-hidden="true" />
+                        <span>Tab</span>
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+
+                    <div className="inline-flex items-stretch">
+                      <Button
+                        variant="default"
+                        onClick={() => (recordSource === 'tab' ? setIsMeetModalOpen(true) : startRecording())}
+                        className="rounded-r-none"
+                      >
+                        <Mic aria-hidden="true" />
+                        <span>Start recording</span>
+                      </Button>
+                      {/* The chosen microphone is also the host mic for Google Meet / Tab capture */}
+                      <MicrophonePicker
+                        align="right"
+                        triggerClassName={cn(
+                          buttonVariants({ variant: 'default', size: 'icon' }),
+                          'w-7 rounded-l-none border-l border-primary-foreground/20 focus-visible:ring-offset-0'
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  <p className="mt-3 text-sm text-muted-foreground" role="status">
+                    {speechEngine.state === 'ready' ? 'Transcription is ready on this device.'
+                      : speechEngine.state === 'loading' ? 'The speech model is loading. Audio capture and transcript readiness are separate.'
+                      : 'Set up and test transcription in Settings before relying on live text.'}
+                    {' '}{recordSource === 'mic' ? 'Microphone permission is requested when you start.' : 'Choose a shared tab with audio when you start.'}
+                  </p>
+                </>
+              ) : (
+                /* Live audio level meter */
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs text-muted-foreground">Input level</span>
+                  <div className="flex h-6 items-center gap-1" aria-hidden="true">
+                    {[...Array(24)].map((_, i) => {
+                      const threshold = (i / 24) * 100;
+                      const active = audioLevel >= threshold;
+                      return (
+                        <div
+                          key={i}
+                          className={cn(
+                            'w-1 rounded-full transition-[height,background-color] duration-75',
+                            active ? 'h-5 bg-foreground' : 'h-1.5 bg-input'
+                          )}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Language chip: spoken language and translation target in one popover */}
+            <div className="flex items-center gap-2 border-t px-2.5 py-1.5">
+              <Popover open={isLangOpen} onOpenChange={setIsLangOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="min-w-0 max-w-full text-muted-foreground hover:text-foreground data-[state=open]:bg-accent data-[state=open]:text-foreground"
+                    title="Spoken language and translation"
+                  >
+                    <Languages aria-hidden="true" />
+                    <span className="truncate">
+                      Language: {spokenLanguage === 'auto' ? 'Mixed / auto' : getLanguageName(spokenLanguage)}
+                      {translationTarget !== 'none' && ` → ${getLanguageName(translationTarget)}`}
+                    </span>
+                    <ChevronDown className="size-3.5" aria-hidden="true" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-80 space-y-4" aria-label="Language settings">
+                  <Field label="Spoken language" htmlFor="meeting-spoken-language">
+                    <NativeSelect
+                      id="meeting-spoken-language"
+                      value={spokenLanguage}
+                      disabled={isRecording || isProcessingAI}
+                      onChange={(e) => {
+                        const newLang = e.target.value;
+                        setSpokenLanguage(newLang);
+                        speechTranscriberRef.current?.setLanguage(newLang);
+                        const lName = SUPPORTED_LANGUAGES.find((l) => l.bcp47 === newLang)?.name || newLang;
+                        addToast(`Speech recognition set to ${lName}`, 'info');
+                      }}
+                    >
+                      {SUPPORTED_LANGUAGES.map((lang) => (
+                        <option key={lang.bcp47} value={lang.bcp47}>
+                          {lang.code === 'fil' ? 'Filipino / Taglish' : lang.code === 'auto' ? 'Other / mixed languages (auto)' : lang.name}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  </Field>
+                  <Field label="Translate to" htmlFor="meeting-translate-to">
+                    <NativeSelect
+                      id="meeting-translate-to"
+                      value={translationTarget}
+                      onChange={(e) => {
+                        const newTarget = e.target.value;
+                        setTranslationTarget(newTarget);
+                        if (newTarget !== 'none') {
+                          const tName = TRANSLATION_TARGETS.find((t) => t.code === newTarget)?.name || newTarget;
+                          addToast(`Live AI translation set to ${tName}`, 'info');
+                        } else {
+                          addToast('Live translation disabled (Original text only)', 'info');
+                        }
+                      }}
+                    >
+                      {TRANSLATION_TARGETS.map((target) => (
+                        <option key={target.code} value={target.code}>
+                          {target.name}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  </Field>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
-        )}
 
-        {/* Screenshot Thumbnail Strip */}
-        {screenshots.length > 0 && (
-          <div className="pt-4 border-t dark:border-zinc-850 mt-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Camera className="w-3.5 h-3.5 text-slate-600 dark:text-zinc-400" />
-              <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
-                Captured Screenshots ({screenshots.length})
-              </span>
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-2">
-              {screenshots.map((ss) => (
-                <div key={ss.id} className="relative group shrink-0">
-                  <button
-                    onClick={() => setPreviewScreenshot(ss)}
-                    className="block rounded-lg overflow-hidden border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-600 transition-colors"
-                  >
-                    <img
-                      src={ss.dataUrl}
-                      alt={`Screenshot at ${formatSecondsToTime(ss.timestampSeconds)}`}
-                      className="h-16 w-28 object-cover"
-                    />
-                  </button>
-                  <span className="absolute bottom-1 left-1 text-[9px] font-mono bg-black/80 text-zinc-300 px-1.5 py-0.5 rounded">
-                    {formatSecondsToTime(ss.timestampSeconds)}
-                  </span>
-                  {isRecording && (
+          {/* ── Screenshot thumbnails ── */}
+          {screenshots.length > 0 && (
+            <section className="mt-6">
+              <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                <Camera className="size-3.5" aria-hidden="true" />
+                Screenshots ({screenshots.length})
+              </h3>
+              <div className="flex gap-3 overflow-x-auto pb-1 pr-2 pt-3">
+                {screenshots.map((ss) => (
+                  <div key={ss.id} className="group relative shrink-0">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeScreenshot(ss.id);
-                      }}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-900 hover:border-red-700"
-                      title="Remove screenshot"
+                      type="button"
+                      onClick={() => setPreviewScreenshot(ss)}
+                      className="block overflow-hidden rounded-md border transition-colors duration-100 hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                      <X className="w-3 h-3 text-slate-700 dark:text-zinc-300" />
+                      <img
+                        src={ss.dataUrl}
+                        alt={`Screenshot at ${formatSecondsToTime(ss.timestampSeconds)}`}
+                        className="h-16 w-28 bg-muted object-cover"
+                      />
                     </button>
+                    <span className="mt-1 block font-mono text-xs tabular-nums text-muted-foreground">
+                      {formatSecondsToTime(ss.timestampSeconds)}
+                    </span>
+                    {isRecording && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeScreenshot(ss.id);
+                        }}
+                        className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full border bg-background text-muted-foreground opacity-0 shadow-xs transition-[opacity,background-color,color] duration-100 hover:bg-destructive hover:text-destructive-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover:opacity-100 coarse:opacity-100"
+                        title="Remove screenshot"
+                        aria-label="Remove screenshot"
+                      >
+                        <X className="size-3" aria-hidden="true" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ── Live transcript (left) and notes (right) ── */}
+          <div className="mt-6 grid flex-1 grid-cols-1 gap-4 md:grid-cols-2 md:grid-rows-[minmax(24rem,1fr)]">
+            {/* Live Transcript Pane */}
+            <section className="flex h-[28rem] min-h-0 flex-col overflow-hidden rounded-lg border bg-card md:h-auto">
+              <div className="flex min-h-10 shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5 border-b px-4 py-1.5">
+                <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  {isRecording ? (
+                    <StatusDot tone="destructive" pulse />
+                  ) : (
+                    <Radio className="size-4 text-muted-foreground" aria-hidden="true" />
+                  )}
+                  Transcript
+                </h3>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {transcript.length} segments
+                  {!!pendingSpeech?.count && <span> · {pendingSpeech.seconds > 10 ? 'Catching up: ' : ''}{Math.ceil(pendingSpeech.seconds)}s pending</span>}
+                </span>
+
+                <div className="ml-auto flex flex-wrap items-center gap-1.5">
+                  {transcript.length > 0 && translationTarget !== 'none' && (
+                    <ToggleGroup
+                      type="single"
+                      variant="outline"
+                      size="sm"
+                      value={transcriptViewMode}
+                      onValueChange={(mode) => mode && setTranscriptViewMode(mode as 'dual' | 'translated' | 'original')}
+                      aria-label="Transcript view mode"
+                    >
+                      {(['dual', 'translated', 'original'] as const).map((mode) => (
+                        <ToggleGroupItem
+                          key={mode}
+                          value={mode}
+                          className="h-6 px-2 text-xs"
+                          title={
+                            mode === 'dual'
+                              ? 'Show both original spoken language and translated text'
+                              : mode === 'translated'
+                              ? 'Show translated text only'
+                              : 'Show original spoken text only'
+                          }
+                        >
+                          {mode === 'dual' ? 'Dual' : mode === 'translated' ? 'Translation' : 'Original'}
+                        </ToggleGroupItem>
+                      ))}
+                    </ToggleGroup>
+                  )}
+
+                  {transcript.length > 0 && translationTarget !== 'none' && (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={() => handleBatchTranslate(translationTarget)}
+                      disabled={isTranslatingAll}
+                      title="Translate all transcript segments using Local AI"
+                    >
+                      <Languages className={cn('text-muted-foreground', isTranslatingAll && 'animate-spin')} aria-hidden="true" />
+                      <span>{isTranslatingAll ? 'Translating...' : `Translate (${translationTarget.toUpperCase()})`}</span>
+                    </Button>
+                  )}
+
+                  {transcript.length > 0 && (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={handlePolishTranscript}
+                      disabled={isPolishingAI}
+                      title="Use Local AI to clean grammar and diarize speaker turns"
+                    >
+                      <Wand2 className={cn('text-muted-foreground', isPolishingAI && 'animate-spin')} aria-hidden="true" />
+                      <span>{isPolishingAI ? 'Diarizing...' : 'AI Polish'}</span>
+                    </Button>
                   )}
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              </div>
 
-        {/* Multilingual Speech Recognition & AI Translation Controls */}
-        <div className="pt-3 border-t dark:border-zinc-850 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-400 font-mono text-[11px]">
-              <Languages className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Spoken Language:</span>
-            </div>
-            <select
-              value={spokenLanguage}
-              onChange={(e) => {
-                const newLang = e.target.value;
-                setSpokenLanguage(newLang);
-                speechTranscriberRef.current?.setLanguage(newLang);
-                const lName = SUPPORTED_LANGUAGES.find((l) => l.bcp47 === newLang)?.name || newLang;
-                addToast(`Speech recognition set to ${lName}`, 'info');
-              }}
-              className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded px-2.5 py-1 text-xs text-slate-950 dark:text-white focus:outline-none focus:border-slate-300 dark:focus:border-zinc-600 font-medium"
-              title="Select spoken language for speech recognition"
-            >
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <option key={lang.bcp47} value={lang.bcp47}>
-                  {lang.flag} {lang.name} ({lang.nativeName})
-                </option>
-              ))}
-            </select>
-
-            <div className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-400 font-mono text-[11px]">
-              <ArrowRightLeft className="w-3 h-3 text-slate-500 dark:text-zinc-500" />
-              <span>Translate To:</span>
-            </div>
-            <select
-              value={translationTarget}
-              onChange={(e) => {
-                const newTarget = e.target.value;
-                setTranslationTarget(newTarget);
-                if (newTarget !== 'none') {
-                  const tName = TRANSLATION_TARGETS.find((t) => t.code === newTarget)?.name || newTarget;
-                  addToast(`Live AI translation set to ${tName}`, 'info');
-                } else {
-                  addToast('Live translation disabled (Original text only)', 'info');
-                }
-              }}
-              className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded px-2.5 py-1 text-xs text-slate-950 dark:text-white focus:outline-none focus:border-slate-300 dark:focus:border-zinc-600 font-medium"
-              title="Select target translation language"
-            >
-              {TRANSLATION_TARGETS.map((target) => (
-                <option key={target.code} value={target.code}>
-                  {target.flag} {target.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* View mode toggle (Dual / Translated / Original) when translation is active */}
-          {translationTarget !== 'none' && (
-            <div className="flex items-center gap-1 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg p-0.5 text-[11px] font-mono">
-              <button
-                onClick={() => setTranscriptViewMode('dual')}
-                className={`px-2 py-0.5 rounded transition-all ${
-                  transcriptViewMode === 'dual'
-                    ? 'bg-slate-100 dark:bg-zinc-800 text-slate-950 dark:text-white font-bold'
-                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white'
-                }`}
-                title="Show both original spoken language and translated text"
-              >
-                Dual View
-              </button>
-              <button
-                onClick={() => setTranscriptViewMode('translated')}
-                className={`px-2 py-0.5 rounded transition-all ${
-                  transcriptViewMode === 'translated'
-                    ? 'bg-slate-100 dark:bg-zinc-800 text-slate-950 dark:text-white font-bold'
-                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white'
-                }`}
-                title="Show translated text only"
-              >
-                Translation
-              </button>
-              <button
-                onClick={() => setTranscriptViewMode('original')}
-                className={`px-2 py-0.5 rounded transition-all ${
-                  transcriptViewMode === 'original'
-                    ? 'bg-slate-100 dark:bg-zinc-800 text-slate-950 dark:text-white font-bold'
-                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white'
-                }`}
-                title="Show original spoken text only"
-              >
-                Original
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Main split: Live Transcript on left, Manual Notes on right */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 min-h-0">
-        {/* Live Transcript Pane */}
-        <div className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 flex flex-col min-h-0">
-          <div className="flex items-center justify-between pb-3 border-b dark:border-zinc-850 mb-3 shrink-0 flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
-              <h3 className="text-xs font-semibold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">
-                Live Verbal Transcript
-              </h3>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] text-slate-500 dark:text-zinc-500 font-mono">
-                {transcript.length} segments
-              </span>
-
-              {transcript.length > 0 && translationTarget !== 'none' && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleBatchTranslate(translationTarget)}
-                  disabled={isTranslatingAll}
-                  className="text-xs font-mono py-1 px-2.5 h-7"
-                  title="Translate all transcript segments using Local AI"
-                >
-                  <Languages className={`w-3 h-3 mr-1 text-cyan-400 ${isTranslatingAll ? 'animate-spin' : ''}`} />
-                  <span>{isTranslatingAll ? 'Translating...' : `Translate (${translationTarget.toUpperCase()})`}</span>
-                </Button>
-              )}
-
-              {transcript.length > 0 && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handlePolishTranscript}
-                  disabled={isPolishingAI}
-                  className="text-xs font-mono py-1 px-2.5 h-7"
-                  title="Use Local AI to clean grammar and diarize speaker turns"
-                >
-                  <Wand2 className={`w-3 h-3 mr-1 text-emerald-400 ${isPolishingAI ? 'animate-spin' : ''}`} />
-                  <span>{isPolishingAI ? 'Diarizing...' : 'AI Polish'}</span>
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Active Speaker Hook & Switcher Toolbar */}
-          {isRecording && (
-            <div className="mb-3 p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-2.5 flex-wrap text-xs">
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-400 font-mono text-[11px]">
-                  <Users className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Speaking now:</span>
-                </div>
-                {detectedMeetingApp && (
-                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono flex items-center gap-1 font-semibold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Hooked: {detectedMeetingApp}
+              {/* Active speaker hook & switcher */}
+              {isRecording && (
+                <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b bg-muted/40 px-4 py-2 text-xs">
+                  <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                    <Users className="size-3.5" aria-hidden="true" />
+                    <span>Speaking now:</span>
                   </span>
-                )}
-              </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {speakerRoster.map((spk) => (
-                  <button
-                    key={spk}
-                    onClick={() => handleSpeakerChange(spk)}
-                    className={`px-2.5 py-1 rounded text-[11px] font-mono transition-all flex items-center gap-1.5 ${
-                      currentSpeaker.toLowerCase() === spk.toLowerCase()
-                        ? 'bg-emerald-500 text-black font-bold shadow-sm ring-1 ring-emerald-400'
-                        : 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 hover:text-slate-950 dark:hover:text-white'
-                    }`}
-                  >
-                    {currentSpeaker.toLowerCase() === spk.toLowerCase() && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-slate-50 dark:bg-canvas animate-pulse" />
-                    )}
-                    <span>{spk}</span>
-                  </button>
-                ))}
-                <button
-                  onClick={() => {
-                    const custom = window.prompt('Enter speaker / participant name:');
-                    if (custom && custom.trim()) handleSpeakerChange(custom.trim());
-                  }}
-                  className="px-2 py-1 rounded text-[11px] font-mono bg-slate-100/80 dark:bg-zinc-800/80 text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors border border-dashed border-slate-300 dark:border-zinc-700"
-                  title="Manually add a participant to the speaker roster"
-                >
-                  + Add Speaker
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="flex-1 overflow-y-auto space-y-3 pr-2">
-            {/* Real-time zero-delay interim speech bubble */}
-            {liveInterimText && (
-              <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/50 text-xs animate-in fade-in duration-100 flex items-start gap-2 shadow-sm">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping mt-1 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 font-semibold mb-0.5">
-                    <span>{currentSpeaker}</span>
-                    <span className="text-slate-500 dark:text-zinc-500">•</span>
-                    <span className="text-emerald-300 italic font-normal">speaking now (live)...</span>
-                  </div>
-                  <p className="text-slate-900 dark:text-zinc-100 text-xs leading-relaxed font-sans">
-                    {liveInterimText}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {transcript.length === 0 && !liveInterimText ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 dark:text-zinc-500 text-xs">
-                {isRecording ? (
-                  <>
-                    <Mic className="w-6 h-6 mb-2 text-slate-600 dark:text-zinc-400 animate-pulse" />
-                    <span>
-                      {speechEngine.state === 'loading'
-                        ? 'Preparing the on-device speech model. Audio is being captured and will be transcribed once it is ready.'
-                        : speechEngine.state === 'error'
-                        ? `Transcription problem: ${speechEngine.message}`
-                        : 'Listening to conversation... Each phrase appears here a moment after it is spoken.'}
-                    </span>
-                  </>
-                ) : (
-                  <span>Transcript will appear live with speaker names once recording begins.</span>
-                )}
-              </div>
-            ) : (
-              transcript.map((seg, idx) => {
-                const displaySpeaker = /^speaker\s*\d*$/i.test(seg.speaker) ? 'You / Host' : seg.speaker;
-                const isHost = displaySpeaker.toLowerCase().includes('host') || displaySpeaker.toLowerCase().includes('you');
-                const badgeColor = isHost
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                  : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30';
-
-                const showDual = transcriptViewMode === 'dual' && seg.translation;
-                const showTranslatedOnly = transcriptViewMode === 'translated' && seg.translation;
-
-                return (
-                  <div key={seg.id || `seg-${idx}`} className="p-3 rounded-lg bg-slate-50/70 dark:bg-zinc-900/70 border border-slate-200 dark:border-zinc-800 text-xs transition-colors hover:border-slate-300 dark:hover:border-zinc-700 space-y-1.5">
-                    <div className="flex items-center justify-between text-[10px] text-slate-600 dark:text-zinc-400 mb-1">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleRenameSpeaker(displaySpeaker)}
-                          className={`font-semibold px-1.5 py-0.5 rounded border text-[10px] font-mono flex items-center gap-1 hover:brightness-125 transition-all cursor-pointer ${badgeColor}`}
-                          title="Click to rename this speaker across all segments"
+                  {detectedMeetingApp && (
+                    <Badge variant="success" dot>
+                      Hooked: {detectedMeetingApp}
+                    </Badge>
+                  )}
+                  <div className="flex flex-wrap items-center gap-1 sm:ml-auto">
+                    {speakerRoster.map((spk) => {
+                      const isActive = currentSpeaker.toLowerCase() === spk.toLowerCase();
+                      return (
+                        <Button
+                          key={spk}
+                          size="xs"
+                          variant={isActive ? 'default' : 'secondary'}
+                          aria-pressed={isActive}
+                          onClick={() => handleSpeakerChange(spk)}
                         >
-                          <User className="w-2.5 h-2.5" />
-                          <span>{displaySpeaker}</span>
-                        </button>
-                        {seg.sourceLanguage && (
-                          <span className="text-[9px] font-mono px-1 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border border-slate-300 dark:border-zinc-700">
-                            {seg.sourceLanguage}
-                          </span>
-                        )}
-                      </div>
-                      <span className="font-mono text-slate-500 dark:text-zinc-500">{formatSecondsToTime(seg.timestampSeconds)}</span>
+                          {spk}
+                        </Button>
+                      );
+                    })}
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      onClick={() => {
+                        const custom = window.prompt('Enter speaker / participant name:');
+                        if (custom && custom.trim()) handleSpeakerChange(custom.trim());
+                      }}
+                      className="border border-dashed border-input text-muted-foreground"
+                      title="Manually add a participant to the speaker roster"
+                    >
+                      + Add Speaker
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="min-h-0 flex-1 space-y-px overflow-y-auto p-2">
+                {/* Real-time interim phrase */}
+                {liveInterimText && (
+                  <div className="mb-1 rounded-md border border-dashed px-3 py-2">
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <StatusDot tone="success" pulse />
+                      <span className="font-medium text-foreground">{currentSpeaker}</span>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="italic text-muted-foreground">speaking now (live)...</span>
                     </div>
+                    <p className="mt-0.5 text-sm italic leading-6 text-muted-foreground">
+                      {liveInterimText}
+                    </p>
+                  </div>
+                )}
 
-                    {showDual ? (
-                      <div className="space-y-1 pl-1">
-                        <div className="text-slate-600 dark:text-zinc-400 text-[11px] leading-relaxed italic border-l-2 border-slate-300 dark:border-zinc-700 pl-2">
-                          <span className="text-[9px] font-mono uppercase text-slate-500 dark:text-zinc-500 mr-1.5">Spoken:</span>
-                          {seg.originalText || seg.text}
-                        </div>
-                        <div className="text-slate-900 dark:text-zinc-100 text-xs font-medium leading-relaxed border-l-2 border-emerald-500/60 pl-2">
-                          <span className="text-[9px] font-mono uppercase text-emerald-400 mr-1.5">Translated:</span>
-                          {seg.translation}
-                        </div>
-                      </div>
-                    ) : showTranslatedOnly ? (
-                      <p className="text-slate-900 dark:text-zinc-100 text-xs leading-relaxed pl-1 font-medium">
-                        {seg.translation}
-                      </p>
+                {transcript.length === 0 && !liveInterimText ? (
+                  <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-sm text-muted-foreground">
+                    {isRecording ? (
+                      <>
+                        <Mic className="size-5 animate-pulse text-muted-foreground" aria-hidden="true" />
+                        <span className="max-w-xs">
+                          {speechEngine.state === 'loading'
+                            ? 'Preparing the on-device speech model. Audio is being captured and will be transcribed once it is ready.'
+                            : speechEngine.state === 'error'
+                            ? `Transcription problem: ${speechEngine.message}`
+                            : 'Listening to conversation... Each phrase appears here a moment after it is spoken.'}
+                        </span>
+                      </>
                     ) : (
-                      <p className="text-slate-800 dark:text-zinc-200 leading-relaxed pl-1">
-                        {seg.originalText || seg.text}
-                      </p>
-                    )}
-
-                    {seg.isTranslating && (
-                      <div className="text-[10px] font-mono text-amber-400 flex items-center gap-1 pl-1 animate-pulse">
-                        <Sparkles className="w-2.5 h-2.5" />
-                        <span>Translating with AI...</span>
-                      </div>
+                      <span className="max-w-xs">Transcript appears as speech is processed. Review the text and speaker labels before using them.</span>
                     )}
                   </div>
-                );
-              })
-            )}
-            <div ref={transcriptBottomRef} />
-          </div>
-        </div>
+                ) : (
+                  transcript.map((seg, idx) => {
+                    const displaySpeaker = displaySpeakerOf(seg.speaker);
+                    const showDual = transcriptViewMode === 'dual' && seg.translation;
+                    const showTranslatedOnly = transcriptViewMode === 'translated' && seg.translation;
 
-        {/* Manual Meeting Notes Pane */}
-        <div className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 flex flex-col min-h-0">
-          <div className="flex items-center justify-between pb-3 border-b dark:border-zinc-850 mb-3 shrink-0">
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-slate-600 dark:text-zinc-400" />
-              <h3 className="text-xs font-semibold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">
-                Meeting Notes
-              </h3>
-            </div>
-            <span className="text-[11px] text-slate-500 dark:text-zinc-500">Live editor</span>
-          </div>
+                    return (
+                      <div
+                        key={seg.id || `seg-${idx}`}
+                        className="grid grid-cols-[auto_1fr] gap-x-3 rounded-md px-2 py-2 transition-colors duration-100 hover:bg-accent/50"
+                      >
+                        <span className="pt-0.5 font-mono text-xs tabular-nums text-muted-foreground">
+                          {formatSecondsToTime(seg.timestampSeconds)}
+                        </span>
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleRenameSpeaker(displaySpeaker)}
+                              className="inline-flex items-center gap-1.5 rounded-sm text-xs font-medium text-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              title="Click to rename this speaker across all segments"
+                            >
+                              <span aria-hidden="true" className={cn('size-2 shrink-0 rounded-full', speakerDotClass(speakerColors, displaySpeaker))} />
+                              <span>{displaySpeaker}</span>
+                            </button>
+                            {seg.sourceLanguage && (
+                              <Badge variant="outline" className="px-1 py-0 font-mono font-normal text-muted-foreground">
+                                {seg.sourceLanguage}
+                              </Badge>
+                            )}
+                          </div>
 
-          <textarea
-            value={manualNotes}
-            onChange={(e) => setManualNotes(e.target.value)}
-            placeholder="Jot down notes, reminders, or questions during the meeting..."
-            className="flex-1 w-full bg-transparent resize-none text-xs leading-relaxed text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none font-mono"
-          />
+                          {showDual ? (
+                            <div className="space-y-1.5">
+                              <p className="border-l-2 pl-3 text-sm italic leading-6 text-muted-foreground">
+                                <span className="mr-1.5 text-xs not-italic">Spoken:</span>
+                                {seg.originalText || seg.text}
+                              </p>
+                              <p className="border-l-2 border-foreground/40 pl-3 text-sm leading-6 text-foreground">
+                                <span className="mr-1.5 text-xs text-muted-foreground">Translated:</span>
+                                {seg.translation}
+                              </p>
+                            </div>
+                          ) : showTranslatedOnly ? (
+                            <p className="text-sm leading-6 text-foreground">{seg.translation}</p>
+                          ) : (
+                            <p className="text-sm leading-6 text-foreground">{seg.originalText || seg.text}</p>
+                          )}
+
+                          {seg.isTranslating && (
+                            <p className="flex animate-pulse items-center gap-1 text-xs text-muted-foreground">
+                              <Sparkles className="size-3" aria-hidden="true" />
+                              <span>Translating with AI...</span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+                <div ref={transcriptBottomRef} />
+              </div>
+            </section>
+
+            {/* Manual Meeting Notes Pane */}
+            <section className="flex h-[22rem] min-h-0 flex-col overflow-hidden rounded-lg border bg-card transition-[border-color,box-shadow] duration-100 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/20 md:h-auto">
+              <div className="flex h-10 shrink-0 items-center gap-2 border-b px-4">
+                <FileText className="size-4 text-muted-foreground" aria-hidden="true" />
+                <h3 className="text-sm font-medium text-foreground">Notes</h3>
+                <span className="ml-auto text-xs text-muted-foreground">Live editor</span>
+              </div>
+              <textarea
+                value={manualNotes}
+                onChange={(e) => setManualNotes(e.target.value)}
+                placeholder="Jot down notes, reminders, or questions during the meeting..."
+                className="min-h-0 flex-1 w-full resize-none bg-transparent px-4 py-3 text-sm leading-6 text-foreground placeholder:text-muted-foreground focus-visible:outline-none"
+              />
+            </section>
+          </div>
         </div>
       </div>
 
       {/* Processing AI overlay */}
       {isProcessingAI && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4">
-          <Sparkles className="w-8 h-8 text-zinc-300 animate-spin mb-4" />
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 mb-1">Synthesizing Meeting</h3>
-          <p className="text-xs text-slate-600 dark:text-zinc-400 max-w-sm text-center">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-2 bg-background/90 p-4 text-center" role="status">
+          <Spinner className="mb-2 size-6" role="presentation" aria-hidden="true" />
+          <h3 className="text-sm font-semibold text-foreground">Synthesizing Meeting</h3>
+          <p className="max-w-sm text-xs text-muted-foreground">
             Extracting executive summary, key decisions, action items, and topic milestones from your
             actual recorded transcript...
           </p>
         </div>
       )}
 
-      {/* Screenshot Preview Lightbox */}
-      {previewScreenshot && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 cursor-pointer"
-          onClick={() => setPreviewScreenshot(null)}
-        >
-          <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs text-zinc-400 font-mono">
-                Screenshot at {formatSecondsToTime(previewScreenshot.timestampSeconds)}
-              </span>
-              <button
-                onClick={() => setPreviewScreenshot(null)}
-                className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-white transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <img
-              src={previewScreenshot.dataUrl}
-              alt={`Screenshot at ${formatSecondsToTime(previewScreenshot.timestampSeconds)}`}
-              className="w-full rounded-lg border border-zinc-800 shadow-2xl"
-            />
-          </div>
-        </div>
-      )}
+      {/* Screenshot Preview */}
+      <ScreenshotLightbox
+        src={previewScreenshot?.dataUrl ?? null}
+        title={previewScreenshot ? `Screenshot at ${formatSecondsToTime(previewScreenshot.timestampSeconds)}` : 'Screenshot'}
+        alt={previewScreenshot ? `Screenshot at ${formatSecondsToTime(previewScreenshot.timestampSeconds)}` : 'Screenshot'}
+        onClose={() => setPreviewScreenshot(null)}
+      />
 
       {/* Google Meet Guide Modal */}
       {isMeetModalOpen && (

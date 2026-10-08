@@ -1,17 +1,39 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/official_huskynote.png" />
-    <link rel="apple-touch-icon" href="/official_huskynote.png" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="HuskyNote - Your Personal AI Secretary for meetings, documents, and notes. Capture it. Understand it. Keep it." />
-    <title>HuskyNote — Your Personal AI Secretary</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      // Apply the saved theme before first paint (light, dark, or system when unset) so there is no flash
+      (function () {
+        try {
+          var stored = localStorage.getItem('huskynote_theme');
+          var dark = stored === 'dark' || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var root = document.documentElement;
+          root.classList.add(dark ? 'dark' : 'light');
+          root.style.colorScheme = dark ? 'dark' : 'light';
+        } catch (e) {}
+      })();
+    </script>
+    <!-- Keep meeting-app names (meet, teams, zoom, ...) out of the title: visual-participant-scanner.ts sniffs document.title -->
+    <title>HuskyNote — Local-first AI secretary</title>
+    <meta name="description" content="HuskyNote records and transcribes meetings, answers questions about your PDFs, and turns screen recordings into step-by-step guides. Local-first, no account, free for Windows, macOS, and Linux." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="HuskyNote" />
+    <meta property="og:title" content="HuskyNote — Sit. Stay. Take notes." />
+    <meta property="og:description" content="HuskyNote records and transcribes meetings, answers questions about your PDFs, and turns screen recordings into step-by-step guides. Local-first, no account, free for Windows, macOS, and Linux." />
+    <!-- TODO: make og:image absolute (https://<domain>/brand/og-image.png) once the public domain is confirmed; many crawlers ignore relative URLs -->
+    <meta property="og:image" content="/brand/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="HuskyNote: Sit. Stay. Take notes. A husky peeking over a meeting transcript saved on this device." />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
-  <body class="bg-black dark:bg-canvas text-zinc-100 antialiased selection:bg-zinc-800 selection:text-white min-h-screen">
+  <body class="bg-background text-foreground antialiased min-h-screen">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -7,25 +7,43 @@ import { MeetingSummaryView } from '../components/meetings/meeting-summary-view'
 import { EmptyState } from '../components/ui/empty-state';
 import { Button } from '../components/ui/button';
 import { formatSecondsToTime } from '../services/audio/transcriber';
-import { Mic, Plus, Calendar, Clock, ChevronRight } from 'lucide-react';
+import { meetingDurationSeconds } from '../services/meetings/meeting-report';
+import { Mic, Plus, HardDrive, FileUp } from 'lucide-react';
 import { ResizableListPanel } from '../components/ui/resizable-list-panel';
+import { ListPane, ListPaneBody, ListPaneEmpty, ListPaneHeader, ListItem } from '../components/ui/list-pane';
+import { SimpleTooltip } from '../components/ui/tooltip';
+import { RecordingsLibrary } from '../components/meetings/recordings-library';
+import { ImportMeetingDialog } from '../components/meetings/import-meeting-dialog';
+import { ImportProgress } from '../components/meetings/import-progress';
 
 export const MeetingsView: React.FC = () => {
-  const { activeMeetingId, setActiveMeetingId } = useWorkspace();
-  const [isRecordingMode, setIsRecordingMode] = useState<boolean>(false);
+  const { activeMeetingId, setActiveMeetingId, addToast } = useWorkspace();
+  const [showImport, setShowImport] = useState(false);
+  const [isRecordingMode, setIsRecordingMode] = useState<boolean>(() => new URLSearchParams(window.location.search).get('action') === 'meeting');
+  const [showRecordings, setShowRecordings] = useState(false);
 
-  const meetings = useLiveQuery(() => db.meetings.orderBy('startTime').reverse().toArray(), []) || [];
+  const meetings = useLiveQuery(() => db.meetings.orderBy('startTime').reverse().filter((m) => !m.mergedInto).toArray(), []) || [];
 
   // Auto-select first meeting if available and none selected
   useEffect(() => {
-    if (!activeMeetingId && !isRecordingMode && meetings.length > 0) {
+    if (window.matchMedia('(min-width: 768px)').matches && !activeMeetingId && !isRecordingMode && meetings.length > 0) {
       setActiveMeetingId(meetings[0].id);
     }
   }, [meetings, activeMeetingId, isRecordingMode, setActiveMeetingId]);
 
   // Listen to Topbar trigger
   useEffect(() => {
-    const handleStartEvent = () => setIsRecordingMode(true);
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('action') === 'meeting') {
+      url.searchParams.delete('action');
+      window.history.replaceState(window.history.state, '', url.toString());
+    }
+    const handleStartEvent = () => {
+      const current = new URL(window.location.href);
+      current.searchParams.delete('action');
+      window.history.replaceState(window.history.state, '', current.toString());
+      setIsRecordingMode(true);
+    };
     window.addEventListener('huskynote:start-meeting', handleStartEvent);
     return () => window.removeEventListener('huskynote:start-meeting', handleStartEvent);
   }, []);
@@ -35,77 +53,101 @@ export const MeetingsView: React.FC = () => {
   const isDetailOpen = Boolean(isRecordingMode || selectedMeeting);
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-slate-50 dark:bg-canvas transition-colors duration-500">
-      {/* Left Sidebar: Sessions List */}
-      <ResizableListPanel storageKey="meetings" label="Meetings" hiddenOnMobile={isDetailOpen}>
-      <div className="flex w-full border-r border-slate-200 dark:border-zinc-850 flex-col h-full bg-white dark:bg-zinc-950 select-none transition-colors duration-500">
-        <div className="p-4 border-b border-slate-200 dark:border-zinc-850 flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-800 dark:text-zinc-300 uppercase tracking-wider">
-            Meetings ({meetings.length})
-          </span>
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={() => {
-              setIsRecordingMode(true);
-              setActiveMeetingId(null);
-            }}
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>New Session</span>
-          </Button>
-        </div>
+    <div className="flex h-full min-h-0 w-full overflow-hidden bg-background">
+      <ImportMeetingDialog
+        open={showImport}
+        onOpenChange={setShowImport}
+        onImported={(id) => {
+          setIsRecordingMode(false);
+          setActiveMeetingId(id);
+          addToast('Meeting imported. Generate a report from its transcript.', 'success');
+        }}
+        onStarted={() => addToast('Transcribing the recording. Progress shows above your meetings list.', 'info')}
+        onError={(message) => addToast(`Import failed: ${message}`, 'error')}
+      />
+      {showRecordings && <RecordingsLibrary onClose={() => setShowRecordings(false)} onOpen={(id) => {
+        setActiveMeetingId(id);
+        setShowRecordings(false);
+      }} />}
 
-        <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-850">
-          {meetings.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-500 dark:text-zinc-500">
-              No meetings recorded yet. Start your first session to record audio and build your
-              timeline.
-            </div>
-          ) : (
-            meetings.map((m) => {
-              const isSelected = !isRecordingMode && activeMeetingId === m.id;
-              return (
-                <div
+      {/* Left: sessions list */}
+      <ResizableListPanel storageKey="meetings" label="Meetings" hiddenOnMobile={isDetailOpen}>
+        {/* Phones show the list full width, so it needs no right border there */}
+        <ListPane className="border-r-0 md:border-r">
+          <ListPaneHeader
+            title="Meetings"
+            count={meetings.length}
+            actions={
+              <>
+                <SimpleTooltip content="Import a Teams meeting (transcript or recording)" side="bottom">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Import a meeting"
+                    disabled={isRecordingMode}
+                    onClick={() => setShowImport(true)}
+                    className="text-muted-foreground"
+                  >
+                    <FileUp />
+                  </Button>
+                </SimpleTooltip>
+                <SimpleTooltip content="Recordings & storage" side="bottom">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Recordings & storage"
+                    disabled={isRecordingMode}
+                    onClick={() => setShowRecordings(true)}
+                    className="text-muted-foreground"
+                  >
+                    <HardDrive />
+                  </Button>
+                </SimpleTooltip>
+                <Button
+                  size="sm"
+                  variant="default"
+                  onClick={() => {
+                    setIsRecordingMode(true);
+                    setActiveMeetingId(null);
+                  }}
+                >
+                  <Plus />
+                  <span>New Session</span>
+                </Button>
+              </>
+            }
+          />
+
+          <ImportProgress onOpen={(id) => { setIsRecordingMode(false); setActiveMeetingId(id); }} />
+          <ListPaneBody>
+            {meetings.length === 0 ? (
+              <ListPaneEmpty
+                icon={<Mic />}
+                title="No meetings recorded yet."
+                description="Start your first session to record audio and build your timeline."
+              />
+            ) : (
+              meetings.map((m) => (
+                <ListItem
                   key={m.id}
+                  selected={!isRecordingMode && activeMeetingId === m.id}
                   onClick={() => {
                     setIsRecordingMode(false);
                     setActiveMeetingId(m.id);
                   }}
-                  className={`p-4 cursor-pointer transition-colors ${
-                    isSelected
-                      ? 'bg-slate-100 dark:bg-zinc-900/90 text-slate-950 dark:text-white border-l-2 border-slate-900 dark:border-white'
-                      : 'hover:bg-slate-50 dark:hover:bg-zinc-900/40 text-slate-700 dark:text-zinc-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="text-xs font-bold text-slate-950 dark:text-zinc-100 truncate pr-2">
-                      {m.title}
-                    </h4>
-                    <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-500 font-medium">
-                      {formatSecondsToTime(m.durationSeconds)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500 dark:text-zinc-500 mb-1.5 font-medium">
-                    <span>{new Date(m.startTime).toLocaleDateString()}</span>
-                    <span>•</span>
-                    <span>{m.transcript.length} transcript segments</span>
-                  </div>
-                  {m.summary?.overview && (
-                    <p className="text-[11px] text-slate-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
-                      {m.summary.overview}
-                    </p>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
+                  title={m.title}
+                  trailing={<span className="font-mono tabular-nums">{formatSecondsToTime(meetingDurationSeconds(m))}</span>}
+                  meta={`${new Date(m.startTime).toLocaleDateString()} · ${m.transcript.length} transcript segments`}
+                  description={m.summary?.overview || undefined}
+                />
+              ))
+            )}
+          </ListPaneBody>
+        </ListPane>
       </ResizableListPanel>
 
-      {/* Right Content Area */}
-      <div className={`${isDetailOpen ? 'flex' : 'hidden md:flex'} flex-1 h-full min-w-0 flex-col`}>
+      {/* Right: recorder, meeting or empty state */}
+      <div className={`${isDetailOpen ? 'flex' : 'hidden md:flex'} h-full min-w-0 flex-1 flex-col`}>
         {isRecordingMode ? (
           <MeetingRecorder
             onMeetingSaved={(savedMeeting) => {
@@ -130,7 +172,7 @@ export const MeetingsView: React.FC = () => {
             }}
           />
         ) : (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-1 items-center justify-center">
             <EmptyState
               icon={Mic}
               title="No meeting selected"

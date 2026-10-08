@@ -1,17 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../db';
-import {
-  Mic,
-  MicOff,
-  FileText,
-  Bookmark,
-  ExternalLink,
-  X,
-  Sparkles,
-  Send,
-  Radio,
-  Clock,
-} from 'lucide-react';
+import { Mic, MicOff, ExternalLink, X, Send, Radio } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Input } from '../ui/input';
+import { StatusDot } from '../ui/status-dot';
+import { cn } from '@/lib/utils';
 
 interface FloatingScreenHudProps {
   onClose?: () => void;
@@ -64,112 +58,109 @@ export const FloatingScreenHud: React.FC<FloatingScreenHudProps> = ({
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
+  // Renders inside the Document Picture-in-Picture window too: plain elements and token classes only,
+  // no Radix portal components (tooltips, menus, popovers would open in the main window instead).
   return (
-    <div className="w-full h-full bg-zinc-950/85 backdrop-blur-2xl text-white p-3.5 flex flex-col justify-between select-none border border-white/15 shadow-2xl font-sans">
+    <div className="flex h-full w-full select-none flex-col gap-3 bg-popover p-3 font-sans text-popover-foreground">
       {/* Top Header Bar */}
-      <div className="flex items-center justify-between pb-2 border-b border-white/10 gap-2">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-          <span className="text-xs font-bold font-mono tracking-tight text-white">
-            HuskyNote Quick Bar
-          </span>
+      <div className="flex items-center justify-between gap-2 border-b pb-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <StatusDot tone={isRecording ? 'destructive' : 'success'} pulse={isRecording} />
+          <span className="truncate text-xs font-medium text-foreground">HuskyNote Quick Bar</span>
           {isRecording && (
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-white/10 text-white border border-white/20 flex items-center gap-1 font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            <Badge variant="destructive" className="font-mono tabular-nums">
               {formatSecs(elapsedSeconds)}
-            </span>
+            </Badge>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <button
+        <div className="flex shrink-0 items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="icon-sm"
             onClick={() => {
               if (window.opener) window.opener.focus();
               else window.focus();
             }}
-            className="p-1 rounded bg-white/5 hover:bg-white/15 border border-white/10 text-zinc-400 hover:text-white transition-colors"
+            className="size-6 text-muted-foreground"
             title="Focus HuskyNote Window"
+            aria-label="Focus HuskyNote Window"
           >
-            <ExternalLink className="w-3.5 h-3.5" />
-          </button>
+            <ExternalLink />
+          </Button>
           {onClose && (
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={onClose}
-              className="p-1 rounded bg-white/5 hover:bg-white/15 border border-white/10 text-zinc-400 hover:text-white transition-colors"
+              className="size-6 text-muted-foreground"
               title="Close Quick Bar"
+              aria-label="Close Quick Bar"
             >
-              <X className="w-3.5 h-3.5" />
-            </button>
+              <X />
+            </Button>
           )}
         </div>
       </div>
 
       {/* Middle: Live Speech Caption Ticker */}
-      <div className="my-2 p-2 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 flex items-start gap-2 min-h-[46px] overflow-hidden">
-        <Radio className="w-3.5 h-3.5 text-white shrink-0 mt-0.5" />
+      <div className="flex min-h-[46px] items-start gap-2 overflow-hidden rounded-md bg-secondary px-2.5 py-2">
+        <Radio className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-400 mb-0.5">
-            <span className="text-white font-bold">{activeSpeaker}</span>
-            <span>•</span>
+          <div className="mb-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">{activeSpeaker}</span>
+            <span aria-hidden="true">·</span>
             <span>Live Caption</span>
           </div>
-          <p className="text-[11px] text-zinc-200 line-clamp-2 leading-tight">
+          <p className="line-clamp-2 text-xs leading-snug text-foreground">
             {latestTranscriptSnippet || (isRecording ? 'Listening to speech...' : 'Ready to record')}
           </p>
         </div>
       </div>
 
       {/* Bottom: Action Buttons & Quick Note Input */}
-      <div className="space-y-2">
+      <div className="mt-auto space-y-2">
         <form onSubmit={handleSaveQuickNote} className="flex items-center gap-1.5">
-          <input
+          <Input
             type="text"
             value={quickNote}
             onChange={(e) => setQuickNote(e.target.value)}
             placeholder={noteSavedFeedback ? 'Saved to HuskyNote!' : 'Quick note... (Enter to save)'}
-            className="flex-1 px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 font-sans backdrop-blur-sm"
+            aria-label="Quick note"
+            className="h-7 flex-1 text-xs coarse:min-h-7"
           />
-          <button
-            type="submit"
-            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-zinc-200 hover:text-white transition-colors"
-            title="Save Note"
-          >
-            <Send className="w-3.5 h-3.5" />
-          </button>
+          <Button type="submit" variant="outline" size="icon-sm" title="Save Note" aria-label="Save Note">
+            <Send />
+          </Button>
         </form>
 
-        <div className="flex items-center justify-between gap-1 text-[10px] font-mono pt-1">
-          {onToggleMic && (
-            <button
-              onClick={onToggleMic}
-              className={`px-2 py-1 rounded-md border flex items-center gap-1 transition-colors ${
-                isRecording
-                  ? 'bg-white/20 border-white/40 text-white'
-                  : 'bg-white/5 border-white/10 text-zinc-300 hover:bg-white/15 hover:text-white'
-              }`}
-            >
-              {isRecording ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
-              <span>{isRecording ? 'Mute' : 'Mic'}</span>
-            </button>
-          )}
+        {(onToggleMic || onAddBookmark) && (
+          <div className="flex items-center justify-between gap-1">
+            {onToggleMic && (
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={onToggleMic}
+                aria-pressed={isRecording}
+                className={cn(isRecording && 'bg-accent')}
+              >
+                {isRecording ? <MicOff /> : <Mic />}
+                <span>{isRecording ? 'Mute' : 'Mic'}</span>
+              </Button>
+            )}
 
-          {onAddBookmark && (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => onAddBookmark('decision')}
-                className="px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-zinc-300 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                + Decision
-              </button>
-              <button
-                onClick={() => onAddBookmark('action')}
-                className="px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-zinc-300 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                + Action
-              </button>
-            </div>
-          )}
-        </div>
+            {onAddBookmark && (
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="xs" onClick={() => onAddBookmark('decision')}>
+                  + Decision
+                </Button>
+                <Button variant="outline" size="xs" onClick={() => onAddBookmark('action')}>
+                  + Action
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

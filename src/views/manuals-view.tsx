@@ -1,24 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useWorkspace } from '../context/workspace-context';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db';
-import { OperationRecorder } from '../components/operations/operation-recorder';
 import { ManualBuilder } from '../components/operations/manual-builder';
 import { EmptyState } from '../components/ui/empty-state';
 import { Button } from '../components/ui/button';
+import { ResizableListPanel } from '../components/ui/resizable-list-panel';
+import { ListPane, ListPaneBody, ListPaneEmpty, ListPaneHeader, ListItem } from '../components/ui/list-pane';
+import { cn } from '../lib/utils';
 import { Video, Plus, BookOpen } from 'lucide-react';
 
 export const ManualsView: React.FC = () => {
-  const { activeManualId, setActiveManualId } = useWorkspace();
-  const [isRecordingMode, setIsRecordingMode] = useState(false);
+  const { activeManualId, setActiveManualId, setActiveView } = useWorkspace();
 
   const manuals = useLiveQuery(() => db.manuals.orderBy('updatedAt').reverse().toArray(), []) || [];
 
+  // Auto-select the newest manual on desktop; phones start on the list
   useEffect(() => {
-    if (!activeManualId && !isRecordingMode && manuals.length > 0) {
+    if (window.matchMedia('(min-width: 768px)').matches && !activeManualId && manuals.length > 0) {
       setActiveManualId(manuals[0].id);
     }
-  }, [manuals, activeManualId, isRecordingMode, setActiveManualId]);
+  }, [manuals, activeManualId, setActiveManualId]);
 
   const handleCreateBlankManual = async () => {
     const id = `manual-${Date.now()}`;
@@ -42,117 +44,94 @@ export const ManualsView: React.FC = () => {
       updatedAt: Date.now(),
       version: 1,
     });
-    setIsRecordingMode(false);
     setActiveManualId(id);
   };
 
   const selectedManual = manuals.find((m) => m.id === activeManualId);
+  const isDetailOpen = Boolean(selectedManual);
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-slate-50 dark:bg-canvas transition-colors duration-500 font-sans">
-      {/* Left Sidebar: Manuals List */}
-      <div className="w-80 border-r border-slate-200 dark:border-zinc-850 flex flex-col h-full bg-white dark:bg-zinc-950 shrink-0 select-none transition-colors duration-500">
-        <div className="p-4 border-b border-slate-200 dark:border-zinc-850 flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-800 dark:text-zinc-300 uppercase tracking-wider">
-            Manuals ({manuals.length})
-          </span>
-          <div className="flex items-center gap-1.5">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleCreateBlankManual}
-              title="Create blank manual"
-            >
-              <Plus className="w-3.5 h-3.5" />
-            </Button>
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={() => {
-                setIsRecordingMode(true);
-                setActiveManualId(null);
-              }}
-              title="Record screen operation"
-            >
-              <Video className="w-3.5 h-3.5" />
-              <span>Capture</span>
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-850">
-          {manuals.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-500 dark:text-zinc-500">
-              No operation manuals yet. Capture your screen or create a manual to get started.
-            </div>
-          ) : (
-            manuals.map((m) => {
-              const isSelected = !isRecordingMode && activeManualId === m.id;
-              return (
-                <div
-                  key={m.id}
-                  onClick={() => {
-                    setIsRecordingMode(false);
-                    setActiveManualId(m.id);
-                  }}
-                  className={`p-4 cursor-pointer transition-colors ${
-                    isSelected
-                      ? 'bg-slate-100 dark:bg-zinc-900/90 text-slate-950 dark:text-white border-l-2 border-slate-900 dark:border-white'
-                      : 'hover:bg-slate-50 dark:hover:bg-zinc-900/40 text-slate-700 dark:text-zinc-300'
-                  }`}
+    <div className="flex h-full min-h-0 w-full overflow-hidden bg-background">
+      {/* Left column: manuals list */}
+      <ResizableListPanel storageKey="manuals" label="Manuals" hiddenOnMobile={isDetailOpen}>
+        <ListPane>
+          <ListPaneHeader
+            title="Manuals"
+            count={manuals.length}
+            actions={
+              <>
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  onClick={handleCreateBlankManual}
+                  className="text-muted-foreground"
+                  title="Create blank manual"
+                  aria-label="Create blank manual"
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="text-xs font-bold text-slate-950 dark:text-zinc-100 truncate pr-2">
-                      {m.title || 'Untitled Manual'}
-                    </h4>
-                    <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-mono font-medium">v{m.version}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-zinc-500 mb-1.5 font-medium">
-                    <span>{m.steps.length} steps</span>
-                    <span>•</span>
-                    <span>{new Date(m.updatedAt).toLocaleDateString()}</span>
-                  </div>
-                  {m.purpose && (
-                    <p className="text-[11px] text-slate-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
-                      {m.purpose}
-                    </p>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
-
-      {/* Right Content Area */}
-      <div className="flex-1 h-full min-w-0 flex flex-col">
-        {isRecordingMode ? (
-          <OperationRecorder
-            onManualCreated={(manualId) => {
-              setIsRecordingMode(false);
-              setActiveManualId(manualId);
-            }}
-            onCancel={() => {
-              setIsRecordingMode(false);
-              if (manuals.length > 0) setActiveManualId(manuals[0].id);
-            }}
+                  <Plus />
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setActiveView('studio')}
+                  title="Record your screen to create a step-by-step guide"
+                >
+                  <Video />
+                  <span>Record a guide</span>
+                </Button>
+              </>
+            }
           />
-        ) : selectedManual ? (
+
+          <ListPaneBody>
+            {manuals.length === 0 ? (
+              <ListPaneEmpty
+                icon={<BookOpen />}
+                title="No operation manuals yet."
+                description="Record a guide or create a manual to get started."
+              />
+            ) : (
+              manuals.map((m) => {
+                const isSelected = activeManualId === m.id;
+                return (
+                  <ListItem
+                    key={m.id}
+                    selected={isSelected}
+                    title={m.title || 'Untitled Manual'}
+                    trailing={<span className="tabular-nums">v{m.version}</span>}
+                    meta={
+                      <span className="tabular-nums">
+                        {m.steps.length} steps · {new Date(m.updatedAt).toLocaleDateString()}
+                      </span>
+                    }
+                    description={m.purpose || undefined}
+                    onClick={() => setActiveManualId(m.id)}
+                  />
+                );
+              })
+            )}
+          </ListPaneBody>
+        </ListPane>
+      </ResizableListPanel>
+
+      {/* Right content area */}
+      <div className={cn('h-full min-w-0 flex-1 flex-col', isDetailOpen ? 'flex' : 'hidden md:flex')}>
+        {selectedManual ? (
           <ManualBuilder
             manualId={selectedManual.id}
+            onBack={() => setActiveManualId(null)}
             onDeleted={() => {
               const remaining = manuals.filter((m) => m.id !== selectedManual.id);
               setActiveManualId(remaining.length > 0 ? remaining[0].id : null);
             }}
           />
         ) : (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-1 items-center justify-center overflow-y-auto">
             <EmptyState
               icon={Video}
               title="No operation manual selected"
-              description="Capture your screen states during an operation, or create a blank standard operating procedure."
-              actionLabel="Capture Operation"
-              onAction={() => setIsRecordingMode(true)}
+              description="Record your screen to build a step-by-step guide, or start a blank manual."
+              actionLabel="Record a guide"
+              onAction={() => setActiveView('studio')}
               secondaryActionLabel="Blank Manual"
               onSecondaryAction={handleCreateBlankManual}
             />

@@ -1,6 +1,6 @@
 # DomoNote to HuskyNote Rebranding
 
-Status: Documentation, source code, artwork, and macOS disk images rebranded. Windows binaries are rebuilt by the next release.
+Status: Documentation, source code, brand system, generated artwork, and macOS disk images rebranded. Windows binaries are rebuilt by the next release.
 
 HuskyNote is a rebranded fork of [DomoNote](https://github.com/darknecrocities/DomoNote) by darknecrocities, used under the MIT License.
 
@@ -27,7 +27,7 @@ HuskyNote is a rebranded fork of [DomoNote](https://github.com/darknecrocities/D
 | Windows desktop | Project files `HuskyNote.csproj` / `HuskyNoteSetup.csproj`, namespaces, mutex, install dir, registry key, shortcuts, publisher |
 | macOS desktop | `main.swift` window title and menus, `Open HuskyNote.command` launcher |
 | CI/CD | Workflow artifact names and release asset names |
-| Asset files | Logo renamed to `official_huskynote.png`, demo to `huskynote-demo.webp`, mascot media to neutral `mascot-*` names |
+| Asset files | Logo renamed to `official_huskynote.png`; all icons and images are now generated from `src/brand/` (section 2) |
 | Downloads | `HuskyNote-Setup.bat`, `HuskyNote-macOS-*.dmg` (renamed, see section 2), `SHA256SUMS.txt` updated |
 
 ### Data migration for existing DomoNote users
@@ -43,22 +43,54 @@ Limits: browser storage is per origin, so data only carries over when HuskyNote 
 
 ---
 
-## 2. Artwork and Binaries
+## 2. Brand System and Artwork
 
-Completed after the code rebrand:
+The HuskyNote identity is code, not hand-exported images. Everything lives in `src/brand/` (never edit it from page code; import from `@/brand`):
 
-- New husky artwork: logo (`official_huskynote.png`, `favicon.png`), app icons (`favicon.ico` for web and Windows, `AppIcon.icns` for macOS), the `HuskyMascot` component image (`src/assets/husky-mascot.png`), the landing page reading animation (`public/mascot-reading.gif`), the macOS menu bar icon drawn in `desktop/main.swift`, and a re-recorded walkthrough (`public/huskynote-demo.webp`). Unused panda media was removed.
+| File | What it holds |
+| :--- | :--- |
+| `colors.ts` | `BRAND` (name, tagline, descriptor, description, platforms, license), `HUSKY_TONES` (`ink` for light backgrounds, `snow` for dark, `neutral` for rasters that sit on both), and `BRAND_COLORS` (the landing page's Snowline / Polar night surfaces and the app-icon tile gradient) |
+| `husky-mark.tsx` | `HuskyMark` — the note-page husky symbol: `size`, `tone` (`auto` follows the theme), `detail`, `title` |
+| `husky-logo.tsx` | `HuskyLogo` (mark + wordmark, sizes `sm` / `md` / `lg` / `xl`) and `HuskyWordmark` |
+| `husky-art.tsx` | Mascot poses `HuskyHead`, `HuskyPeek`, `HuskyFetch` (`tone`, `size`, `animated`) |
+| `husky-tile.tsx` | `HuskyTile` — the rounded app-icon tile used for favicons and app icons |
+| `og-card.tsx` | The 1200 x 630 social card |
+| `brand.css`, `tone.ts` | The `--hn-*` color variables behind `tone="auto"` (switches under `html.dark`) |
+| `fonts.ts`, `fonts.css` | Bundled Geist and Geist Mono (`@fontsource-variable/*`, no network requests) exposed as `--font-brand-sans` / `--font-brand-mono`; imported once from `src/main.tsx` |
+
+Usage in the app: the sidebar and Download page show `HuskyLogo` (collapsed sidebar: `HuskyMark`), About shows `HuskyMark` at 64 px, the AI Workspace empty state shows `HuskyMark`, the Husky companion uses `HuskyHead`, and the landing page (`src/components/landing/`, styled by its own `landing.css`) uses the full set. The app UI itself follows the design tokens in `src/index.css` (see SOT.md, "Visual system"); brand colors are not used as UI colors.
+
+### Generated assets
+
+Every favicon, app icon and social image is rendered from those components:
+
+```bash
+npx vite-node scripts/brand/generate-brand-assets.ts            # write all assets
+npx vite-node scripts/brand/generate-brand-assets.ts --preview <dir>  # also write an HTML preview sheet
+```
+
+The script rasterizes with Playwright using the system Edge or Chrome (`BROWSER_CHANNEL` overrides the channel) and is deterministic: running it twice produces identical files. `scripts/brand/icon-encoders.ts` writes the `.ico` and `.icns` containers (covered by `tests/brand-icon-encoders.test.ts`). It writes:
+
+- `public/favicon.svg`, `public/favicon.ico`, `public/favicon.png`, `public/apple-touch-icon.png`
+- `public/brand/huskynote-mark.svg`, `public/brand/huskynote-tile.svg`, `public/brand/og-image.png` (referenced by the `index.html` Open Graph and Twitter tags)
+- `public/official_huskynote.png` and `src/assets/official_huskynote.png` (1024 px tile, used by the Linux and Windows setup scripts)
+- `src/assets/husky-mascot.png` (raster mascot for external use; the app renders `HuskyHead`)
+- `desktop/windows/favicon.ico`, `desktop/installer/favicon.ico`, `desktop/linux/huskynote.png`, `browser-extension/icon.png`, `AppIcon.icns` (macOS)
+
+After changing anything in `src/brand/`, rerun the generator and commit the regenerated files with the change.
+
+The old raster media (the landing page's `public/mascot-reading.gif` reading animation and the `public/huskynote-demo.webp` walkthrough) were removed with the landing page rebuild; the new landing page draws its product mocks in HTML and CSS.
+
+### Binaries
+
 - The macOS disk images are built by `.github/workflows/build-macos.yml` (run it from the Actions tab) and committed to `public/downloads/` with their checksums.
-
-Remaining:
-
 - `HuskyNote-Setup-x64.exe` and `HuskyNote-Windows-Portable.zip` are produced by `npm run build:windows` or the release workflow (requires the .NET 9 SDK). Their `SHA256SUMS.txt` lines are stale until the next release build regenerates them.
-- The macOS app is ad-hoc signed, not notarized, so Gatekeeper warns on first launch; `Open HuskyNote.command` clears the quarantine flag. Notarizing needs an Apple Developer ID.
+- Builds are not code-signed. The macOS app is ad-hoc signed, not notarized, so Gatekeeper warns on first launch; `Open HuskyNote.command` clears the quarantine flag. Notarizing needs an Apple Developer ID. Windows SmartScreen may also ask for confirmation.
 - The macOS app serves its bundled files with the system `python3`, which on a fresh Mac prompts to install the Command Line Tools. This behavior predates the rebrand.
 
 ### Other
 
-- The GitHub star counter (`src/services/github/stars.ts`) cannot read a private repository, so it shows no count until the repository is public.
+- The repository is private, so the app does not query the GitHub API for a star count (the sidebar's Help menu and About only link to the repository). The opt-in update check (`src/services/updates/update-checker.ts`) is the only GitHub API call.
 - The local working directory is still named `DomoNote`. Renaming it is optional; the `upstream` remote still points to `https://github.com/darknecrocities/DomoNote.git` for pulling upstream fixes.
 
 Find any remaining references with:

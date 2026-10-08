@@ -42,7 +42,7 @@ async function createEngine(engine: ParakeetEngine): Promise<LoadedModel> {
       // 'webgpu-hybrid' puts the encoder on the GPU and the decoder on the CPU. The plain 'webgpu'
       // alias sets no execution provider in fromUrls, so ONNX Runtime silently loads the fp16
       // model on the CPU and runs out of memory (std::bad_alloc).
-      const model = await fromHub(engine.model, { backend: 'webgpu-hybrid', ...engine.quant.webgpu, progress });
+      const model = await fromHub(engine.model, { revision: engine.revision, backend: 'webgpu-hybrid', ...engine.quant.webgpu, progress });
       await warmUp(model);
       return { model, device: 'webgpu' };
     } catch (err: any) {
@@ -52,7 +52,8 @@ async function createEngine(engine: ParakeetEngine): Promise<LoadedModel> {
   } else {
     gpuError = gpu.reason;
   }
-  const model = await fromHub(engine.model, { backend: 'wasm', ...engine.quant.wasm, progress });
+  const model = await fromHub(engine.model, { revision: engine.revision, backend: 'wasm', ...engine.quant.wasm, progress });
+  await warmUp(model);
   return { model, device: 'wasm', gpuError };
 }
 

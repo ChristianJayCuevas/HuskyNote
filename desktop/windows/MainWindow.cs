@@ -161,6 +161,31 @@ namespace HuskyNote
                 _webView.CoreWebView2.Settings.IsStatusBarEnabled = false;
                 _webView.CoreWebView2.Settings.AreDevToolsEnabled = true;
 
+                // Portable backups use a normal file, outside WebView2's private data directory.
+                // Keep WebView2's download progress/error UI; only choose the destination here.
+                _webView.CoreWebView2.DownloadStarting += (sender, args) =>
+                {
+                    if (!string.Equals(Path.GetExtension(args.ResultFilePath), ".huskybackup", StringComparison.OrdinalIgnoreCase)) return;
+                    var deferral = args.GetDeferral();
+                    BeginInvoke(new Action(() =>
+                    {
+                        using (deferral)
+                        using (var dialog = new SaveFileDialog
+                        {
+                            Title = "Save HuskyNote backup",
+                            FileName = Path.GetFileName(args.ResultFilePath),
+                            Filter = "HuskyNote backup (*.huskybackup)|*.huskybackup",
+                            DefaultExt = "huskybackup",
+                            AddExtension = true,
+                            OverwritePrompt = true
+                        })
+                        {
+                            if (dialog.ShowDialog(this) == DialogResult.OK) args.ResultFilePath = dialog.FileName;
+                            else args.Cancel = true;
+                        }
+                    }));
+                };
+
                 // Grant microphone and screen capture permissions automatically
                 _webView.CoreWebView2.PermissionRequested += (s, e) =>
                 {

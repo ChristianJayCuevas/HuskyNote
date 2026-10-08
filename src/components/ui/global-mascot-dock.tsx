@@ -1,96 +1,79 @@
+/**
+ * Exports: GlobalMascotDock
+ *
+ * Bottom-right companion button (z-40) that expands into a small card. Hidden on the landing page
+ * and in Focus mode. GlobalMascotDock({ onHide? }).
+ */
 import React, { useState } from 'react';
-import { HuskyMascot } from './husky-mascot';
+import { ArrowRight, Feather, X } from 'lucide-react';
+import { HuskyHead } from '@/brand';
 import { useWorkspace } from '../../context/workspace-context';
-import { useSound } from '../../context/sound-context';
 import { useAI } from '../../context/ai-context';
-import { X, Sparkles, Feather, Volume2, VolumeX, ArrowRight, MessageSquare } from 'lucide-react';
+import { Button } from './button';
+import { StatusDot } from './status-dot';
 
-export const GlobalMascotDock: React.FC = () => {
+export const GlobalMascotDock: React.FC<{ onHide?: () => void }> = ({ onHide }) => {
   const { activeView, setActiveView } = useWorkspace();
-  const { isMuted, toggleMute, playPop, playThock } = useSound();
   const { isConnected, selectedModel } = useAI();
-
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // If in zen mode or landing page, let those pages render mascot custom
+  // Focus mode and the landing page have their own layout
   if (activeView === 'zen' || activeView === 'landing') return null;
 
   return (
-    <div className="fixed bottom-5 right-5 z-40 select-none font-sans">
+    <div className="fixed bottom-3 right-3 z-40">
       {isExpanded ? (
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-xl p-5 shadow-2xl w-80 space-y-4 animate-fade-in text-xs text-zinc-300">
-          <div className="flex items-center justify-between border-b dark:border-zinc-850 pb-2.5">
+        <div className="w-80 max-w-[calc(100vw-1.5rem)] space-y-3 rounded-xl border bg-popover p-4 text-sm text-popover-foreground shadow-lg animate-in fade-in-0 zoom-in-95">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="font-bold text-white tracking-tight">HuskyNote Companion</span>
+              <StatusDot tone={isConnected ? 'success' : 'muted'} />
+              <span className="font-semibold">HuskyNote Companion</span>
             </div>
-            <button
-              onClick={() => {
-                playPop();
-                setIsExpanded(false);
-              }}
-              className="p-1 text-zinc-500 hover:text-white rounded transition-colors"
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setIsExpanded(false)}
+              className="-mr-1.5 text-muted-foreground"
               title="Minimize companion"
+              aria-label="Minimize companion"
             >
-              <X className="w-4 h-4" />
-            </button>
+              <X />
+            </Button>
           </div>
 
-          <div className="flex items-center gap-4">
-            <HuskyMascot size="sm" showSpeechBubble={false} />
-            <div className="space-y-1">
-              <p className="text-zinc-200 text-xs font-medium">
-                "I'm keeping your notes and meetings organized locally."
-              </p>
-              <div className="text-[10px] font-mono text-zinc-500">
-                {isConnected ? `AI: ${selectedModel}` : 'AI: Offline'}
-              </div>
+          <div className="flex items-center gap-3">
+            <HuskyHead animated className="size-12 shrink-0" />
+            <div className="min-w-0 space-y-0.5">
+              <p className="text-sm">Your notes and meetings are saved on this device.</p>
+              <p className="truncate text-xs text-muted-foreground">{isConnected ? `AI: ${selectedModel}` : 'AI: Offline'}</p>
             </div>
           </div>
 
-          <div className="pt-2 border-t dark:border-zinc-850 flex flex-col gap-2">
-            <button
-              onClick={() => {
-                playThock();
-                setActiveView('zen');
-              }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 dark:hover:bg-zinc-850 text-white font-mono text-[11px] transition-colors"
-            >
+          <div className="flex flex-col gap-1.5 border-t pt-3">
+            <Button type="button" variant="ghost" size="sm" className="justify-between" onClick={() => setActiveView('zen')}>
               <span className="flex items-center gap-2">
-                <Feather className="w-3.5 h-3.5 text-zinc-300" />
-                <span>Open Husky Notes</span>
+                <Feather className="text-muted-foreground" />
+                Focus mode
               </span>
-              <ArrowRight className="w-3.5 h-3.5 text-zinc-500" />
-            </button>
-
-            <button
-              onClick={toggleMute}
-              className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-zinc-900/60 border dark:border-zinc-850 text-zinc-400 hover:text-zinc-200 font-mono text-[10px] transition-colors"
-            >
-              <span className="flex items-center gap-2">
-                {isMuted ? <VolumeX className="w-3 h-3 text-zinc-500" /> : <Volume2 className="w-3 h-3 text-zinc-300" />}
-                <span>Tactile Sound Effects</span>
-              </span>
-              <span>{isMuted ? 'Muted' : 'Thock Active'}</span>
-            </button>
+              <ArrowRight className="text-muted-foreground" />
+            </Button>
+            {onHide && (
+              <Button type="button" variant="ghost" size="sm" className="justify-start text-muted-foreground" onClick={onHide}>
+                Hide this button
+              </Button>
+            )}
           </div>
         </div>
       ) : (
         <button
-          onClick={() => {
-            playPop();
-            setIsExpanded(true);
-          }}
-          className="group flex items-center gap-2.5 px-3 py-2 rounded-full bg-zinc-950/90 border border-zinc-800 hover:border-zinc-700 shadow-2xl backdrop-blur-md transition-all duration-200 hover:scale-105"
-          title="Open Husky Focus Companion"
+          type="button"
+          onClick={() => setIsExpanded(true)}
+          className="flex size-11 items-center justify-center rounded-full border bg-background shadow-md transition-colors duration-100 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          title="Husky companion"
+          aria-label="Open Husky companion"
         >
-          <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center">
-            <HuskyMascot size="sm" showSpeechBubble={false} enableInteraction={false} />
-          </div>
-          <span className="font-mono text-xs text-zinc-300 group-hover:text-white pr-1">
-            Husky Notes
-          </span>
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <HuskyHead className="size-7" />
         </button>
       )}
     </div>

@@ -1,5 +1,14 @@
+/**
+ * Exports: EmptyState
+ *
+ * EmptyState({ icon: LucideIcon, title, description, actionLabel?, onAction?, secondaryActionLabel?,
+ *              onSecondaryAction?, className?, children? })
+ * Centered: muted icon (size-8, no box), title text-base font-medium, description text-sm muted max-w-sm,
+ * primary action (default size sm) + secondary (outline size sm). children render under the actions.
+ */
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from './button';
 
 interface EmptyStateProps {
@@ -10,6 +19,8 @@ interface EmptyStateProps {
   onAction?: () => void;
   secondaryActionLabel?: string;
   onSecondaryAction?: () => void;
+  className?: string;
+  children?: React.ReactNode;
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
@@ -20,26 +31,30 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   onAction,
   secondaryActionLabel,
   onSecondaryAction,
+  className,
+  children,
 }) => {
+  const hasActions = (actionLabel && onAction) || (secondaryActionLabel && onSecondaryAction);
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center max-w-md mx-auto">
-      <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-400 mb-4">
-        <Icon className="w-6 h-6" />
-      </div>
-      <h3 className="text-base font-semibold text-slate-900 dark:text-zinc-100 mb-1.5">{title}</h3>
-      <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed mb-6">{description}</p>
-      <div className="flex items-center gap-3">
-        {actionLabel && onAction && (
-          <Button variant="primary" size="sm" onClick={onAction}>
-            {actionLabel}
-          </Button>
-        )}
-        {secondaryActionLabel && onSecondaryAction && (
-          <Button variant="outline" size="sm" onClick={onSecondaryAction}>
-            {secondaryActionLabel}
-          </Button>
-        )}
-      </div>
+    <div className={cn('mx-auto flex max-w-md flex-col items-center justify-center px-4 py-16 text-center', className)}>
+      <Icon aria-hidden="true" className="mb-4 size-8 text-muted-foreground/70" strokeWidth={1.5} />
+      <h3 className="text-base font-medium text-foreground">{title}</h3>
+      <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">{description}</p>
+      {hasActions && (
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          {actionLabel && onAction && (
+            <Button size="sm" onClick={onAction}>
+              {actionLabel}
+            </Button>
+          )}
+          {secondaryActionLabel && onSecondaryAction && (
+            <Button variant="outline" size="sm" onClick={onSecondaryAction}>
+              {secondaryActionLabel}
+            </Button>
+          )}
+        </div>
+      )}
+      {children}
     </div>
   );
 };

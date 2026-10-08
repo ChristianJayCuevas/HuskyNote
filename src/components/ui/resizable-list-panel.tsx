@@ -1,5 +1,14 @@
+/**
+ * Exports: ResizableListPanel
+ *
+ * ResizableListPanel({ storageKey, label, hiddenOnMobile?, children }) wraps the ListPane of a list/detail page.
+ * Desktop: drag the right edge to resize (double-click resets, arrow keys step), or collapse to a w-10 rail.
+ * Phones: full-width stacked list (hidden while an item is open when hiddenOnMobile).
+ */
 import React, { useCallback, useRef, useState } from 'react';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from './button';
 
 const DEFAULT_WIDTH = 320;
 const MIN_WIDTH = 220;
@@ -105,17 +114,19 @@ export const ResizableListPanel: React.FC<ResizableListPanelProps> = ({ storageK
       <>
         {/* Phones ignore the desktop collapse and keep the full list */}
         <div className={`${hiddenOnMobile ? 'hidden' : 'flex'} md:hidden w-full shrink-0 h-full`}>{children}</div>
-        <div className="hidden md:flex w-10 shrink-0 h-full flex-col items-center gap-3 py-3 border-r border-slate-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-          <button
+        <div className="hidden h-full w-10 shrink-0 flex-col items-center gap-3 border-r bg-background py-2 md:flex">
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-sm"
             onClick={() => setCollapsedAndSave(false)}
-            className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-850 transition-colors"
+            className="text-muted-foreground"
             title={`Show ${label.toLowerCase()} list`}
             aria-label={`Show ${label.toLowerCase()} list`}
           >
-            <PanelLeftOpen className="w-4 h-4" />
-          </button>
-          <span className="[writing-mode:vertical-rl] rotate-180 text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-zinc-500 select-none">
+            <PanelLeftOpen />
+          </Button>
+          <span className="select-none text-xs font-medium text-muted-foreground [writing-mode:vertical-rl] rotate-180">
             {label}
           </span>
         </div>
@@ -125,21 +136,23 @@ export const ResizableListPanel: React.FC<ResizableListPanelProps> = ({ storageK
 
   return (
     <div
-      className={`${mobile} group/panel relative w-full md:w-[var(--list-panel-width)] shrink-0 h-full ${dragging ? 'select-none' : ''}`}
+      className={cn(mobile, 'group/panel relative h-full w-full shrink-0 md:w-[var(--list-panel-width)]', dragging && 'select-none')}
       style={{ '--list-panel-width': `${width}px` } as React.CSSProperties}
     >
       {children}
 
       {/* Collapse button near the top of the border, clear of where people grab it to resize */}
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="icon"
         onClick={() => setCollapsedAndSave(true)}
-        className="hidden md:flex absolute top-16 -right-3 z-20 w-6 h-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm opacity-0 pointer-events-none group-hover/panel:opacity-100 group-hover/panel:pointer-events-auto focus:opacity-100 focus:pointer-events-auto hover:text-slate-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-opacity"
+        className="pointer-events-none absolute -right-3 top-14 z-20 hidden size-6 rounded-full bg-background text-muted-foreground opacity-0 shadow-sm transition-opacity duration-100 focus:pointer-events-auto focus:opacity-100 group-hover/panel:pointer-events-auto group-hover/panel:opacity-100 md:inline-flex dark:bg-background [&_svg]:size-3.5"
         title={`Hide ${label.toLowerCase()} list`}
         aria-label={`Hide ${label.toLowerCase()} list`}
       >
-        <PanelLeftClose className="w-3.5 h-3.5" />
-      </button>
+        <PanelLeftClose />
+      </Button>
 
       {/* Drag handle over the right border */}
       <div
@@ -157,11 +170,10 @@ export const ResizableListPanel: React.FC<ResizableListPanelProps> = ({ storageK
         onDoubleClick={() => commitWidth(DEFAULT_WIDTH)}
         onKeyDown={onKeyDown}
         title="Drag to resize, double-click to reset"
-        className={`hidden md:block absolute top-0 -right-1 z-10 h-full w-2 cursor-col-resize touch-none focus:outline-none after:absolute after:inset-y-0 after:left-1/2 after:w-0.5 after:-translate-x-1/2 after:transition-colors ${
-          dragging
-            ? 'after:bg-slate-400 dark:after:bg-zinc-500'
-            : 'hover:after:bg-slate-300 focus-visible:after:bg-slate-400 dark:hover:after:bg-zinc-600 dark:focus-visible:after:bg-zinc-500'
-        }`}
+        className={cn(
+          'absolute -right-1 top-0 z-10 hidden h-full w-2 cursor-col-resize touch-none after:absolute after:inset-y-0 after:left-1/2 after:w-0.5 after:-translate-x-1/2 after:transition-colors after:duration-100 focus:outline-none md:block',
+          dragging ? 'after:bg-ring' : 'hover:after:bg-input focus-visible:after:bg-ring'
+        )}
       />
     </div>
   );

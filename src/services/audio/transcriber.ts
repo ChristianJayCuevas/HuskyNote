@@ -1,6 +1,7 @@
 import type { TranscriptSegment, MeetingSummary, TimelineItem, ScheduleEvent } from '../../types';
 export type { TranscriptSegment, MeetingSummary, TimelineItem, ScheduleEvent };
 import { ai } from '../ai/active-provider';
+import { parseTopicList } from '../meetings/meeting-report';
 import {
   detectAllEventsInText,
   createScheduleEventFromMatch,
@@ -15,6 +16,7 @@ import { speechStatus, speechEngine, toWhisperLanguage, isNonSpeech } from './sp
 import { resolveTranscriptionEngine, getTranscriptionEngine, MULTILINGUAL_FALLBACK_ENGINE } from './transcription-engines';
 import { startPcmCapture, takeChunkBatch, locateInBatch, type PcmCapture, type SpeechChunk } from './pcm-capture';
 import { openMicrophone } from './microphone';
+import { enqueueSpeechJob, processMeetingJobs, pauseMeetingTranscription } from './speech-jobs';
 
 // Longest audio merged into one Whisper call (the model window is 30 s)
 const MAX_BATCH_SECONDS = 25;
@@ -272,11 +274,9 @@ export class WebSpeechTranscriber {
  * mixed tab + microphone audio of a meeting) or opens the microphone itself,
  * cuts the audio into phrases at natural pauses, and emits one timestamped
  * segment per phrase. Progress and errors are published on `speechStatus`.
- * Falls back to the browser's Web Speech API when Whisper cannot run.
+ * No automatic cloud speech fallback. Meeting jobs are retained for local retry.
  */
 export class LiveSpeechTranscriber {
-  private fallback = new WebSpeechTranscriber();
-  private usingFallback = false;
   private inputStream: MediaStream | null = null;
   private ownedStream: MediaStream | null = null;
   private capture: PcmCapture | null = null;
@@ -288,9 +288,16 @@ export class LiveSpeechTranscriber {
   private language = 'auto';
   private activeSpeaker = 'You / Host';
   private session = 0;
+  private meetingId: string | null = null;
+  private writes: Promise<void> = Promise.resolve();
+  private nextSequence = 0;
+  private failed = false;
+  private starting: Promise<void> | null = null;
+
+  setMeetingId(id: string): void { this.meetingId = id; }
 
   isSupported(): boolean {
-    return speechEngine.isSupported() || this.fallback.isSupported();
+    return speechEngine.isSupported();
   }
 
   /** Transcribe this stream instead of opening the microphone. Pass null to clear. */
@@ -301,7 +308,6 @@ export class LiveSpeechTranscriber {
   setLanguage(lang: string): void {
     if (!lang) return;
     this.language = lang;
-    this.fallback.setLanguage(lang);
   }
 
   getLanguage(): string {
@@ -311,7 +317,6 @@ export class LiveSpeechTranscriber {
   setActiveSpeaker(speaker: string): void {
     if (speaker && speaker.trim()) {
       this.activeSpeaker = speaker.trim();
-      this.fallback.setActiveSpeaker(speaker);
     }
   }
 
@@ -332,12 +337,13 @@ export class LiveSpeechTranscriber {
     this.onInterimCallback = onInterim || null;
     this.segmentCounter = 0;
     const session = ++this.session;
-    void this.startCapture(session);
+    this.failed = false;
+    this.starting = this.startCapture(session);
   }
 
   private async startCapture(session: number): Promise<void> {
     if (!speechEngine.isSupported()) {
-      this.startFallback();
+      speechStatus.set({ state: 'error', message: 'On-device transcription is unavailable in this browser. No audio has been sent to a cloud service.' });
       return;
     }
     try {
@@ -351,38 +357,51 @@ export class LiveSpeechTranscriber {
         return;
       }
       this.capture = await startPcmCapture(stream, (chunk) => this.enqueue(chunk));
+      if (session !== this.session) { await this.stopCapture(); return; }
       const engine = resolveTranscriptionEngine(this.language);
-      speechEngine.load(engine).catch(async (err) => {
+      speechEngine.load(engine).catch((err) => {
         console.warn(`[HuskyNote] ${engine.name} could not load:`, err);
         if (session !== this.session) return;
-        // Try the multilingual engine before giving up on on-device transcription
-        if (engine.id !== MULTILINGUAL_FALLBACK_ENGINE) {
-          try {
-            await speechEngine.load(getTranscriptionEngine(MULTILINGUAL_FALLBACK_ENGINE));
-            return;
-          } catch (fallbackErr) {
-            console.warn('[HuskyNote] Fallback speech engine could not load:', fallbackErr);
-          }
-        }
-        if (session === this.session) this.startFallback();
+        this.failed = true;
+        speechStatus.set({ state: 'error', message: 'Local transcription could not start. Retry setup in Settings. Meeting audio remains on this device.' });
       });
     } catch (err: any) {
+      this.releaseOwnedStream();
       console.error('[HuskyNote] Could not start audio capture for transcription:', err);
       speechStatus.set({ state: 'error', message: err?.message || 'Could not access audio for transcription.' });
     }
   }
 
-  private startFallback(): void {
-    if (this.usingFallback || !this.fallback.isSupported() || !this.onSegmentCallback) return;
-    this.usingFallback = true;
-    this.stopCapture();
-    this.fallback.setLanguage(this.language);
-    this.fallback.setActiveSpeaker(this.activeSpeaker);
-    this.fallback.start(this.onSegmentCallback, this.onInterimCallback || undefined);
-  }
-
   private enqueue(chunk: SpeechChunk): void {
     if (!this.onSegmentCallback) return;
+    if (this.meetingId) {
+      const meetingId = this.meetingId;
+      const sequence = this.nextSequence++;
+      const session = this.session;
+      const callback = this.onSegmentCallback;
+      const job = { id: `${meetingId}-speech-${sequence}`, meetingId, sequence, startSeconds: chunk.startSeconds,
+        language: this.language, speaker: this.activeSpeaker, engineId: resolveTranscriptionEngine(this.language).id,
+        audio: chunk.audio, attempts: 0 };
+      this.writes = this.writes.then(() => enqueueSpeechJob(job)).then(() => {
+        if (!this.failed) this.draining = processMeetingJobs(meetingId, (segment) => {
+          if (this.session === session) callback(segment);
+        }).catch((error) => {
+          this.failed = true;
+          speechStatus.set({ state: 'error', message: `Could not read pending transcription: ${String(error)}. Check storage and retry.` });
+        });
+      }).catch((error) => {
+        this.failed = true;
+        speechStatus.set({ state: 'error', message: `Could not save pending transcription: ${String(error)}. Stop recording and check storage.` });
+      });
+      return;
+    }
+    // Dictation/test audio is transient. Keep memory bounded and report overload.
+    if (this.pendingChunks.reduce((n, c) => n + c.audio.length, 0) > 16000 * 60) {
+      this.failed = true;
+      speechStatus.set({ state: 'error', message: 'Live dictation cannot keep up. Stop and retry with a smaller model.' });
+      void this.stopCapture().catch(() => {});
+      return;
+    }
     this.pendingChunks.push({ ...chunk, meta: { speaker: this.activeSpeaker, language: this.language } });
     if (!this.draining) {
       this.draining = this.drain().finally(() => {
@@ -420,27 +439,24 @@ export class LiveSpeechTranscriber {
         }
       } catch (err) {
         console.warn('[HuskyNote] Whisper transcription failed for a batch:', err);
+        speechStatus.set({ state: 'error', message: 'A speech phrase could not be transcribed. Retry dictation or resume saved meeting audio.' });
       }
     }
   }
 
   pause(): void {
-    if (this.usingFallback) this.fallback.stop();
-    else this.capture?.pause();
+    this.capture?.pause();
   }
 
   resume(): void {
-    if (this.usingFallback) {
-      if (this.onSegmentCallback) this.fallback.start(this.onSegmentCallback, this.onInterimCallback || undefined);
-    } else {
-      this.capture?.resume();
-    }
+    this.capture?.resume();
   }
 
-  private stopCapture(): void {
-    this.capture?.stop();
+  private async stopCapture(): Promise<void> {
+    const capture = this.capture;
     this.capture = null;
-    this.releaseOwnedStream();
+    try { await capture?.stop(); }
+    finally { this.releaseOwnedStream(); }
   }
 
   private releaseOwnedStream(): void {
@@ -453,13 +469,15 @@ export class LiveSpeechTranscriber {
    * (bounded by `timeoutMs`), so callers can save a complete transcript.
    */
   async stop(timeoutMs = 30000): Promise<void> {
+    await this.starting;
+    try { await this.stopCapture(); }
+    catch (error) { speechStatus.set({ state: 'error', message: String(error) }); }
+    await this.writes;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    await Promise.race([this.draining ?? Promise.resolve(), new Promise((r) => { timer = setTimeout(r, this.meetingId ? Math.min(timeoutMs, 3000) : timeoutMs); })]);
+    clearTimeout(timer);
+    if (this.meetingId) pauseMeetingTranscription(this.meetingId);
     this.session++;
-    this.stopCapture();
-    if (this.usingFallback) {
-      this.fallback.stop();
-      this.usingFallback = false;
-    }
-    await Promise.race([this.draining ?? Promise.resolve(), new Promise((r) => setTimeout(r, timeoutMs))]);
     this.pendingChunks = [];
     this.onSegmentCallback = null;
     this.onInterimCallback = null;
@@ -472,8 +490,10 @@ export class LiveSpeechTranscriber {
  * @returns Formatted time string (e.g., '05:32').
  */
 export function formatSecondsToTime(totalSeconds: number): string {
-  const mins = Math.floor(totalSeconds / 60);
-  const secs = totalSeconds % 60;
+  // Speech segments carry fractional timestamps; show whole seconds
+  const whole = Math.max(0, Math.floor(totalSeconds || 0));
+  const mins = Math.floor(whole / 60);
+  const secs = whole % 60;
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
@@ -708,6 +728,7 @@ Respond STRICTLY with valid JSON in this exact structure, with no extra text or 
         topics: Array.isArray(parsed.topics) ? parsed.topics : [],
         followUpTasks: Array.isArray(parsed.followUpTasks) ? parsed.followUpTasks : [],
         summaryLanguage: targetSummaryLanguage,
+        aiGenerated: true,
       },
       timeline,
       detectedEvents,
@@ -719,12 +740,14 @@ Respond STRICTLY with valid JSON in this exact structure, with no extra text or 
       summary: {
         overview: targetSummaryLanguage === 'fil'
           ? `Naitala ang pulong na may ${transcript.length} bahagi ng transcript.`
-          : `Meeting recorded with ${transcript.length} transcript segment(s). AI analysis could not be parsed.`,
+          : `Meeting recorded with ${transcript.length} transcript segment(s). The AI report could not be generated.`,
         decisions: [],
         actionItems: [],
         topics: [],
         followUpTasks: [],
         summaryLanguage: targetSummaryLanguage,
+        aiGenerated: false,
+        aiError: err?.message || 'The AI did not respond.',
       },
       timeline: transcript.slice(0, 5).map((s, idx) => ({
         id: `tl-${idx}`,
@@ -736,6 +759,39 @@ Respond STRICTLY with valid JSON in this exact structure, with no extra text or 
       detectedEvents,
     };
   }
+}
+
+/**
+ * Rewrites a meeting's topic list into short, distinct, readable labels:
+ * merges duplicates and overlapping items and trims long run-on topics.
+ * Throws when the AI fails, so the caller keeps the existing topics.
+ */
+export async function polishMeetingTopics(
+  topics: string[],
+  overview: string,
+  modelName: string,
+  language: string = 'en'
+): Promise<string[]> {
+  const prompt = `You are editing the "Topics discussed" list of a meeting report.
+
+Meeting summary (context only):
+${overview}
+
+Current topics:
+${topics.map((t) => `- ${t}`).join('\n')}
+
+Rewrite the list so a reader can scan it in seconds:
+- Merge duplicates and topics that overlap into one.
+- Each topic is a short noun phrase of 3 to 9 words. Move detail out; do not end with a period.
+- Keep names, systems and numbers that matter (for example "24-hour SLA", "Billing API 403").
+- Do not invent topics that are not in the current list.
+- Keep the order in which they were discussed. Return at most 10 topics.
+- Write in ${getLanguageName(language)}.
+
+Return only a JSON array of strings.`;
+
+  const response = await ai.generate(prompt, { model: modelName, temperature: 0.1 });
+  return parseTopicList(response);
 }
 
 /**

@@ -49,6 +49,19 @@ export async function grabFrameFromStreamOrVideo(
   return null;
 }
 
+// Colors painted into captured guide screenshots (canvas drawing over arbitrary screen content, so the
+// high-contrast black/white overlay is fixed and does not follow the app theme).
+const CAPTURE = {
+  // design-exception: annotation overlay colors burned into exported screenshots
+  backdropTop: '#09090b', backdropBottom: '#18181b', chrome: '#27272a', chromeDots: '#71717a', mutedText: '#a1a1aa', light: '#ffffff', badgeFill: '#050505',
+  // design-exception: translucent overlay layers of the same screenshot annotation
+  grid: 'rgba(255, 255, 255, 0.04)', focusBox: 'rgba(255, 255, 255, 0.85)', focusScrim: 'rgba(0, 0, 0, 0.15)', badgeGlow: 'rgba(0, 0, 0, 0.8)',
+  // design-exception: translucent overlay layers of the same screenshot annotation
+  badgeRing: 'rgba(255, 255, 255, 0.5)', pillFill: 'rgba(10, 10, 10, 0.88)', pillBorder: 'rgba(255, 255, 255, 0.6)',
+  // design-exception: translucent overlay layers of the same screenshot annotation
+  watermarkFill: 'rgba(5, 5, 5, 0.85)', watermarkRule: 'rgba(255, 255, 255, 0.15)',
+} as const;
+
 export class ScreenAnnotatorService {
   /**
    * Captures a frame from an image source and burns dynamic annotation overlays onto it.
@@ -102,16 +115,16 @@ export class ScreenAnnotatorService {
     if (!frameRendered) {
       // Draw a sleek high-definition macOS workspace simulation backdrop
       const grad = ctx.createLinearGradient(0, 0, width, height);
-      grad.addColorStop(0, '#09090b');
-      grad.addColorStop(1, '#18181b');
+      grad.addColorStop(0, CAPTURE.backdropTop);
+      grad.addColorStop(1, CAPTURE.backdropBottom);
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
 
       // Window chrome bar
-      ctx.fillStyle = '#27272a';
+      ctx.fillStyle = CAPTURE.chrome;
       ctx.fillRect(0, 0, width, 40);
       // Window traffic dots
-      ctx.fillStyle = '#71717a';
+      ctx.fillStyle = CAPTURE.chromeDots;
       ctx.beginPath();
       ctx.arc(24, 20, 6, 0, Math.PI * 2);
       ctx.arc(42, 20, 6, 0, Math.PI * 2);
@@ -119,12 +132,12 @@ export class ScreenAnnotatorService {
       ctx.fill();
 
       // Window title
-      ctx.fillStyle = '#a1a1aa';
+      ctx.fillStyle = CAPTURE.mutedText;
       ctx.font = '12px sans-serif';
       ctx.fillText('HuskyNote Workflow Capture Session', 85, 24);
 
       // Subtle workspace grid
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.strokeStyle = CAPTURE.grid;
       ctx.lineWidth = 1;
       for (let x = 60; x < width; x += 60) {
         ctx.beginPath();
@@ -174,13 +187,13 @@ export class ScreenAnnotatorService {
     // 3. Draw high-visibility focus box around interaction zone
     const boxSize = Math.max(48, Math.round(width * 0.08));
     ctx.save();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.strokeStyle = CAPTURE.focusBox;
     ctx.lineWidth = 2.5;
     ctx.setLineDash([6, 4]);
     ctx.strokeRect(targetX - boxSize / 2, targetY - boxSize / 2, boxSize, boxSize);
 
     // Subtle dark scrim vignette around focus box
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.fillStyle = CAPTURE.focusScrim;
     ctx.fillRect(targetX - boxSize / 2, targetY - boxSize / 2, boxSize, boxSize);
     ctx.restore();
 
@@ -191,27 +204,27 @@ export class ScreenAnnotatorService {
 
     ctx.save();
     // Outer glow
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+    ctx.shadowColor = CAPTURE.badgeGlow;
     ctx.shadowBlur = 12;
 
     // Outer pulse ring
     ctx.beginPath();
     ctx.arc(badgeX, badgeY, badgeRadius + 4, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.strokeStyle = CAPTURE.badgeRing;
     ctx.lineWidth = 2;
     ctx.stroke();
 
     // Inner filled badge
     ctx.beginPath();
     ctx.arc(badgeX, badgeY, badgeRadius, 0, Math.PI * 2);
-    ctx.fillStyle = '#050505';
+    ctx.fillStyle = CAPTURE.badgeFill;
     ctx.fill();
-    ctx.strokeStyle = '#ffffff';
+    ctx.strokeStyle = CAPTURE.light;
     ctx.lineWidth = 2.5;
     ctx.stroke();
 
     // Step number text
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = CAPTURE.light;
     ctx.font = `bold ${Math.round(badgeRadius * 1.1)}px monospace, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -231,15 +244,15 @@ export class ScreenAnnotatorService {
     // Check boundary
     const safePillX = pillX + pillWidth > width - 10 ? badgeX - badgeRadius - pillWidth - 8 : pillX;
 
-    ctx.fillStyle = 'rgba(10, 10, 10, 0.88)';
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.fillStyle = CAPTURE.pillFill;
+    ctx.strokeStyle = CAPTURE.pillBorder;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.roundRect(safePillX, pillY, pillWidth, pillHeight, 4);
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = CAPTURE.light;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(labelText, safePillX + pillWidth / 2, pillY + pillHeight / 2);
@@ -252,17 +265,17 @@ export class ScreenAnnotatorService {
     const watermarkText = `HUSKYNOTE FLIGHT RECORDER • STEP ${options.stepNumber} • ${timeFormatted} • LOCAL PRIVACY GUARANTEED`;
 
     ctx.save();
-    ctx.fillStyle = 'rgba(5, 5, 5, 0.85)';
+    ctx.fillStyle = CAPTURE.watermarkFill;
     ctx.fillRect(0, height - 26, width, 26);
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.strokeStyle = CAPTURE.watermarkRule;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(0, height - 26);
     ctx.lineTo(width, height - 26);
     ctx.stroke();
 
-    ctx.fillStyle = '#a1a1aa';
+    ctx.fillStyle = CAPTURE.mutedText;
     ctx.font = '10px monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';

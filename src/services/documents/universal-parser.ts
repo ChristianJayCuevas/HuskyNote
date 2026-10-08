@@ -291,3 +291,14 @@ export async function parseDocumentFile(
     rawText,
   };
 }
+
+/** The text paragraphs of a .docx file, in order (used to import Teams transcripts) */
+export async function extractDocxParagraphs(arrayBuffer: ArrayBuffer): Promise<string[]> {
+  const entries = await extractZipEntries(arrayBuffer);
+  const docXml = entries.get('word/document.xml');
+  if (!docXml) throw new Error('This .docx file has no document text.');
+  const xml = new DOMParser().parseFromString(docXml, 'application/xml');
+  return Array.from(xml.getElementsByTagName('w:p'))
+    .map((p) => Array.from(p.getElementsByTagName('w:t')).map((t) => t.textContent || '').join('').trim())
+    .filter(Boolean);
+}

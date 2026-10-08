@@ -32,7 +32,7 @@ HuskyNote integrates five primary knowledge and capture modalities into a unifie
 3. **Decoupled Local AI**: Local intelligence communicates with Ollama at `http://localhost:11434`. If Ollama is offline or unavailable, the application provides clear visual status and diagnostic instructions rather than failing or substituting synthetic responses.
 4. **Privacy and Zero Telemetry**: No user data, uploaded documents, or transcripts are transmitted to third-party cloud services. Operating system and browser permissions are requested explicitly.
 5. **Real Data Integrity**: The application does not generate or display synthetic filler cards, fake statistics, or mock AI completions. Empty states are explicitly communicated.
-6. **Grayscale Visual Discipline**: The visual system is strictly black, white, and grayscale. Saturated accent colors are restricted to semantic states (recording active, connection status, alerts). Emojis are prohibited across UI icons and documentation.
+6. **Visual System (near-grayscale, Notion-style)**: The interface is built from shadcn/ui (new-york) primitives on semantic design tokens, in Light, Dark, and System themes (System is the default). Neutrals are warm grays; primary actions are near-black in light mode and near-white in dark mode. Color has exactly three jobs: keyboard focus rings and text selection (blue `--ring`), semantic status (success, warning, info, destructive; an active recording is destructive), and data (chart-1 to chart-5). Emojis are prohibited across UI icons and documentation. The full specification is in section 8.
 7. **Safe Binary Delivery**: Download links for native installers (`.exe`, `.dmg`, `.zip`, `.AppImage`) must deliver genuine PE/Mach-O binaries. SPA web servers must never rewrite binary download paths to `index.html`. Automated fallbacks forward directly to official GitHub Releases.
 
 ---
@@ -42,11 +42,11 @@ HuskyNote integrates five primary knowledge and capture modalities into a unifie
 ### 3.1 Web Application
 - **Frontend Framework**: React 18, TypeScript 5 (Strict Mode)
 - **Build Tool**: Vite 6
-- **Styling**: Tailwind CSS 3 (configured with custom grayscale tokens)
+- **Styling**: Tailwind CSS 3 with semantic design tokens (HSL CSS variables for light and dark in `src/index.css`), shadcn/ui new-york primitives on Radix UI and class-variance-authority in `src/components/ui`, cmdk for the command palette, and bundled Geist fonts (no font requests at runtime). Token rules are enforced by `scripts/check-design-tokens.mjs`.
 - **Iconography**: Lucide React (no emojis permitted)
 - **Local Database**: IndexedDB via Dexie 4
 - **Document Engine**: PDF.js (`pdfjs-dist`)
-- **Markdown Engine**: React Markdown, Remark GFM, DOMPurify for HTML sanitization
+- **Markdown Engine**: React Markdown and Remark GFM through the `Markdown` primitive: HTML in the source is shown as text (never rendered), and URLs are restricted to http(s), mailto, and relative links, plus base64 `data:image/*` for images. DOMPurify sanitizes any other user-provided HTML.
 - **Export Engines**: jsPDF (for client-side PDF rendering), native Markdown/JSON serializers
 - **Local AI Service**: Ollama REST API (streaming generate, chat, and tag endpoints)
 - **Speech-to-Text**: On-device engines in web workers, selectable in Settings (`src/services/audio/transcription-engines.ts`): Parakeet TDT v3 via parakeet.js (default; 25 European languages), Moonshine Base and Whisper Base via transformers.js. WebGPU when available, WebAssembly otherwise. Languages the chosen engine lacks use Whisper Base automatically. The Web Speech API is a last-resort fallback.
@@ -177,3 +177,25 @@ To guarantee reliable binary distribution:
 - **Git Commit Standards**:
   - Conventional Commits: `feat(...)`, `fix(...)`, `docs(...)`, `chore(...)`, `refactor(...)`, `test(...)`.
   - Strictly no emojis in commit messages, code comments, or documentation.
+
+---
+
+## 8. Visual System
+
+The app UI (everything except the landing page) follows one token and primitive system. `scripts/check-design-tokens.mjs` enforces the token rules.
+
+1. **Design tokens** (`src/index.css`, shadcn/ui v3 format: HSL channels, light values in `:root`, dark values in `.dark`; mapped in `tailwind.config.js`):
+   - Surfaces and text: `background`, `foreground`, `card`, `popover`, `muted` / `muted-foreground`, `accent`, `secondary`, `primary` / `primary-foreground`, `border`, `input`, `sidebar-*`.
+   - Focus and selection: `ring` (Notion blue `#2383E2`), the only decorative use of blue.
+   - Status: `success`, `warning`, `info`, `destructive`, used for text and icons and soft fills (`bg-success/10 text-success`); only `destructive` is a solid fill.
+   - Data: `chart-1` to `chart-5` (charts and speaker identity dots only).
+   - Documents: `paper` / `paper-foreground` keep PDF and document pages white in both themes.
+   - Radius (`rounded-md` controls, `rounded-lg` cards and menus, `rounded-xl` dialogs) and shadows (`shadow-xs` to `shadow-xl`) also come from tokens.
+   - The `slate` and `zinc` ramps are remapped to warm grays for legacy code; `canvas` is deprecated. New code uses the semantic names.
+2. **Themes**: Light, Dark, and System (default). The preference is stored in `localStorage.huskynote_theme` (`light`, `dark`, or `system`); an inline script in `index.html` applies the class before first paint. `src/context/theme-context.tsx` exposes `preference`, `setPreference`, the resolved `theme`, and `toggleTheme(origin?)` (circular reveal only when an origin is passed).
+3. **Typography**: Geist and Geist Mono are bundled through `@fontsource-variable/*` and loaded once from `src/brand/fonts.ts` (no font requests at runtime). Page titles `text-2xl font-semibold`, document titles `text-3xl sm:text-4xl font-bold`, UI text `text-sm`, meta text `text-xs text-muted-foreground`; nothing smaller than 12 px in the app UI. Long-form Markdown renders through the `Markdown` primitive (Tailwind Typography on the tokens).
+4. **Primitives** (`src/components/ui`, each file lists its exports at the top): shadcn/ui **Tailwind v3 new-york** sources copied by hand (shadcn CLI 2.x era, `hsl(var(--x))`), on Radix UI and class-variance-authority. Never run `shadcn@latest`; it targets Tailwind v4 and oklch, which the macOS WebKit shell does not need and the tokens do not use. Every button, input, select, menu, popover, dialog, tab strip, segmented control, badge, alert, table, and empty state uses these primitives; menus and overlays are never hand-rolled.
+5. **Layout patterns**: pages use `PageContainer` + `PageHeader` and scroll inside the single `<main>`; list/detail views (Notes, Meetings, Documents, Manuals) use `ResizableListPanel` + `ListPane` with a `Toolbar` heading the detail pane. Controls are `h-8` (`h-7` small), bars (topbar, list headers, toolbars) are `h-11`, sidebar items `h-7`. Only `AppLayout` renders `<main>` and only the sidebar renders `<aside>`.
+6. **Design exceptions**: a literal color is allowed only where tokens cannot apply: the Picture-in-Picture window's inline HTML, annotation and screenshot overlay colors drawn on canvases, media on a black stage, white paper pages, and third-party logos. Each needs a `design-exception: <reason>` comment on the same line or the line above.
+7. **Checker**: `node scripts/check-design-tokens.mjs [files or directories]` flags palette colors, `canvas`, `dark:` outside `src/components/ui`, hex/rgb/hsl literals, `bg-white`/`bg-black`/`text-white`/`text-black`, deprecated Button variants and sizes, `backdrop-blur`, `transition-all`, `duration-500`, press/hover scale effects, `rounded-2xl`/`rounded-3xl`, `shadow-2xl`, and `font-extrabold`/`font-black`. With no arguments it scans `src` except the landing page and `src/brand`, and exits 1 on any violation. The app is at 0 violations; keep it there.
+8. **Brand and landing**: the HuskyNote mark, logo, mascot poses, and generated icons come from `src/brand` (import from `@/brand`; see REBRANDING.md). The landing page (`src/views/landing-page.tsx`, `src/components/landing`) is self-contained, styled by its own `landing.css` under `.hn-landing`, and is outside the checker's scope.

@@ -42,23 +42,77 @@ chrome.runtime.onInstalled.addListener(() => {
   }
 
   if (chrome.contextMenus) {
-    chrome.contextMenus.create({
-      id: 'huskynote-summarize-selection',
-      title: 'Summarize with HuskyNote AI (local)',
-      contexts: ['selection'],
-    });
-    chrome.contextMenus.create({
-      id: 'huskynote-add-note',
-      title: 'Save to HuskyNote Quick Notes',
-      contexts: ['selection'],
-    });
-    chrome.contextMenus.create({
-      id: 'huskynote-start-meeting',
-      title: 'Start HuskyNote Meeting Recording',
-      contexts: ['page'],
-    });
+    // Menus survive updates; clear them so re-creating does not fail on duplicate ids
+    chrome.contextMenus.removeAll(() => createContextMenus());
   }
 });
+
+function createContextMenus() {
+  chrome.contextMenus.create({
+    id: 'huskynote-collect-teams-transcript',
+    title: 'Collect Teams transcript for HuskyNote',
+    contexts: ['page', 'frame', 'selection', 'link'],
+  });
+  chrome.contextMenus.create({
+    id: 'huskynote-summarize-selection',
+    title: 'Summarize with HuskyNote AI (local)',
+    contexts: ['selection'],
+  });
+  chrome.contextMenus.create({
+    id: 'huskynote-add-note',
+    title: 'Save to HuskyNote Quick Notes',
+    contexts: ['selection'],
+  });
+  chrome.contextMenus.create({
+    id: 'huskynote-start-meeting',
+    title: 'Start HuskyNote Meeting Recording',
+    contexts: ['page'],
+  });
+}
+
+/**
+ * Collect the Teams transcript open in a tab. The crawler runs in every frame
+ * because Teams often shows the transcript inside an embedded frame; frames
+ * without a transcript return straight away.
+ */
+async function collectTeamsTranscript(tabId) {
+  if (!chrome.scripting?.executeScript) return { found: false };
+  let results = [];
+  try {
+    results = await chrome.scripting.executeScript({ target: { tabId, allFrames: true }, files: ['teams-transcript-crawler.js'] });
+  } catch (error) {
+    console.warn('[HuskyNote] Could not run the transcript collector:', error);
+  }
+  const found = results.some((r) => r?.result?.found);
+  if (!found) {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+        const id = 'huskynote-transcript-collector';
+        document.getElementById(id)?.remove();
+        const box = document.createElement('div');
+        box.id = id;
+        box.setAttribute('role', 'status');
+        box.style.cssText = 'position:fixed;top:12px;right:12px;z-index:2147483647;width:300px;padding:12px 14px;border-radius:10px;background:#202020;color:#e3e2e0;'
+          + 'font:13px/1.45 "Segoe UI",system-ui,sans-serif;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 9px 24px rgba(0,0,0,.45);';
+        box.textContent = 'HuskyNote could not find an open transcript on this page. Open the meeting in Teams, go to Recap › Transcript so the lines show, then try again.';
+        document.body.appendChild(box);
+        setTimeout(() => box.remove(), 9000);
+      },
+    }).catch(() => {});
+  }
+  return { found };
+}
+
+if (chrome.runtime?.onMessage) {
+  chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    if (msg?.type === 'HUSKYNOTE_COLLECT_TEAMS_TRANSCRIPT' && msg.tabId) {
+      collectTeamsTranscript(msg.tabId).then(sendResponse);
+      return true;
+    }
+    return undefined;
+  });
+}
 
 // Ensure newly opened or navigated meeting tabs have content script injected
 if (chrome.tabs?.onUpdated) {
@@ -98,6 +152,10 @@ if (chrome.contextMenus) {
         });
         chrome.storage.local.set({ notes });
       });
+    }
+
+    if (info.menuItemId === 'huskynote-collect-teams-transcript' && tab?.id) {
+      collectTeamsTranscript(tab.id);
     }
 
     if (info.menuItemId === 'huskynote-start-meeting' && tab?.id) {

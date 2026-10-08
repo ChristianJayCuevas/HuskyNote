@@ -48,9 +48,9 @@ describe('Markdown Exporters', () => {
     };
 
     const md = exportMeetingToMarkdown(meeting);
-    expect(md).toContain('# Meeting: Weekly Sync');
-    expect(md).toContain('Deployment scheduled for Friday.');
-    expect(md).toContain('- [ ] Prepare configs (@Arron)');
+    expect(md).toContain('# Weekly Sync');
+    expect(md).toContain('1. Deployment scheduled for Friday.');
+    expect(md).toContain('- [ ] Prepare configs (owner: Arron)');
     expect(md).toContain('We are ready to deploy.');
     expect(md).toContain('Remember to check environment keys.');
   });
@@ -84,8 +84,8 @@ describe('Markdown Exporters', () => {
 
     const md = exportMeetingToMarkdown(meeting);
     expect(md).toContain('## Screenshots');
-    expect(md).toContain('[00:45] Slide 3 - Architecture Diagram');
-    expect(md).toContain('## Follow-Up Tasks');
+    expect(md).toContain('- [00:00:45] Slide 3 - Architecture Diagram');
+    expect(md).toContain('## Follow-up tasks');
     expect(md).toContain('- [ ] Send recording link to team');
   });
 
@@ -167,5 +167,20 @@ describe('PDF Exporters', () => {
     const doc = exportMeetingToPdf(meeting);
     expect(doc).toBeDefined();
     expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('PDF text', () => {
+  it('converts characters the built-in PDF fonts cannot draw instead of breaking the line', async () => {
+    const { toPdfText } = await import('../src/services/export/pdf');
+    expect(toPdfText('underwriter → manager ☐ done ✓')).toBe('underwriter -> manager done');
+    expect(toPdfText('“Quotes” — dashes • bullets café')).toBe('“Quotes” — dashes • bullets café');
+    expect(toPdfText('Line one \n  line two')).toBe('Line one\nline two');
+  });
+
+  it('formats fractional speech timestamps as whole seconds', async () => {
+    const { formatSecondsToTime } = await import('../src/services/audio/transcriber');
+    expect(formatSecondsToTime(9.642666666666667)).toBe('00:09');
+    expect(formatSecondsToTime(2077.99)).toBe('34:37');
   });
 });
