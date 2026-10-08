@@ -10,7 +10,7 @@ The September 30 findings about save feedback, mobile selection, clickable conte
 
 Inspected current source and rendered the local development app in a fresh, isolated headless Edge context at 1440 × 900 and 390 × 844. Created only synthetic notes and a meeting inside that temporary context. External network requests were blocked, so AI was deliberately unavailable. No real workspace, microphone, downloaded speech model, or packaged desktop application was used.
 
-Evidence is in [browser observations](artifacts/ui-ux-review-2026-10-01/observations.json). The diagnostic script captured the principal workspace screens and completed the interaction checks. Its initial run stopped at the landing screen because that screen contained two `main` landmarks and the locator expected one. After correcting that diagnostic locator, the full run also captured the landing screen. Marketing copy and landmark findings are grounded in source.
+Evidence was recorded as browser observations and screenshots, which are no longer kept in the repository. The diagnostic script captured the principal workspace screens and completed the interaction checks. Its initial run stopped at the landing screen because that screen contained two `main` landmarks and the locator expected one. After correcting that diagnostic locator, the full run also captured the landing screen. Marketing copy and landmark findings are grounded in source.
 
 These checks establish the reproduced behaviors, not a complete accessibility audit or usability study. Screenshot captures immediately following theme changes can include transitions; do not treat an intermediate frame as proof of a permanent color defect.
 
@@ -56,7 +56,7 @@ The populated dark Home screen has a clean palette and consistent alignment. How
 
 Make Recent activity the main surface. Put creation actions in a compact row and make the primary action clear. Empty categories can become small prompts or disappear from the returning-user view until relevant. Preserve an explicit first-run screen for users with no content.
 
-Evidence: [populated Home](artifacts/ui-ux-review-2026-10-01/home-populated-dark.png).
+Evidence: populated Home.
 
 ### The editor devotes substantial space to controls
 
@@ -66,7 +66,7 @@ On mobile, text labels disappear and the toolbar becomes a sequence of similar s
 
 Keep formatting and the current view readily available. Move exports and history into a named document menu. Group deletion separately. Give touch controls explicit accessible names and sufficient hit areas, and use a labeled overflow menu instead of stripping every label.
 
-Evidence: [desktop editor](artifacts/ui-ux-review-2026-10-01/notes-desktop-dark.png), [mobile editor](artifacts/ui-ux-review-2026-10-01/notes-mobile-after-back.png).
+Evidence: desktop editor, mobile editor.
 
 ### Typography is consistently small
 
@@ -82,7 +82,7 @@ The basic panel still exposes effective model, size variants, pinned revisions, 
 
 Use state-specific labels: Download transcription model, Retry setup, and Check readiness. Keep language, download size, progress, and microphone test in the main path. Place revision/cache explanation and timing diagnostics in Advanced. Keep limitations available through concise supporting copy.
 
-Evidence: [transcription settings](artifacts/ui-ux-review-2026-10-01/settings-transcription-light.png).
+Evidence: transcription settings.
 
 ### Recording setup should explain readiness before recording
 
@@ -90,7 +90,7 @@ The meeting screen has a strong Start recording action, separate transcript and 
 
 Before capture, the transcript promises live text and speaker names. Model readiness and speaker-name expectations should be explained accurately at that point. If a model is not ready, say whether audio can still be recorded and transcribed later. Present microphone access, audio source, and transcription readiness as distinct states; an unrelated AI-offline indicator should not imply speech recognition is unavailable.
 
-Evidence: [meeting setup](artifacts/ui-ux-review-2026-10-01/meeting-setup-light.png). Actual microphone capture and transcript accuracy were not tested.
+Evidence: meeting setup. Actual microphone capture and transcript accuracy were not tested.
 
 ## Remaining source-based concerns
 
@@ -142,6 +142,6 @@ The current browser regression script is [scripts/test-ui-ux-browser.mjs](script
 
 Browser regressions cover save failure/retry, retained drafts, rapid note switching, mobile Back, complete-backup navigation, content search, dialog focus trapping/restoration and inert background, command creation/setup, direct document selection, editor/menu viewport bounds, note deletion/Undo, light theme, one landing main landmark, and unknown storage states.
 
-Before/after screenshots are in [the review artifact directory](artifacts/ui-ux-review-2026-10-01). Key results: [Home](artifacts/ui-ux-review-2026-10-01/after/home-dark.png), [desktop notes](artifacts/ui-ux-review-2026-10-01/after/notes-desktop-dark.png), [mobile notes](artifacts/ui-ux-review-2026-10-01/after/notes-mobile-light.png).
+Before/after screenshots were captured during the review; they are no longer kept in the repository. Running the regression script saves new ones to `artifacts/ui-ux-review-2026-10-01/after/`, which git ignores.
 
 Validation does not establish real-device microphone behavior, transcription accuracy, packaged-desktop compatibility, or a complete screen-reader audit. English copy was revised; other existing translations need a dedicated editorial pass to fully align their older marketing statements. Draft retention and deletion Undo currently last only while the app session remains open. Permanent draft recovery after crashes and persistent Trash require separate data and archive contracts.

@@ -57,3 +57,6 @@ public/downloads/*.zip
 public/downloads/*.AppImage
 public/downloads/*.deb
 dist/downloads/
+
+# Screenshots and notes written by the browser test scripts
+artifacts/
