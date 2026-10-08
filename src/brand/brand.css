@@ -1,0 +1,99 @@
+/* HuskyNote brand: tone variables and mascot motion. Every selector is hn- prefixed. */
+
+.hn-tone-auto {
+  --hn-fur: #1B2433;
+  --hn-fold: #8794AA;
+  --hn-eye: #5AB0FF;
+  --hn-mask: #FFFFFF;
+  --hn-ink: #141A24;
+  --hn-paw-rim: #C9D1DE;
+  --hn-paper: #FFFFFF;
+}
+
+html.dark .hn-tone-auto {
+  --hn-fur: #5B6B88;
+  --hn-fold: #8E9DB8;
+  --hn-eye: #6BB8FF;
+  --hn-paw-rim: #8E9DB8;
+}
+
+.hn-mark,
+.hn-art {
+  display: inline-block;
+  vertical-align: middle;
+  overflow: visible;
+}
+
+.hn-art .hn-eye,
+.hn-art .hn-ear,
+.hn-mark .hn-eye {
+  transform-box: fill-box;
+}
+
+.hn-art .hn-eye,
+.hn-mark .hn-eye {
+  transform-origin: center;
+}
+
+.hn-art .hn-ear-l {
+  transform-origin: 70% 100%;
+}
+
+.hn-art .hn-ear-r {
+  transform-origin: 30% 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hn-animated .hn-eye {
+    animation: hn-blink 6s cubic-bezier(0.2, 0.7, 0.2, 1) infinite;
+  }
+
+  /* Ear twitch: hover the mascot itself, or any ancestor marked .hn-twitch */
+  .hn-animated:hover .hn-ear-l,
+  .hn-twitch:hover .hn-animated .hn-ear-l {
+    animation: hn-ear-twitch-l 640ms cubic-bezier(0.2, 0.7, 0.2, 1) 1;
+  }
+
+  .hn-animated:hover .hn-ear-r,
+  .hn-twitch:hover .hn-animated .hn-ear-r {
+    animation: hn-ear-twitch-r 640ms cubic-bezier(0.2, 0.7, 0.2, 1) 80ms 1;
+  }
+
+  @keyframes hn-blink {
+    0%,
+    95.5%,
+    98.5%,
+    100% {
+      transform: scaleY(1);
+    }
+    97% {
+      transform: scaleY(0.1);
+    }
+  }
+
+  @keyframes hn-ear-twitch-l {
+    0%,
+    100% {
+      transform: rotate(0deg);
+    }
+    30% {
+      transform: rotate(-9deg);
+    }
+    60% {
+      transform: rotate(3deg);
+    }
+  }
+
+  @keyframes hn-ear-twitch-r {
+    0%,
+    100% {
+      transform: rotate(0deg);
+    }
+    30% {
+      transform: rotate(9deg);
+    }
+    60% {
+      transform: rotate(-3deg);
+    }
+  }
+}

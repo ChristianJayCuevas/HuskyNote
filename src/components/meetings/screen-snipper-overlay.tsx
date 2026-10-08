@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Crop, X, Check } from 'lucide-react';
+import { Crop, X } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Kbd } from '../ui/kbd';
+import { cn } from '@/lib/utils';
 
 export interface CropRect {
   x: number;
@@ -17,7 +20,7 @@ interface ScreenSnipperOverlayProps {
 
 /**
  * ScreenSnipperOverlay provides an interactive, crosshair-based screen portion
- * selection tool with a pure monochrome white/gray glassmorphic design.
+ * selection tool: a dark scrim, a popover-style instruction pill and a dashed selection box.
  *
  * Users can click and drag across the viewport to crop a designated region.
  */
@@ -91,58 +94,62 @@ export const ScreenSnipperOverlay: React.FC<ScreenSnipperOverlayProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[10000] select-none cursor-crosshair overflow-hidden"
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.45)',
-        backdropFilter: 'blur(3px)',
-      }}
+      // design-exception: the snipping scrim dims whatever is on screen, so it stays dark in both themes
+      className="fixed inset-0 z-[10000] cursor-crosshair select-none overflow-hidden bg-black/45"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
     >
-      {/* Top Floating Instruction Pill in Monochrome Glassmorphism */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-5 py-2.5 rounded-full bg-zinc-950/80 dark:bg-canvas-inset/85 backdrop-blur-2xl border border-white/25 shadow-2xl text-white pointer-events-auto">
-        <Crop className="w-4 h-4 text-zinc-300 animate-pulse" />
-        <span className="text-xs font-semibold tracking-wide text-zinc-100">
-          Click and drag to snip a portion of the screen
+      {/* Top floating instruction pill */}
+      <div className="pointer-events-auto absolute left-1/2 top-6 flex -translate-x-1/2 items-center gap-3 rounded-full border bg-popover py-1.5 pl-4 pr-1.5 text-popover-foreground shadow-lg">
+        <Crop className="size-4 text-muted-foreground" />
+        <span className="whitespace-nowrap text-sm font-medium">Click and drag to snip a portion of the screen</span>
+        <span className="hidden items-center gap-1.5 whitespace-nowrap text-xs text-muted-foreground sm:inline-flex">
+          <Kbd>Esc</Kbd> to cancel
         </span>
-        <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white/10 text-zinc-300 border border-white/15">
-          ESC to cancel
-        </span>
-        <button
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
             onCancel();
           }}
-          className="p-1 rounded-full hover:bg-white/15 text-zinc-400 hover:text-white transition-colors"
+          className="rounded-full text-muted-foreground"
           title="Cancel Snip"
+          aria-label="Cancel Snip"
         >
-          <X className="w-3.5 h-3.5" />
-        </button>
+          <X />
+        </Button>
       </div>
 
       {/* Selection Box when dragging */}
       {rect && rect.width > 0 && rect.height > 0 && (
         <div
-          className="absolute pointer-events-none"
+          className="pointer-events-none absolute"
           style={{
             left: `${rect.x}px`,
             top: `${rect.y}px`,
             width: `${rect.width}px`,
             height: `${rect.height}px`,
+            // design-exception: the selection is drawn over arbitrary screen content, so it uses fixed light/dark contrast
             border: '2px dashed rgba(255, 255, 255, 0.9)',
+            // design-exception: see above
             backgroundColor: 'rgba(255, 255, 255, 0.08)',
+            // design-exception: see above (darkens everything outside the selection)
             boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.35)',
           }}
         >
           {/* Corner Handles */}
-          <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border border-zinc-900 rounded-sm shadow-sm" />
-          <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border border-zinc-900 rounded-sm shadow-sm" />
-          <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border border-zinc-900 rounded-sm shadow-sm" />
-          <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border border-zinc-900 rounded-sm shadow-sm" />
+          {['-left-1.5 -top-1.5', '-right-1.5 -top-1.5', '-bottom-1.5 -left-1.5', '-bottom-1.5 -right-1.5'].map((corner) => (
+            <div
+              key={corner}
+              className={cn('absolute size-3 rounded-sm border border-primary bg-primary-foreground shadow-sm', corner)}
+            />
+          ))}
 
           {/* Dimension Tag */}
-          <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-md bg-zinc-950/90 border border-white/20 text-[10px] font-mono text-white whitespace-nowrap shadow-lg">
+          <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md border bg-popover px-2 py-0.5 font-mono text-xs tabular-nums text-popover-foreground shadow-lg">
             {Math.round(rect.width)} × {Math.round(rect.height)} px
           </div>
         </div>

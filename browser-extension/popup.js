@@ -726,6 +726,22 @@ ${text}`,
 
   document.getElementById('btn-launch-meeting-hud')?.addEventListener('click', launchMeetingHUD);
 
+  // Collect the Teams transcript open in the active tab (the crawler shows its progress on that page)
+  document.getElementById('btn-collect-teams-transcript')?.addEventListener('click', () => {
+    const status = document.getElementById('collect-teams-transcript-status');
+    if (typeof chrome === 'undefined' || !chrome.tabs?.query) return;
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tabId = tabs[0]?.id;
+      if (!tabId) return;
+      if (status) status.textContent = 'Looking for the transcript…';
+      chrome.runtime.sendMessage({ type: 'HUSKYNOTE_COLLECT_TEAMS_TRANSCRIPT', tabId }, (res) => {
+        if (status) status.textContent = res?.found
+          ? 'Collecting. Watch the progress on the Teams page.'
+          : 'No open transcript found on this tab. Open Recap › Transcript first.';
+      });
+    });
+  });
+
   // ─── MEETINGS: Load saved meeting documents ──────────────────────────────────
   let savedMeetings = [];
   let viewingMeetingId = null;

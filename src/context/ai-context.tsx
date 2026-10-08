@@ -1,14 +1,15 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import type { OllamaModel, AppSettings } from '../types';
 import { ollama, type PullProgressUpdate } from '../services/ai/ollama';
 import { claude, DEFAULT_CLAUDE_MODEL } from '../services/ai/claude';
+import { codex, codexModelsAsOptions, type CodexStatus } from '../services/ai/codex';
 import { setActiveProvider, type AIProviderId } from '../services/ai/active-provider';
 import { db, DEFAULT_SETTINGS } from '../db';
 
-export type { PullProgressUpdate, AIProviderId };
+export type { PullProgressUpdate, AIProviderId, CodexStatus };
 
 interface AIContextType {
-  /** The active provider can answer requests (Ollama reachable, or Claude key verified) */
+  /** The active provider can answer requests (Ollama reachable, Claude key verified, or Codex signed in) */
   isConnected: boolean;
   isChecking: boolean;
   /** Models of the active provider */
@@ -21,6 +22,12 @@ interface AIContextType {
   hasClaudeApiKey: boolean;
   /** Saves (or clears, with '') the Claude API key and verifies it */
   setClaudeApiKey: (apiKey: string) => Promise<boolean>;
+  /** Codex on this computer: installed, signed in, models (null until first checked) */
+  codexStatus: CodexStatus | null;
+  /** Re-reads the Codex status */
+  refreshCodexStatus: () => Promise<CodexStatus>;
+  /** Opens ChatGPT sign-in through Codex and waits until it finishes (true when signed in) */
+  signInWithChatGPT: (onUrl?: (url: string) => void) => Promise<boolean>;
   /** Local Ollama status, regardless of the active provider */
   isOllamaConnected: boolean;
   setSelectedModel: (model: string) => Promise<void>;
@@ -62,6 +69,8 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
   const [claudeModels, setClaudeModels] = useState<OllamaModel[]>([]);
   const [hasClaudeApiKey, setHasClaudeApiKey] = useState<boolean>(false);
   const [isClaudeReady, setIsClaudeReady] = useState<boolean>(false);
+  const [codexStatus, setCodexStatus] = useState<CodexStatus | null>(null);
+  const [codexModel, setCodexModelState] = useState<string>('');
 
   useEffect(() => {
     claude.getModels().then(setClaudeModels);
@@ -76,6 +85,33 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
     } finally {
       setIsChecking(false);
     }
+  }, []);
+
+  const refreshCodexStatus = useCallback(async (): Promise<CodexStatus> => {
+    setIsChecking(true);
+    try {
+      const status = await codex.getStatus();
+      setCodexStatus(status);
+      return status;
+    } finally {
+      setIsChecking(false);
+    }
+  }, []);
+
+  const signInWithChatGPT = useCallback(async (onUrl?: (url: string) => void): Promise<boolean> => {
+    const { url } = await codex.startLogin();
+    if (url) onUrl?.(url);
+    // Codex finishes sign-in in the browser; watch until it reports signed in or gives up
+    const deadline = Date.now() + 10 * 60_000;
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 2500));
+      const status = await codex.getStatus();
+      setCodexStatus(status);
+      if (status.loginUrl) onUrl?.(status.loginUrl);
+      if (status.loggedIn) return true;
+      if (!status.loginInProgress) return false;
+    }
+    return false;
   }, []);
 
   // Load persisted settings on mount
@@ -100,10 +136,13 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
           setBaseUrlState(settings.ollamaBaseUrl || 'http://localhost:11434');
           ollama.setBaseUrl(settings.ollamaBaseUrl || 'http://localhost:11434');
 
-          const savedProvider: AIProviderId = settings.aiProvider === 'claude' ? 'claude' : 'ollama';
+          const savedProvider: AIProviderId =
+            settings.aiProvider === 'claude' || settings.aiProvider === 'codex' ? settings.aiProvider : 'ollama';
           setProviderState(savedProvider);
           setActiveProvider(savedProvider);
           if (settings.claudeModel) setClaudeModelState(settings.claudeModel);
+          if (settings.codexModel) setCodexModelState(settings.codexModel);
+          if (savedProvider === 'codex') refreshCodexStatus();
           if (settings.claudeApiKey) {
             claude.setApiKey(settings.claudeApiKey);
             setHasClaudeApiKey(true);
@@ -119,7 +158,7 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
     return () => {
       isMounted = false;
     };
-  }, [checkClaude]);
+  }, [checkClaude, refreshCodexStatus]);
 
   const checkOllama = useCallback(async (): Promise<boolean> => {
     setIsChecking(true);
@@ -168,10 +207,14 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  const checkConnection = useCallback(
-    (): Promise<boolean> => (provider === 'claude' ? checkClaude() : checkOllama()),
-    [provider, checkClaude, checkOllama]
-  );
+  const checkConnection = useCallback(async (): Promise<boolean> => {
+    if (provider === 'claude') return checkClaude();
+    if (provider === 'codex') {
+      const status = await refreshCodexStatus();
+      return status.installed && status.loggedIn;
+    }
+    return checkOllama();
+  }, [provider, checkClaude, checkOllama, refreshCodexStatus]);
 
   // Poll the local Ollama service every 12 seconds (Claude is verified only when its key changes)
   useEffect(() => {
@@ -189,6 +232,7 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
       console.warn('[HuskyNote] Failed to persist AI provider:', err);
     }
     if (next === 'claude' && claude.hasApiKey()) checkClaude();
+    if (next === 'codex') refreshCodexStatus();
   };
 
   const setClaudeApiKey = async (apiKey: string): Promise<boolean> => {
@@ -210,6 +254,16 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
   const setSelectedModel = async (model: string) => {
     if (!model || !model.trim()) return;
     const cleanModel = model.trim();
+
+    if (provider === 'codex') {
+      setCodexModelState(cleanModel);
+      try {
+        await saveSettings({ codexModel: cleanModel });
+      } catch (err) {
+        console.warn('[HuskyNote] Failed to persist Codex model:', err);
+      }
+      return;
+    }
 
     if (provider === 'claude') {
       setClaudeModelState(cleanModel);
@@ -297,20 +351,27 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
     return result;
   };
 
-  const isClaude = provider === 'claude';
+  const codexModels = useMemo(() => codexStatus?.models ?? [], [codexStatus]);
+  const codexModelOptions = useMemo(() => codexModelsAsOptions(codexModels), [codexModels]);
+  // A saved model Codex no longer lists falls back to its first (default) model
+  const activeCodexModel = codexModels.some((m) => m.id === codexModel) ? codexModel : codexModels[0]?.id ?? '';
+  const isCodexReady = Boolean(codexStatus?.installed && codexStatus.loggedIn);
 
   return (
     <AIContext.Provider
       value={{
-        isConnected: isClaude ? isClaudeReady : isOllamaConnected,
+        isConnected: provider === 'claude' ? isClaudeReady : provider === 'codex' ? isCodexReady : isOllamaConnected,
         isChecking,
-        models: isClaude ? claudeModels : ollamaModels,
-        selectedModel: isClaude ? claudeModel : ollamaModel,
+        models: provider === 'claude' ? claudeModels : provider === 'codex' ? codexModelOptions : ollamaModels,
+        selectedModel: provider === 'claude' ? claudeModel : provider === 'codex' ? activeCodexModel : ollamaModel,
         baseUrl,
         provider,
         setProvider,
         hasClaudeApiKey,
         setClaudeApiKey,
+        codexStatus,
+        refreshCodexStatus,
+        signInWithChatGPT,
         isOllamaConnected,
         setSelectedModel,
         setBaseUrl,

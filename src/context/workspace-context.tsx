@@ -23,6 +23,7 @@ export interface ToastItem {
   id: string;
   type: 'info' | 'success' | 'warning' | 'error';
   message: string;
+  action?: { label: string; run: () => Promise<void> };
 }
 
 interface WorkspaceContextType {
@@ -48,7 +49,7 @@ interface WorkspaceContextType {
   setIsExtensionModalOpen: (open: boolean) => void;
   isCloudHost: boolean;
   toasts: ToastItem[];
-  addToast: (message: string, type?: ToastItem['type']) => void;
+  addToast: (message: string, type?: ToastItem['type'], action?: ToastItem['action']) => void;
   removeToast: (id: string) => void;
 }
 
@@ -170,10 +171,10 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const addToast = useCallback((message: string, type: ToastItem['type'] = 'info') => {
+  const addToast = useCallback((message: string, type: ToastItem['type'] = 'info', action?: ToastItem['action']) => {
     const id = `toast-${Date.now()}-${Math.random()}`;
-    setToasts((prev) => [...prev, { id, type, message }]);
-    setTimeout(() => {
+    setToasts((prev) => [...prev, { id, type, message, action }]);
+    if (!action) setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
   }, []);

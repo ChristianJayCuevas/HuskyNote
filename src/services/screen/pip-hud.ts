@@ -82,7 +82,8 @@ export async function openPipHudWindow(
     pipWin.document.body.style.margin = '0';
     pipWin.document.body.style.padding = '0';
     pipWin.document.body.style.overflow = 'hidden';
-    pipWin.document.body.style.background = '#09090b';
+    // design-exception: the PiP window starts without the app stylesheet; matches the dark --background (#191919)
+    pipWin.document.body.style.background = '#191919';
     pipWin.document.body.style.fontFamily =
       'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 

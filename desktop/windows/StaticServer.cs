@@ -30,6 +30,8 @@ namespace HuskyNote
             { ".svg", "image/svg+xml" },
             { ".ico", "image/x-icon" },
             { ".wasm", "application/wasm" },
+            { ".woff2", "font/woff2" },
+            { ".woff", "font/woff" },
             { ".txt", "text/plain; charset=utf-8" },
             { ".mp3", "audio/mpeg" },
             { ".wav", "audio/wav" },
@@ -69,7 +71,9 @@ namespace HuskyNote
                 try
                 {
                     var context = await _listener.GetContextAsync();
-                    _ = Task.Run(() => HandleRequest(context));
+                    // ChatGPT through Codex, answered before the static files' open CORS headers
+                    if (CodexBridge.Handles(context.Request)) _ = Task.Run(() => CodexBridge.HandleAsync(context, _port));
+                    else _ = Task.Run(() => HandleRequest(context));
                 }
                 catch (HttpListenerException) when (ct.IsCancellationRequested || !_listener.IsListening)
                 {

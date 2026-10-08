@@ -4,6 +4,7 @@ import path from 'path';
 import { exec } from 'child_process';
 import fs from 'fs';
 import { createRequire } from 'module';
+import { handleCodexRequest } from './server/codex-bridge';
 
 // parakeet.js pins its own onnxruntime-web (it may be nested under parakeet.js
 // rather than hoisted), and its runtime files must match that exact version
@@ -189,6 +190,16 @@ function chromeExtensionInstallerPlugin() {
   };
 }
 
+/** /api/codex/*: ChatGPT through the Codex CLI on this computer (see server/codex-bridge.ts) */
+function codexBridgePlugin() {
+  const use = (server: any) => {
+    server.middlewares.use((req: any, res: any, next: any) => {
+      if (!handleCodexRequest(req, res)) next();
+    });
+  };
+  return { name: 'huskynote-codex-bridge', configureServer: use, configurePreviewServer: use };
+}
+
 // https://vitejs.dev/config/
 const appVersion: string = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8')).version;
 
@@ -196,7 +207,7 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(appVersion),
   },
-  plugins: [react(), chromeExtensionInstallerPlugin()],
+  plugins: [react(), chromeExtensionInstallerPlugin(), codexBridgePlugin()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -215,6 +226,24 @@ export default defineConfig({
           'pdfjs-vendor': ['pdfjs-dist'],
           'markdown-vendor': ['react-markdown', 'remark-gfm', 'dompurify'],
           'export-vendor': ['jspdf'],
+          // UI primitives (Radix, cmdk, cva) change rarely; a separate chunk stays cached across app updates
+          'ui-vendor': [
+            '@radix-ui/react-alert-dialog',
+            '@radix-ui/react-checkbox',
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-label',
+            '@radix-ui/react-popover',
+            '@radix-ui/react-separator',
+            '@radix-ui/react-slot',
+            '@radix-ui/react-switch',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-toggle',
+            '@radix-ui/react-toggle-group',
+            '@radix-ui/react-tooltip',
+            'class-variance-authority',
+            'cmdk',
+          ],
         },
       },
     },

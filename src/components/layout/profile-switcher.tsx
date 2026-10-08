@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, ChevronsUpDown, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { createProfileWithSettings, deleteProfileAndData } from '../../db';
 import {
@@ -10,6 +10,11 @@ import {
   setActiveProfileId,
   type Profile,
 } from '../../services/profiles';
+import { cn } from '@/lib/utils';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { SimpleTooltip } from '../ui/tooltip';
 
 const initial = (name: string) => name.trim().charAt(0).toUpperCase() || '?';
 
@@ -22,8 +27,8 @@ function openProfile(id: string): void {
 type Pending = { kind: 'switch' | 'delete'; profile: Profile } | { kind: 'rename'; profile: Profile; name: string } | null;
 
 /**
- * Sidebar control for switching between profiles, each a separate workspace
- * for a job or project, and for adding, renaming, or deleting them.
+ * Sidebar workspace switcher (Notion style): each profile is a separate workspace for a job or
+ * project. The popover lists profiles and lets you add, rename, or delete them.
  */
 export const ProfileSwitcher: React.FC<{ collapsed?: boolean }> = ({ collapsed = false }) => {
   const active = getActiveProfile();
@@ -34,25 +39,11 @@ export const ProfileSwitcher: React.FC<{ collapsed?: boolean }> = ({ collapsed =
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!open) return;
-    setProfiles(listProfiles());
-    const onPointer = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
-    document.addEventListener('mousedown', onPointer);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onPointer);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) {
+    if (open) {
+      setProfiles(listProfiles());
+    } else {
       setPending(null);
       setAdding(false);
       setNewName('');
@@ -92,89 +83,86 @@ export const ProfileSwitcher: React.FC<{ collapsed?: boolean }> = ({ collapsed =
       setPending(null);
     });
 
-  const inputClass =
-    'flex-1 min-w-0 px-2 py-1.5 rounded-md text-xs bg-white border border-slate-300 text-slate-900 focus:outline-none focus:border-slate-500 dark:bg-canvas dark:border-zinc-700 dark:text-zinc-100 dark:focus:border-zinc-500';
-  const smallButton =
-    'px-2 py-1.5 rounded-md text-[11px] font-semibold disabled:opacity-50 transition-colors';
-  const primary = `${smallButton} bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200`;
-  const quiet = `${smallButton} text-slate-600 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-850`;
+  const trigger = (
+    <button
+      type="button"
+      title={`Profile: ${active.name}`}
+      aria-label={collapsed ? `Profile: ${active.name}` : undefined}
+      className={cn(
+        'flex items-center gap-2 rounded-md text-left transition-colors duration-100 hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring data-[state=open]:bg-sidebar-accent',
+        collapsed ? 'size-8 justify-center' : 'h-9 w-full px-2'
+      )}
+    >
+      <span className="flex size-5 shrink-0 items-center justify-center rounded bg-primary text-xs font-semibold text-primary-foreground">
+        {initial(active.name)}
+      </span>
+      {!collapsed && (
+        <>
+          <span className="min-w-0 flex-1 truncate text-sm font-medium text-sidebar-accent-foreground">{active.name}</span>
+          <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
+        </>
+      )}
+    </button>
+  );
 
   return (
-    <div ref={rootRef} className={`relative ${collapsed ? 'flex justify-center' : ''}`}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        title={`Profile: ${active.name}`}
-        className={`flex items-center gap-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-850 transition-colors ${
-          collapsed ? 'p-1.5' : 'w-full px-2.5 py-2 text-left'
-        }`}
+    <Popover open={open} onOpenChange={setOpen}>
+      {collapsed ? (
+        <SimpleTooltip content={`Profile: ${active.name}`} side="right">
+          <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+        </SimpleTooltip>
+      ) : (
+        <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      )}
+      <PopoverContent
+        side={collapsed ? 'right' : 'bottom'}
+        align="start"
+        className="w-72 p-1"
+        aria-label="Profiles"
       >
-        <span className="w-6 h-6 shrink-0 rounded-md bg-slate-900 text-white dark:bg-white dark:text-black text-[11px] font-bold flex items-center justify-center">
-          {initial(active.name)}
-        </span>
-        {!collapsed && (
-          <>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-zinc-500 leading-none">
-                Profile
-              </span>
-              <span className="block mt-1 text-xs font-semibold text-slate-900 dark:text-zinc-100 truncate leading-none">
-                {active.name}
-              </span>
-            </span>
-            <ChevronsUpDown className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-zinc-500" />
-          </>
-        )}
-      </button>
+        <div className="px-2 pb-1.5 pt-1.5 text-xs font-medium text-muted-foreground">Profiles</div>
 
-      {open && (
-        <div
-          role="menu"
-          aria-label="Profiles"
-          className={`absolute z-50 w-72 max-w-[calc(100vw-2rem)] p-1.5 rounded-lg border shadow-xl bg-white border-slate-200 dark:bg-zinc-900 dark:border-zinc-800 dark:shadow-[0_8px_24px_rgba(1,4,9,0.75)] ${
-            collapsed ? 'left-full top-0 ml-2' : 'left-0 top-full mt-1.5'
-          }`}
-        >
-          <div className="px-2.5 pt-1.5 pb-2 text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-zinc-500">
-            Profiles
-          </div>
-
+        <div className="space-y-px">
           {profiles.map((p) => {
             const isActive = p.id === active.id;
             if (pending?.profile.id === p.id && pending.kind === 'rename') {
               return (
                 <form
                   key={p.id}
-                  className="flex items-center gap-1.5 px-1.5 py-1"
+                  className="flex items-center gap-1.5 px-1 py-1"
                   onSubmit={(e) => {
                     e.preventDefault();
                     handleRename(p, pending.name);
                   }}
                 >
-                  <input
+                  <Input
                     autoFocus
                     value={pending.name}
                     maxLength={MAX_PROFILE_NAME_LENGTH}
                     onChange={(e) => setPending({ ...pending, name: e.target.value })}
-                    className={inputClass}
+                    className="h-7 flex-1"
                     aria-label="Profile name"
                   />
-                  <button type="submit" disabled={busy} className={primary}>
+                  <Button type="submit" size="sm" disabled={busy}>
                     Save
-                  </button>
-                  <button type="button" onClick={() => setPending(null)} className={quiet} aria-label="Cancel rename">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setPending(null)}
+                    aria-label="Cancel rename"
+                  >
+                    <X />
+                  </Button>
                 </form>
               );
             }
             if (pending?.profile.id === p.id && (pending.kind === 'switch' || pending.kind === 'delete')) {
               const deleting = pending.kind === 'delete';
               return (
-                <div key={p.id} className="px-2.5 py-2 rounded-md bg-slate-50 dark:bg-zinc-850/60">
-                  <p className="text-[11px] leading-relaxed text-slate-700 dark:text-zinc-300">
+                <div key={p.id} className={cn('rounded-md px-2.5 py-2', deleting ? 'bg-destructive/10' : 'bg-muted')}>
+                  <p className="text-xs leading-relaxed text-foreground">
                     {deleting ? (
                       <>
                         Delete <strong>{p.name}</strong> and all of its notes, meetings, documents, and settings? This
@@ -187,106 +175,107 @@ export const ProfileSwitcher: React.FC<{ collapsed?: boolean }> = ({ collapsed =
                     )}
                   </p>
                   <div className="mt-2 flex items-center gap-1.5">
-                    <button
+                    <Button
                       type="button"
+                      size="xs"
+                      variant={deleting ? 'destructive' : 'default'}
                       disabled={busy}
                       onClick={() => (deleting ? handleDelete(p) : openProfile(p.id))}
-                      className={
-                        deleting
-                          ? `${smallButton} bg-red-600 text-white hover:bg-red-700`
-                          : primary
-                      }
                     >
                       {deleting ? 'Delete profile' : 'Switch'}
-                    </button>
-                    <button type="button" onClick={() => setPending(null)} className={quiet}>
+                    </Button>
+                    <Button type="button" size="xs" variant="ghost" onClick={() => setPending(null)}>
                       Cancel
-                    </button>
+                    </Button>
                   </div>
                 </div>
               );
             }
             return (
-              <div key={p.id} className="group flex items-center rounded-md hover:bg-slate-50 dark:hover:bg-zinc-850/60">
+              <div key={p.id} className="group flex items-center rounded-md transition-colors duration-100 hover:bg-accent">
                 <button
                   type="button"
-                  role="menuitemradio"
-                  aria-checked={isActive}
+                  aria-current={isActive ? 'true' : undefined}
                   onClick={() => !isActive && setPending({ kind: 'switch', profile: p })}
-                  className={`flex-1 min-w-0 flex items-center gap-2 px-2.5 py-2 text-left text-xs ${
-                    isActive ? 'font-semibold text-slate-950 dark:text-white' : 'text-slate-700 dark:text-zinc-300'
-                  }`}
+                  className={cn(
+                    'flex min-h-8 min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    isActive ? 'font-medium text-foreground' : 'text-foreground'
+                  )}
                 >
-                  <Check className={`w-3.5 h-3.5 shrink-0 ${isActive ? '' : 'invisible'}`} />
-                  <span className="w-5 h-5 shrink-0 rounded bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 text-[10px] font-bold flex items-center justify-center">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded bg-secondary text-xs font-semibold text-secondary-foreground">
                     {initial(p.name)}
                   </span>
-                  <span className="truncate">{p.name}</span>
+                  <span className="min-w-0 flex-1 truncate">{p.name}</span>
+                  {isActive && <Check className="size-4 shrink-0 text-foreground" />}
                 </button>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => setPending({ kind: 'rename', profile: p, name: p.name })}
-                  className="p-1.5 rounded text-slate-400 hover:text-slate-900 dark:text-zinc-500 dark:hover:text-zinc-100 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                  className="size-6 text-muted-foreground opacity-0 focus-visible:opacity-100 group-hover:opacity-100 coarse:opacity-100"
                   title={`Rename ${p.name}`}
                   aria-label={`Rename ${p.name}`}
                 >
-                  <Pencil className="w-3 h-3" />
-                </button>
+                  <Pencil className="size-3" />
+                </Button>
                 {p.id !== DEFAULT_PROFILE_ID && !isActive && (
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => setPending({ kind: 'delete', profile: p })}
-                    className="p-1.5 mr-1 rounded text-slate-400 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                    className="mr-1 size-6 text-muted-foreground opacity-0 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 coarse:opacity-100"
                     title={`Delete ${p.name}`}
                     aria-label={`Delete ${p.name}`}
                   >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
+                    <Trash2 className="size-3" />
+                  </Button>
                 )}
               </div>
             );
           })}
-
-          <div className="mt-1 pt-1.5 border-t border-slate-100 dark:border-zinc-800">
-            {adding ? (
-              <form
-                className="flex items-center gap-1.5 px-1.5 py-1"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleCreate();
-                }}
-              >
-                <input
-                  autoFocus
-                  value={newName}
-                  maxLength={MAX_PROFILE_NAME_LENGTH}
-                  onChange={(e) => setNewName(e.target.value)}
-                  placeholder="Job or project name"
-                  className={inputClass}
-                  aria-label="New profile name"
-                />
-                <button type="submit" disabled={busy || !newName.trim()} className={primary}>
-                  Create
-                </button>
-              </form>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setAdding(true)}
-                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-left text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-850/60"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                New profile
-              </button>
-            )}
-            {error && <p className="px-2.5 py-1.5 text-[11px] text-red-600 dark:text-red-400">{error}</p>}
-            <p className="px-2.5 pt-1.5 pb-1 text-[10px] leading-relaxed text-slate-500 dark:text-zinc-500">
-              Each profile keeps its own notes, meetings, documents, manuals, and schedule. A new profile starts with your
-              current AI and transcription settings.
-            </p>
-          </div>
         </div>
-      )}
-    </div>
+
+        <div className="mt-1 border-t pt-1">
+          {adding ? (
+            <form
+              className="flex items-center gap-1.5 px-1 py-1"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleCreate();
+              }}
+            >
+              <Input
+                autoFocus
+                value={newName}
+                maxLength={MAX_PROFILE_NAME_LENGTH}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Job or project name"
+                className="h-7 flex-1"
+                aria-label="New profile name"
+              />
+              <Button type="submit" size="sm" disabled={busy || !newName.trim()}>
+                Create
+              </Button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAdding(true)}
+              className="flex min-h-8 w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm text-muted-foreground transition-colors duration-100 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Plus className="size-4" />
+              New profile
+            </button>
+          )}
+          {error && <p className="px-2 py-1.5 text-xs text-destructive">{error}</p>}
+          <p className="px-2 pb-1 pt-1.5 text-xs leading-relaxed text-muted-foreground">
+            Each profile keeps its own notes, meetings, documents, manuals, and schedule. A new profile starts with your
+            current AI and transcription settings.
+          </p>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 };

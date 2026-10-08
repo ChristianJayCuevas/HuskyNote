@@ -1,21 +1,60 @@
-import React, { useState, useEffect, useMemo } from 'react';
+/**
+ * Exports: CommandPalette
+ *
+ * Ctrl/Cmd+K palette on cmdk (CommandDialog). Rendered once by AppLayout; open state lives in
+ * useWorkspace().isCommandPaletteOpen. Groups: Create, Go to, Actions. Enter runs the selected
+ * (first matching) command.
+ */
+import React, { useMemo } from 'react';
 import {
-  Search,
-  FileText,
-  Mic,
-  FileUp,
-  Video,
-  Bot,
-  Settings,
-  Download,
-  Shield,
   BookOpen,
-  Sparkles,
+  Bot,
+  Download,
+  Feather,
+  FileText,
+  FileUp,
+  GitCommit,
+  Home,
+  Info,
+  Calendar,
   Layers,
+  Mic,
+  Moon,
+  Settings,
+  Shield,
+  Sparkles,
+  Video,
+  BookMarked,
+  type LucideIcon,
 } from 'lucide-react';
 import { useWorkspace } from '../../context/workspace-context';
-import { exportWorkspaceToJson } from '../../db';
-import { downloadJsonFile } from '../../services/export/json';
+import { useTheme } from '../../context/theme-context';
+import { SETTINGS_TAB_STORAGE_KEY } from '../../views/settings-view';
+import { createEmptyNote } from '../../services/notes/actions';
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandFooter,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from './command';
+
+interface PaletteAction {
+  id: string;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  group: 'create' | 'goto' | 'actions';
+  run: () => void | Promise<void>;
+}
+
+const GROUPS: Array<{ id: PaletteAction['group']; heading: string }> = [
+  { id: 'create', heading: 'Create' },
+  { id: 'goto', heading: 'Go to' },
+  { id: 'actions', heading: 'Actions' },
+];
 
 export const CommandPalette: React.FC = () => {
   const {
@@ -24,56 +63,108 @@ export const CommandPalette: React.FC = () => {
     setActiveView,
     addToast,
     setIsExtensionModalOpen,
+    setActiveNoteId,
   } = useWorkspace();
-  const [query, setQuery] = useState('');
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const { toggleTheme } = useTheme();
 
-  const actions = useMemo(
+  const actions = useMemo<PaletteAction[]>(
     () => [
       {
         id: 'new-note',
         title: 'New Note',
         description: 'Create an empty markdown note',
         icon: FileText,
-        shortcut: 'Cmd+N',
-        run: () => {
+        group: 'create',
+        run: async () => {
+          try { setActiveNoteId(await createEmptyNote()); }
+          catch { addToast('Could not create a note. Check available storage and retry.', 'error'); return; }
           setActiveView('notes');
         },
       },
       {
         id: 'start-meeting',
-        title: 'Start Meeting',
-        description: 'Begin real-time microphone capture & transcription',
+        title: 'Open meeting setup',
+        description: 'Choose an audio source before starting a recording',
         icon: Mic,
-        shortcut: 'Cmd+Shift+M',
+        group: 'create',
         run: () => {
+          const url = new URL(window.location.href);
+          url.searchParams.set('action', 'meeting');
+          window.history.replaceState(window.history.state, '', url.toString());
           setActiveView('meetings');
+          window.dispatchEvent(new CustomEvent('huskynote:start-meeting'));
         },
       },
       {
         id: 'upload-doc',
         title: 'Upload Document',
-        description: 'Open PDF reader and AI extraction',
+        description: 'Choose a PDF, document, or text file',
         icon: FileUp,
-        shortcut: 'Cmd+Shift+U',
+        group: 'create',
         run: () => {
+          const url = new URL(window.location.href);
+          url.searchParams.set('action', 'upload');
+          window.history.replaceState(window.history.state, '', url.toString());
           setActiveView('documents');
+          window.dispatchEvent(new CustomEvent('huskynote:upload-pdf'));
         },
       },
       {
         id: 'capture-operation',
-        title: 'Capture Operation',
-        description: 'Record screen states to generate a manual',
+        title: 'Open guide recorder',
+        description: 'Set up a screen recording to create a guide',
         icon: Video,
+        group: 'create',
         run: () => {
-          setActiveView('manuals');
+          setActiveView('studio');
         },
+      },
+      {
+        id: 'go-home',
+        title: 'Home',
+        description: 'Today, recent work, and action items',
+        icon: Home,
+        group: 'goto',
+        run: () => setActiveView('dashboard'),
+      },
+      {
+        id: 'go-notes',
+        title: 'Notes',
+        description: 'Markdown notes in this profile',
+        icon: FileText,
+        group: 'goto',
+        run: () => setActiveView('notes'),
+      },
+      {
+        id: 'go-meetings',
+        title: 'Meetings',
+        description: 'Recordings, transcripts, and reports',
+        icon: Mic,
+        group: 'goto',
+        run: () => setActiveView('meetings'),
+      },
+      {
+        id: 'go-documents',
+        title: 'Documents',
+        description: 'PDFs and files with the document assistant',
+        icon: FileUp,
+        group: 'goto',
+        run: () => setActiveView('documents'),
+      },
+      {
+        id: 'go-manuals',
+        title: 'Manuals',
+        description: 'Step-by-step guides from screen recordings',
+        icon: BookMarked,
+        group: 'goto',
+        run: () => setActiveView('manuals'),
       },
       {
         id: 'ask-ai',
         title: 'AI Workspace',
         description: 'Synthesize across notes, meetings, and documents',
         icon: Bot,
+        group: 'goto',
         run: () => {
           setActiveView('ai-workspace');
         },
@@ -83,51 +174,17 @@ export const CommandPalette: React.FC = () => {
         title: 'Templates Gallery',
         description: 'Browse built-in SOPs, meeting notes, and logs',
         icon: BookOpen,
+        group: 'goto',
         run: () => {
           setActiveView('templates');
-        },
-      },
-      {
-        id: 'settings',
-        title: 'Settings',
-        description: 'Configure local Ollama and view storage',
-        icon: Settings,
-        run: () => {
-          setActiveView('settings');
-        },
-      },
-      {
-        id: 'chrome-extension',
-        title: 'Chrome Extension',
-        description: '1-click standalone extension & side panel setup',
-        icon: Layers,
-        shortcut: 'Cmd+Shift+E',
-        run: () => {
-          setIsExtensionModalOpen(true);
-        },
-      },
-      {
-        id: 'export-workspace',
-        title: 'Export Workspace',
-        description: 'Download JSON archive of all local data',
-        icon: Download,
-        run: async () => {
-          try {
-            const jsonStr = await exportWorkspaceToJson();
-            const dateStr = new Date().toISOString().split('T')[0];
-            downloadJsonFile(`huskynote_backup_${dateStr}.json`, jsonStr);
-            addToast('Workspace successfully exported to JSON.', 'success');
-          } catch {
-            addToast('Failed to export workspace.', 'error');
-          }
         },
       },
       {
         id: 'zen-notes',
         title: 'Husky Notes Focus Mode',
         description: 'Distraction-free writing with companion',
-        icon: FileText,
-        shortcut: 'Cmd+Shift+N',
+        icon: Feather,
+        group: 'goto',
         run: () => {
           setActiveView('zen');
         },
@@ -136,8 +193,8 @@ export const CommandPalette: React.FC = () => {
         id: 'schedule',
         title: 'Automated Schedule',
         description: 'Timeline agenda, reminders, and calendar planner',
-        icon: Settings,
-        shortcut: 'Cmd+Shift+S',
+        icon: Calendar,
+        group: 'goto',
         run: () => {
           setActiveView('schedule');
         },
@@ -147,16 +204,35 @@ export const CommandPalette: React.FC = () => {
         title: 'Screen Recording Studio',
         description: 'Record your screen with webcam',
         icon: Video,
-        shortcut: 'Cmd+Shift+R',
+        group: 'goto',
         run: () => {
           setActiveView('studio');
         },
       },
       {
+        id: 'settings',
+        title: 'Settings',
+        description: 'Configure AI, transcription, integrations, and storage',
+        icon: Settings,
+        group: 'goto',
+        run: () => {
+          setActiveView('settings');
+        },
+      },
+      {
+        id: 'about',
+        title: 'About HuskyNote',
+        description: 'Credits and project details',
+        icon: Info,
+        group: 'goto',
+        run: () => setActiveView('about'),
+      },
+      {
         id: 'changelog',
         title: 'App Updates & Info',
         description: 'See recent updates and system details',
-        icon: Shield,
+        icon: GitCommit,
+        group: 'goto',
         run: () => {
           setActiveView('changelog');
         },
@@ -166,130 +242,112 @@ export const CommandPalette: React.FC = () => {
         title: 'Privacy & Architecture',
         description: 'View local-first boundaries and data ownership',
         icon: Shield,
+        group: 'goto',
         run: () => {
           setActiveView('privacy');
         },
+      },
+      {
+        id: 'download',
+        title: 'Download App',
+        description: 'Desktop apps for Windows, macOS, and Linux',
+        icon: Download,
+        group: 'goto',
+        run: () => setActiveView('download'),
       },
       {
         id: 'landing-page',
         title: 'Return to Landing Page',
         description: 'Explore features, architecture story, and product demo',
         icon: Sparkles,
-        shortcut: 'Cmd+Shift+L',
+        group: 'goto',
         run: () => {
           setActiveView('landing');
         },
       },
+      {
+        id: 'export-workspace',
+        title: 'Back up active profile',
+        description: 'Open complete backup and recovery, including documents and recordings',
+        icon: Download,
+        group: 'actions',
+        run: () => {
+          window.dispatchEvent(new CustomEvent('huskynote:settings-tab', { detail: 'storage' }));
+          try { localStorage.setItem(SETTINGS_TAB_STORAGE_KEY, 'storage'); } catch { /* URL remains the fallback */ }
+          setActiveView('settings');
+          const url = new URL(window.location.href);
+          url.searchParams.set('tab', 'storage');
+          window.history.replaceState(window.history.state, '', url.toString());
+        },
+      },
+      {
+        id: 'chrome-extension',
+        title: 'Chrome Extension',
+        description: '1-click standalone extension & side panel setup',
+        icon: Layers,
+        group: 'actions',
+        run: () => {
+          setIsExtensionModalOpen(true);
+        },
+      },
+      {
+        id: 'toggle-theme',
+        title: 'Toggle theme',
+        description: 'Switch between light and dark',
+        icon: Moon,
+        group: 'actions',
+        run: () => toggleTheme(),
+      },
     ],
-    [setActiveView, addToast]
+    [setActiveView, setActiveNoteId, addToast, setIsExtensionModalOpen, toggleTheme]
   );
 
-  const filtered = useMemo(() => {
-    if (!query.trim()) return actions;
-    const q = query.toLowerCase();
-    return actions.filter(
-      (a) => a.title.toLowerCase().includes(q) || a.description.toLowerCase().includes(q)
-    );
-  }, [actions, query]);
-
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
-
-  useEffect(() => {
-    if (!isCommandPaletteOpen) {
-      setQuery('');
-      setSelectedIndex(0);
-    }
-  }, [isCommandPaletteOpen]);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev + 1) % filtered.length);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev - 1 + filtered.length) % filtered.length);
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (filtered[selectedIndex]) {
-        filtered[selectedIndex].run();
-        setIsCommandPaletteOpen(false);
-      }
-    }
+  const runAction = (action: PaletteAction) => {
+    setIsCommandPaletteOpen(false);
+    void action.run();
   };
 
-  if (!isCommandPaletteOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/60 dark:bg-canvas-inset/80 backdrop-blur-sm animate-fade-in">
-      <div
-        className="fixed inset-0"
-        onClick={() => setIsCommandPaletteOpen(false)}
-        aria-hidden="true"
-      />
-      <div
-        className="relative w-full max-w-xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-10"
-        role="dialog"
-        aria-modal="true"
-      >
-        <div className="flex items-center px-4 py-3 border-b border-slate-200 dark:border-zinc-850">
-          <Search className="w-4 h-4 text-slate-500 dark:text-zinc-400 mr-3 shrink-0" />
-          <input
-            type="text"
-            placeholder="Type a command or search..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            autoFocus
-            className="w-full bg-transparent text-sm text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none font-medium"
-          />
-          <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-850 rounded font-semibold">
-            ESC
-          </kbd>
-        </div>
-
-        <div className="max-h-80 overflow-y-auto p-2">
-          {filtered.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-500 dark:text-zinc-400">No matching commands.</div>
-          ) : (
-            filtered.map((action, index) => {
-              const Icon = action.icon;
-              const isSelected = index === selectedIndex;
-              return (
-                <div
-                  key={action.id}
-                  onClick={() => {
-                    action.run();
-                    setIsCommandPaletteOpen(false);
-                  }}
-                  onMouseEnter={() => setSelectedIndex(index)}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
-                    isSelected
-                      ? 'bg-slate-100 dark:bg-zinc-900 text-black dark:text-white'
-                      : 'text-slate-800 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-900/60'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-1.5 rounded-md bg-slate-100 dark:bg-zinc-850 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300">
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-950 dark:text-zinc-100">{action.title}</div>
-                      <div className="text-xs text-slate-600 dark:text-zinc-400">{action.description}</div>
-                    </div>
-                  </div>
-                  {action.shortcut && (
-                    <kbd className="text-[10px] font-mono text-slate-700 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-950 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-850 font-semibold">
-                      {action.shortcut}
-                    </kbd>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
-    </div>
+    <CommandDialog
+      open={isCommandPaletteOpen}
+      onOpenChange={setIsCommandPaletteOpen}
+      title="Commands"
+      description="Search for a command to run"
+    >
+      {/* Uncontrolled on purpose: cmdk filters and selects synchronously, so Enter right after typing runs the
+          first match. The palette remounts on every open, which clears the query. */}
+      <CommandInput placeholder="Type a command..." aria-label="Search commands" />
+      <CommandList>
+        <CommandEmpty>No matching commands.</CommandEmpty>
+        {GROUPS.map((group) => (
+          <CommandGroup key={group.id} heading={group.heading}>
+            {actions
+              .filter((action) => action.group === group.id)
+              .map((action) => {
+                const Icon = action.icon;
+                return (
+                  <CommandItem
+                    key={action.id}
+                    value={action.title}
+                    keywords={[action.description]}
+                    onSelect={() => runAction(action)}
+                  >
+                    <Icon />
+                    <span className="shrink-0">{action.title}</span>
+                    <span className="min-w-0 truncate text-xs text-muted-foreground">{action.description}</span>
+                  </CommandItem>
+                );
+              })}
+          </CommandGroup>
+        ))}
+      </CommandList>
+      <CommandFooter aria-hidden="true">
+        <span>↑↓ navigate</span>
+        <span>·</span>
+        <span>↵ select</span>
+        <span>·</span>
+        <span>esc close</span>
+      </CommandFooter>
+    </CommandDialog>
   );
 };

@@ -370,6 +370,20 @@ describe('Multilingual Speech Recognition & AI Translation System', () => {
       expect(summary.overview).toContain('Tinalakay ng koponan');
       expect(summary.actionItems[0].owner).toBe('Arron');
       expect(summary.summaryLanguage).toBe('fil');
+      expect(summary.aiGenerated).toBe(true);
+    });
+
+    it('marks the summary as not written by AI, with the reason, when the AI call fails', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+      const segments: TranscriptSegment[] = [
+        { id: 's1', timestampSeconds: 0, speaker: 'Speaker 1', text: 'Mic test, can everyone hear me?' },
+      ];
+
+      const { summary } = await synthesizeMeetingAI(segments, '', 'test-model', 'Kickoff', 'en');
+
+      expect(summary.aiGenerated).toBe(false);
+      expect(summary.aiError).toBeTruthy();
+      expect(summary.decisions).toEqual([]);
     });
   });
 

@@ -2,7 +2,242 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Performance-optimized View Transitions for seamless 120 FPS theme switching */
+/*
+ * Design tokens (shadcn/ui v3 format: HSL channels consumed as hsl(var(--x) / <alpha>)).
+ * Notion palette: warm grays, near-black primary in light, near-white primary in dark.
+ * Blue (--ring) is only for focus rings and text selection. success / warning / info /
+ * destructive are semantic states; chart-1..5 are for data only.
+ * See SOT.md "Visual system" and scripts/check-design-tokens.mjs.
+ */
+@layer base {
+  :root {
+    color-scheme: light;
+    --background: 0 0% 100%;
+    --foreground: 45 7.8% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 45 7.8% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 45 7.8% 20%;
+    --primary: 45 7.8% 20%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 60 6.7% 94.1%;
+    --secondary-foreground: 45 7.8% 20%;
+    --muted: 60 11.1% 96.5%;
+    --muted-foreground: 50 2.8% 42.4%;
+    --accent: 60 5.9% 93.3%;
+    --accent-foreground: 45 7.8% 20%;
+    --destructive: 2.2 53.7% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 144.8 34.8% 35.5%;
+    --warning: 36.6 78.4% 32.7%;
+    --info: 211.1 72.8% 44.7%;
+    --border: 60 4.3% 91%;
+    --input: 45 5.4% 85.5%;
+    --ring: 209.8 76.7% 51.2%;
+    --radius: 0.5rem;
+    --sidebar-background: 60 11.1% 96.5%;
+    --sidebar-foreground: 45 2.2% 36.5%;
+    --sidebar-primary: 45 7.8% 20%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 60 4.8% 91.8%;
+    --sidebar-accent-foreground: 45 7.8% 20%;
+    --sidebar-border: 60 4.3% 91%;
+    --sidebar-ring: 209.8 76.7% 51.2%;
+    --chart-1: 212.8 67.7% 50.2%;
+    --chart-2: 17 82.1% 56.3%;
+    --chart-3: 158.5 73.3% 39.6%;
+    --chart-4: 40.8 100% 46.5%;
+    --chart-5: 337.4 70.3% 69.6%;
+    /* Document pages stay white in both themes */
+    --paper: 0 0% 100%;
+    --paper-foreground: 45 7.8% 20%;
+    --scrollbar: 45 8.3% 81.2%;
+    --shadow-xs: 0 1px 2px 0 rgb(15 15 15 / 0.05);
+    --shadow-sm: 0 1px 3px 0 rgb(15 15 15 / 0.06), 0 1px 2px -1px rgb(15 15 15 / 0.06);
+    --shadow-md: 0 0 0 1px rgb(15 15 15 / 0.03), 0 3px 6px rgb(15 15 15 / 0.06), 0 6px 16px rgb(15 15 15 / 0.08);
+    --shadow-lg: 0 0 0 1px rgb(15 15 15 / 0.05), 0 3px 6px rgb(15 15 15 / 0.1), 0 9px 24px rgb(15 15 15 / 0.2);
+    --shadow-xl: 0 0 0 1px rgb(15 15 15 / 0.05), 0 5px 10px rgb(15 15 15 / 0.1), 0 15px 40px rgb(15 15 15 / 0.2);
+    /* @deprecated alias for older landing styles */
+    --bg-page: hsl(var(--background));
+
+    /* Neutral ramps (rgb channels). slate: warm light ramp in both themes. zinc: light ramp here, dark ramp in .dark */
+    --slate-50: 251 251 250;
+    --slate-100: 247 247 245;
+    --slate-200: 233 233 231;
+    --slate-300: 217 216 213;
+    --slate-400: 165 164 160;
+    --slate-500: 111 110 105;
+    --slate-600: 95 94 91;
+    --slate-700: 74 73 68;
+    --slate-750: 69 68 63;
+    --slate-800: 64 62 57;
+    --slate-850: 59 58 53;
+    --slate-900: 55 53 47;
+    --slate-950: 37 36 32;
+
+    --zinc-50: 251 251 250;
+    --zinc-100: 247 247 245;
+    --zinc-200: 233 233 231;
+    --zinc-300: 217 216 213;
+    --zinc-400: 165 164 160;
+    --zinc-500: 111 110 105;
+    --zinc-600: 95 94 91;
+    --zinc-700: 74 73 68;
+    --zinc-750: 69 68 63;
+    --zinc-800: 64 62 57;
+    --zinc-850: 59 58 53;
+    --zinc-900: 55 53 47;
+    --zinc-950: 37 36 32;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --background: 0 0% 9.8%;
+    --foreground: 40 5.1% 88.4%;
+    --card: 0 0% 12.5%;
+    --card-foreground: 40 5.1% 88.4%;
+    --popover: 0 0% 14.5%;
+    --popover-foreground: 40 5.1% 88.4%;
+    --primary: 40 5.1% 88.4%;
+    --primary-foreground: 0 0% 9.8%;
+    --secondary: 0 0% 17.3%;
+    --secondary-foreground: 40 5.1% 88.4%;
+    --muted: 0 0% 14.5%;
+    --muted-foreground: 45 2% 60%;
+    --accent: 0 0% 17.3%;
+    --accent-foreground: 40 5.1% 88.4%;
+    --destructive: 3 82.5% 66.5%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 148.7 36.3% 48.6%;
+    --warning: 36.9 63.1% 56.5%;
+    --info: 209.3 68.2% 61.8%;
+    --border: 0 0% 18.4%;
+    --input: 0 0% 22.7%;
+    --ring: 209.8 76.7% 51.2%;
+    --sidebar-background: 0 0% 12.5%;
+    --sidebar-foreground: 45 2% 60%;
+    --sidebar-primary: 40 5.1% 88.4%;
+    --sidebar-primary-foreground: 0 0% 9.8%;
+    --sidebar-accent: 0 0% 17.3%;
+    --sidebar-accent-foreground: 40 5.1% 88.4%;
+    --sidebar-border: 0 0% 16.5%;
+    --sidebar-ring: 209.8 76.7% 51.2%;
+    --chart-1: 212.8 76.8% 56.1%;
+    --chart-2: 17.1 70.2% 50%;
+    --chart-3: 159.2 72.7% 35.9%;
+    --chart-4: 39.7 100% 39.4%;
+    --chart-5: 338.2 61.1% 57.6%;
+    --paper: 0 0% 100%;
+    --paper-foreground: 45 7.8% 20%;
+    --scrollbar: 206.7 6% 29.6%;
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.35), 0 1px 2px -1px rgb(0 0 0 / 0.35);
+    --shadow-md: 0 0 0 1px rgb(255 255 255 / 0.04), 0 3px 6px rgb(0 0 0 / 0.25), 0 6px 16px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 0 0 1px rgb(255 255 255 / 0.06), 0 3px 6px rgb(0 0 0 / 0.3), 0 9px 24px rgb(0 0 0 / 0.5);
+    --shadow-xl: 0 0 0 1px rgb(255 255 255 / 0.06), 0 5px 10px rgb(0 0 0 / 0.3), 0 15px 40px rgb(0 0 0 / 0.55);
+
+    /* Notion dark ramp (50 lightest, 950 darkest) */
+    --zinc-50: 245 245 244;
+    --zinc-100: 227 226 224;
+    --zinc-200: 211 210 207;
+    --zinc-300: 185 184 181;
+    --zinc-400: 155 154 151;
+    --zinc-500: 138 137 134;
+    --zinc-600: 94 93 90;
+    --zinc-700: 63 63 63;
+    --zinc-750: 55 55 55;
+    --zinc-800: 47 47 47;
+    --zinc-850: 44 44 44;
+    --zinc-900: 37 37 37;
+    --zinc-950: 25 25 25;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    overflow-x: hidden;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  html:lang(ja) body {
+    font-family: 'Geist Variable', 'Yu Gothic UI', 'Hiragino Sans', Meiryo, sans-serif;
+  }
+
+  html:lang(zh) body {
+    font-family: 'Geist Variable', 'Microsoft YaHei UI', 'PingFang SC', sans-serif;
+  }
+
+  ::selection {
+    background: hsl(var(--ring) / 0.25);
+  }
+
+  /* Keyboard focus fallback for anything a primitive does not style (zero specificity, so utilities win) */
+  :where(a, button, [role='button'], [role='tab'], [role='menuitem'], summary, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--scrollbar));
+    background-clip: content-box;
+    border: 2px solid transparent;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.7);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
+/* Horizontally scrolling strips (useScrollFade): fade the clipped edge so the hidden items read as scrollable */
+[data-scroll-fade='end'] {
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 2.5rem), transparent);
+  mask-image: linear-gradient(to right, black calc(100% - 2.5rem), transparent);
+}
+[data-scroll-fade='start'] {
+  -webkit-mask-image: linear-gradient(to left, black calc(100% - 2.5rem), transparent);
+  mask-image: linear-gradient(to left, black calc(100% - 2.5rem), transparent);
+}
+[data-scroll-fade='both'] {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 2.5rem, black calc(100% - 2.5rem), transparent);
+  mask-image: linear-gradient(to right, transparent, black 2.5rem, black calc(100% - 2.5rem), transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Theme transition (ThemeContext.toggleTheme(origin) circular reveal)
+   ========================================================================== */
+
+/* The theme toggle animates clip-path on the new snapshot; the snapshots themselves stay static */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
@@ -19,7 +254,7 @@
   will-change: clip-path;
 }
 
-/* Temporarily suppress all element transitions during theme view-transition to eliminate Windows GPU jank/double-painting */
+/* Suppress element transitions while the theme switches (avoids double-painting jank on Windows GPUs) */
 html.theme-transitioning,
 html.theme-transitioning *,
 html.theme-transitioning *::before,
@@ -27,339 +262,6 @@ html.theme-transitioning *::after {
   transition: none !important;
 }
 
-@layer base {
-  :root {
-    color-scheme: dark;
-    --bg-page: #0d1117;
-    --bg-surface: #010409;
-    --bg-card: #0d1117;
-    --bg-subtle: #161b22;
-    --bg-hover: #21262d;
-    --border-subtle: #21262d;
-    --border-medium: #30363d;
-    --border-active: #3d444d;
-    --text-muted: #7d8590;
-    --text-secondary: #9198a1;
-    --text-primary: #e6edf3;
-
-    /* Tailwind stock zinc (light mode keeps these). 750 and 850 are only used behind dark: */
-    --zinc-50: 250 250 250;
-    --zinc-100: 244 244 245;
-    --zinc-200: 228 228 231;
-    --zinc-300: 212 212 216;
-    --zinc-400: 161 161 170;
-    --zinc-500: 113 113 122;
-    --zinc-600: 82 82 91;
-    --zinc-700: 63 63 70;
-    --zinc-750: 51 51 56;
-    --zinc-800: 39 39 42;
-    --zinc-850: 32 32 34;
-    --zinc-900: 24 24 27;
-    --zinc-950: 9 9 11;
-  }
-
-  /* GitHub dark palette (Primer) mapped onto the zinc scale */
-  html.dark {
-    --zinc-50: 240 246 252;   /* #f0f6fc */
-    --zinc-100: 230 237 243;  /* #e6edf3 fg.default */
-    --zinc-200: 209 215 224;  /* #d1d7e0 */
-    --zinc-300: 183 189 200;  /* #b7bdc8 */
-    --zinc-400: 145 152 161;  /* #9198a1 fg.muted */
-    --zinc-500: 125 133 144;  /* #7d8590 */
-    --zinc-600: 101 108 118;  /* #656c76 */
-    --zinc-700: 61 68 77;     /* #3d444d border.emphasis */
-    --zinc-750: 55 62 71;     /* #373e47 */
-    --zinc-800: 48 54 61;     /* #30363d border.default */
-    --zinc-850: 42 48 56;     /* #2a3038 */
-    --zinc-900: 22 27 34;     /* #161b22 canvas.subtle */
-    --zinc-950: 13 17 23;     /* #0d1117 canvas.default */
-  }
-
-  html.light {
-    color-scheme: light;
-    --bg-page: #f8fafc;
-    --bg-surface: #ffffff;
-    --bg-card: #ffffff;
-    --bg-subtle: #f1f5f9;
-    --bg-hover: #e2e8f0;
-    --border-subtle: #e2e8f0;
-    --border-medium: #cbd5e1;
-    --border-active: #94a3b8;
-    --text-muted: #64748b;
-    --text-secondary: #475569;
-    --text-primary: #0f172a;
-  }
-
-  body {
-    background-color: var(--bg-page);
-    color: var(--text-primary);
-    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    transition: background-color 0.5s ease, color 0.5s ease;
-    overflow-x: hidden;
-  }
-
-  html {
-    overflow-x: hidden;
-  }
-
-  /* Custom minimal dark & light scrollbars */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #30363d;
-    border-radius: 3px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #484f58;
-  }
-
-  html.light ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-  }
-
-  html.light ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-  }
-}
-
-/* Subtle Technical Grid Overlay */
-.bg-tech-grid {
-  background-size: 32px 32px;
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-}
-
-/* Subtle Paper Texture Noise Overlay */
-.paper-noise {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
-}
-
-/* Document Paper Shadow */
-.paper-desk-shadow {
-  box-shadow: 
-    0 1px 1px rgba(0,0,0,0.4),
-    0 4px 12px rgba(0,0,0,0.6),
-    0 16px 36px rgba(0,0,0,0.8);
-}
-
-/* Line reveal keyframes */
-@keyframes lineReveal {
-  0% {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-line-reveal {
-  animation: lineReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* Text highlight wipe */
-@keyframes highlightWipe {
-  0% {
-    width: 0%;
-  }
-  100% {
-    width: 100%;
-  }
-}
-
-.animate-highlight-wipe {
-  animation: highlightWipe 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.animate-float {
-  animation: float 5s ease-in-out infinite;
-}
-
-@keyframes pulseSubtle {
-  0%, 100% {
-    opacity: 0.9;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.02);
-  }
-}
-
-@keyframes slideInRight {
-  0% {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-slide-in-right {
-  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: opacity, transform;
-  backface-visibility: hidden;
-  transform: translateZ(0);
-}
-
-@keyframes boxZoomIn {
-  0% {
-    opacity: 0.85;
-    transform: scale(0.98);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.animate-box-zoom {
-  animation: boxZoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
 html {
   scroll-behavior: smooth;
-}
-
-/* Continuous Right to Left Cloud Drift Animations */
-@keyframes cloudDriftSlow {
-  0% {
-    transform: translate3d(0%, 0, 0);
-  }
-  100% {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-@keyframes cloudDriftMedium {
-  0% {
-    transform: translate3d(0%, 0, 0);
-  }
-  100% {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-@keyframes cloudDriftFast {
-  0% {
-    transform: translate3d(0%, 0, 0);
-  }
-  100% {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-.animate-cloud-slow {
-  animation: cloudDriftSlow 70s linear infinite;
-  will-change: transform;
-}
-
-.animate-cloud-medium {
-  animation: cloudDriftMedium 44s linear infinite;
-  will-change: transform;
-}
-
-.animate-cloud-fast {
-  animation: cloudDriftFast 26s linear infinite;
-  will-change: transform;
-}
-
-/* Hand-Drawn Red Annotation Animations for Document Highlights */
-@keyframes redDrawBoxLoop {
-  0% {
-    stroke-dashoffset: 1400;
-    opacity: 0;
-  }
-  8% {
-    opacity: 1;
-  }
-  35% {
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
-  75% {
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
-  86% {
-    stroke-dashoffset: 0;
-    opacity: 0.15;
-  }
-  93% {
-    stroke-dashoffset: 1400;
-    opacity: 0;
-  }
-  100% {
-    stroke-dashoffset: 1400;
-    opacity: 0;
-  }
-}
-
-.animate-red-box {
-  stroke-dasharray: 1400;
-  stroke-dashoffset: 1400;
-  animation: redDrawBoxLoop 3.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-  filter: drop-shadow(0 0 2.5px rgba(239, 68, 68, 0.4));
-}
-
-.animate-red-underline {
-  stroke-dasharray: 600;
-  stroke-dashoffset: 600;
-  animation: redDrawUnderline 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards;
-}
-
-.animate-red-stamp {
-  animation: redDrawStamp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.7s forwards;
-}
-
-/* Continuous Non-Stop Looping Marquee Belts */
-@keyframes marqueeLeft {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-@keyframes marqueeRight {
-  0% {
-    transform: translate3d(-50%, 0, 0);
-  }
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-.animate-marquee-left {
-  animation: marqueeLeft 35s linear infinite;
-  will-change: transform;
-}
-
-.animate-marquee-right {
-  animation: marqueeRight 35s linear infinite;
-  will-change: transform;
 }

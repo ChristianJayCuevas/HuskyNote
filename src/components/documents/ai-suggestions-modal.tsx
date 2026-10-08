@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import type { SuggestedAnnotation, Annotation } from '../../types';
 import { Modal } from '../ui/modal';
 import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { cn } from '../../lib/utils';
 import { Check, X, Sparkles, CheckCheck } from 'lucide-react';
 
 interface AISuggestionsModalProps {
@@ -76,6 +78,7 @@ export const AISuggestionsModal: React.FC<AISuggestionsModalProps> = ({
       pageNumber: s.pageNumber,
       type: s.category === 'Warning' ? 'rectangle' : 'highlight',
       coords: s.coords,
+      // design-exception: annotation colors are document content drawn on the page
       color: s.category === 'Warning' ? '#ef4444' : '#eab308',
       text: s.text,
       label: s.category,
@@ -93,6 +96,7 @@ export const AISuggestionsModal: React.FC<AISuggestionsModalProps> = ({
       pageNumber: s.pageNumber,
       type: s.category === 'Warning' ? 'rectangle' : 'highlight',
       coords: s.coords,
+      // design-exception: annotation colors are document content drawn on the page
       color: s.category === 'Warning' ? '#ef4444' : '#eab308',
       text: s.text,
       label: s.category,
@@ -101,6 +105,14 @@ export const AISuggestionsModal: React.FC<AISuggestionsModalProps> = ({
 
     onAcceptAnnotations(newAnnotations);
     onClose();
+  };
+
+  const categoryVariants: Record<SuggestedAnnotation['category'], 'destructive' | 'info' | 'secondary' | 'warning' | 'success'> = {
+    Warning: 'destructive',
+    Requirement: 'info',
+    Step: 'secondary',
+    Important: 'warning',
+    Definition: 'success',
   };
 
   return (
@@ -113,84 +125,75 @@ export const AISuggestionsModal: React.FC<AISuggestionsModalProps> = ({
     >
       <div className="space-y-4">
         {suggestions.length === 0 ? (
-          <div className="py-12 text-center text-xs text-slate-500 dark:text-zinc-500">
-            No specific steps, warnings, or definitions were automatically detected on this page.
+          <div className="flex flex-col items-center px-4 py-12 text-center">
+            <Sparkles className="mb-3 size-6 text-muted-foreground/70" strokeWidth={1.5} />
+            <p className="max-w-sm text-sm text-muted-foreground">
+              No specific steps, warnings, or definitions were automatically detected on this page.
+            </p>
           </div>
         ) : (
-          <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-            {suggestions.map((sugg) => {
-              const colors = {
-                Warning: 'text-red-400 bg-red-950/40 border-red-800/40',
-                Requirement: 'text-blue-400 bg-blue-950/40 border-blue-800/40',
-                Step: 'text-slate-800 dark:text-zinc-200 bg-slate-50 dark:bg-zinc-900 border-slate-300 dark:border-zinc-700',
-                Important: 'text-amber-400 bg-amber-950/40 border-amber-800/40',
-                Definition: 'text-emerald-400 bg-emerald-950/40 border-emerald-800/40',
-              };
+          <div className="max-h-[50vh] space-y-2 overflow-y-auto">
+            {suggestions.map((sugg) => (
+              <div
+                key={sugg.id}
+                className={cn(
+                  'rounded-lg border px-3.5 py-3 transition-colors duration-100',
+                  sugg.status === 'accepted' && 'border-ring/40 bg-accent/50',
+                  sugg.status === 'rejected' && 'opacity-50'
+                )}
+              >
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <Badge variant={categoryVariants[sugg.category]}>{sugg.category}</Badge>
 
-              return (
-                <div
-                  key={sugg.id}
-                  className={`p-3.5 rounded-lg border text-xs transition-colors ${
-                    sugg.status === 'accepted'
-                      ? 'bg-slate-50/90 dark:bg-zinc-900/90 border-slate-300 dark:border-zinc-700'
-                      : sugg.status === 'rejected'
-                      ? 'opacity-40 bg-white dark:bg-zinc-950 dark:border-zinc-850'
-                      : 'bg-white dark:bg-zinc-950 dark:border-zinc-850'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded border uppercase tracking-wider ${
-                        colors[sugg.category]
-                      }`}
+                  <div className="flex items-center gap-0.5">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => handleToggleStatus(sugg.id, 'accepted')}
+                      aria-pressed={sugg.status === 'accepted'}
+                      className={cn(
+                        'text-muted-foreground',
+                        sugg.status === 'accepted' && 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground'
+                      )}
+                      title="Accept suggestion"
+                      aria-label="Accept suggestion"
                     >
-                      {sugg.category}
-                    </span>
-
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => handleToggleStatus(sugg.id, 'accepted')}
-                        className={`p-1 rounded transition-colors ${
-                          sugg.status === 'accepted'
-                            ? 'bg-slate-900 dark:bg-white text-white dark:text-black'
-                            : 'text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800'
-                        }`}
-                        title="Accept suggestion"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleToggleStatus(sugg.id, 'rejected')}
-                        className={`p-1 rounded transition-colors ${
-                          sugg.status === 'rejected'
-                            ? 'bg-slate-100 dark:bg-zinc-800 text-red-400'
-                            : 'text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800'
-                        }`}
-                        title="Reject suggestion"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                      <Check />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => handleToggleStatus(sugg.id, 'rejected')}
+                      aria-pressed={sugg.status === 'rejected'}
+                      className={cn(
+                        'text-muted-foreground',
+                        sugg.status === 'rejected' && 'bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive'
+                      )}
+                      title="Reject suggestion"
+                      aria-label="Reject suggestion"
+                    >
+                      <X />
+                    </Button>
                   </div>
-
-                  <p className="text-slate-700 dark:text-zinc-300 leading-relaxed">{sugg.text}</p>
                 </div>
-              );
-            })}
+
+                <p className="text-sm leading-6 text-foreground">{sugg.text}</p>
+              </div>
+            ))}
           </div>
         )}
 
-        <div className="pt-4 border-t dark:border-zinc-850 flex items-center justify-between">
+        <div className="flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
           <Button size="sm" variant="outline" onClick={handleAcceptAll}>
-            <CheckCheck className="w-3.5 h-3.5" />
+            <CheckCheck />
             <span>Accept All ({suggestions.length})</span>
           </Button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-2">
             <Button size="sm" variant="ghost" onClick={onClose}>
               Cancel
             </Button>
-            <Button size="sm" variant="primary" onClick={handleApply}>
+            <Button size="sm" onClick={handleApply}>
               Apply Selected
             </Button>
           </div>

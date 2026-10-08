@@ -22,12 +22,17 @@
     "changelog": "変更履歴",
     "privacy": "プライバシー",
     "localAi": "パーソナル秘書",
-    "localWorkspace": "ローカルワークスペース"
+    "localWorkspace": "ローカルワークスペース",
+    "search": "検索",
+    "sectionWorkspace": "ワークスペース",
+    "help": "ヘルプと情報"
   },
   "theme": {
     "light": "ライト",
     "dark": "ダーク",
-    "toggle": "テーマ切り替え"
+    "toggle": "テーマ切り替え",
+    "system": "システム",
+    "appearance": "外観"
   },
   "language": {
     "select": "言語",
@@ -35,121 +40,6 @@
     "zh": "中文",
     "ja": "日本語",
     "fr": "Français"
-  },
-  "landing": {
-    "hero": {
-      "benefitPrivate": "完全プライベート・端末内完結",
-      "benefitOffline": "PC ローカルハードウェアで動作",
-      "headlinePrefix": "ノート、会議、ドキュメント。",
-      "headlineDynamic": "すべてお使いの端末内でオフライン処理。",
-      "subheadline": "クラウドサーバーを一切介さず、会議の音声を書き起こし、PDF を要約・分析し、画面録画から操作手順書を自動生成。ローカル Ollama の知能により、すべてのデータは端末内に安全に保持されます。",
-      "openWorkspace": "ワークスペースを開く",
-      "downloadApp": "アプリをダウンロード",
-      "downloadAll": "ダウンロード (Mac / Win / Linux)",
-      "screenStudio": "画面録画スタジオ",
-      "quickSetup": "クイックセットアップ",
-      "star": "スター",
-      "clientDb": "端末内に100%安全保存",
-      "autoAnnotation": "わかりやすい手順ガイドを自動作成",
-      "zeroCloudLatency": "完全オフラインで動作"
-    },
-    "demo": {
-      "badge": "インタラクティブ・ライブデモ",
-      "title": "HuskyNote の動作を体感",
-      "description": "リアルタイム音声書き起こし、Ollama によるローカル AI 要約、動的枠線アノテーション、構造化された議事録作成をすべてお使いのデバイス上で体験できます。",
-      "interactiveStudio": "体験スタジオ",
-      "walkthroughVideo": "デモ動画",
-      "watchDemo": "デモを見る",
-      "replay": "リプレイ"
-    },
-    "howItWorks": {
-      "badge": "仕組み",
-      "title": "会話から整理されたノートへ。",
-      "description": "通話終了後、多くの会話は忘れ去られます。HuskyNote は発言内容を記録し、重要な意思決定を抽出し、PC 上で永続的なノートへと変換します。",
-      "step1Title": "音声録音",
-      "step1Desc": "ブラウザでローカルに音声を録音。タイムスタンプ付きでリアルタイムに文字起こしされます。",
-      "step2Title": "重要決定とハイライト",
-      "step2Desc": "外部送信なしで、重要な発言、合意事項、行動方針を自動抽出します。",
-      "step3Title": "アクションアイテム",
-      "step3Desc": "タスク内容、担当者、期限を抽出し、整理されたチェックリストにします。",
-      "step4Title": "クリーンなノート",
-      "step4Desc": "会話が整理され、ワークスペースに永続的に蓄積されるナレッジとなります。",
-      "preview": "プレビュー",
-      "next": "次へ",
-      "prev": "前へ",
-      "restart": "最初から (01)"
-    },
-    "summaries": {
-      "badge": "自動要約",
-      "title": "雑然とした会話から明確なアクションへ。",
-      "description": "スライダーを動かして、生の音声書き起こしがどのように整理された意思決定や成果物に変化するか確認できます。"
-    },
-    "features": {
-      "badge": "機能一覧",
-      "title": "日々の実務のために設計。",
-      "description": "すべてお使いのパソコン上で直接動作。アカウント登録不要、インターネットなしでも快適に使えます。",
-      "showcase": "機能ショーケース",
-      "panelMeetingsTitle": "音声録音と即時ノート作成",
-      "panelMeetingsDesc": "ブラウザ内で直接会議を録音。明確な文字起こし、要点ハイライト、タスク一覧を自動生成します。",
-      "panelDocumentsTitle": "ドキュメント閲覧・AI 分析",
-      "panelDocumentsDesc": "PDF、Word、プレゼン資料、テキストファイルを読み込み、横断的な質問や要約の抽出が可能です。",
-      "panelOperationsTitle": "画面録画と操作マニュアル",
-      "panelOperationsDesc": "業務フローの画面を録画。スクリーンショットと手順を自動抽出し、標準業務手順書 (SOP) を作成します。",
-      "panelAiTitle": "プライベートローカル AI",
-      "panelAiDesc": "Ollama を活用して PC 内で直接 AI モデルを実行。外部へデータを送信することなく自由に質問できます。",
-      "panelAnnotationTitle": "動的手順自動アノテーション",
-      "panelAnnotationDesc": "UI 要素や操作動線をリアルタイム認識。境界枠を自動算出し、分かりやすい図解ガイドを作成します。",
-      "panelVaultTitle": "ローカル IndexedDB ナレッジ保管庫",
-      "panelVaultDesc": "ノート、文字起こし、読み込んだ書籍はすべてブラウザ内データベースに保存。超高速な即時検索を実現します。",
-      "panelZenTitle": "集中できる Husky ノート",
-      "panelZenDesc": "明瞭さと集中力を高めるダークエディタ。Markdown、履歴復元、心地よいアンビエント音源を搭載。",
-      "panelExportTitle": "ワンクリック多形式エクスポート",
-      "panelExportDesc": "議事録やマニュアルを美しい PDF、標準 Markdown、構造化 JSON へワンクリックで書き出せます。"
-    },
-    "setup": {
-      "badge": "クイックセットアップ",
-      "title": "コマンド 1 つですべて初期化。",
-      "description": "HuskyNote には自動ランチャーが付属しており、Ollama のセットアップ確認、アクセス設定、軽量モデルのダウンロード、ワークスペースの起動まで自動で行います。",
-      "oneClickInit": "ワンクリック初期化",
-      "whatLauncherAutomates": "ランチャーが自動化する処理：",
-      "checkOllama": "Ollama のインストール状態を確認（未インストールの場合は案内）",
-      "configCors": "ブラウザとのローカル通信に必要なオリジン間設定を自動適用",
-      "pullModels": "推奨される軽量モデルを自動的に取得",
-      "startServer": "開発サーバーを起動し、ブラウザでワークスペースを表示",
-      "supportedModels": "対応ローカルモデル",
-      "supportedModelsDesc": "llama3.2、gemma、mistral、qwen2.5、phi3、llava を含む Ollama 上で動作する全モデルに対応。",
-      "privacyBoundaries": "プライバシーの境界",
-      "privacyBoundariesDesc": "ノートや音声データはお使いの端末から出ません。AI リクエストはブラウザと http://localhost:11434 の間でのみ通信されます。"
-    },
-    "why": {
-      "badge": "HUSKYNOTE を選ぶ理由",
-      "title": "プライバシー、速度、データ主権のために",
-      "card1Tag": "完全プライベート設計",
-      "card1Title": "データは常に手元に",
-      "card1Desc": "すべてのデータは端末の IndexedDB に保存されます。外部サーバーがデータを閲覧・保持することは一切ありません。",
-      "card2Tag": "トラッキングゼロ",
-      "card2Title": "広告・追跡スクリプトなし",
-      "card2Desc": "追跡スクリプトや Cookie、アナリティクスは一切排除。お客様の思考や会議内容は完全に機密保持されます。",
-      "card3Tag": "汎用フォーマット",
-      "card3Title": "いつでもエクスポート可能",
-      "card3Desc": "ノート、議事録、マニュアルをいつでも標準 Markdown や PDF としてワンクリックで書き出せます。",
-      "card4Tag": "オープンソース",
-      "card4Title": "無料で透明・検証可能",
-      "card4Desc": "MIT ライセンスの下で自由に利用可能。ソースコードの検証やカスタマイズが自由に行えます。"
-    },
-    "cta": {
-      "title": "パーソナル AI 秘書と一緒に、新しいノート体験を始めましょう。",
-      "description": "アカウント作成もクレジットカードも不要です。ワークスペースはブラウザとローカルストレージ内で完結します。",
-      "openApp": "HuskyNote を開く",
-      "downloadApp": "アプリをダウンロード"
-    },
-    "footer": {
-      "copyright": "HuskyNote. あなたのパーソナル AI 秘書。",
-      "description": "ノート、会議録、書類をまとめる、あなただけのパーソナル AI 秘書。すべてのデータはお使いのパソコンに安全に保存され、アカウント作成や追跡、クラウド送信は一切ありません。",
-      "privacyNotice": "お使いのパソコンで完結するパーソナル AI 秘書。アカウント登録不要、トラッキングなし、クラウド送信ゼロ。",
-      "licenseNotice": "MIT ライセンス • オープンソース • お使いの端末で動作",
-      "privateByDefault": "完全プライベート設計"
-    }
   },
   "dashboard": {
     "greeting": "ワークスペース",

@@ -22,12 +22,17 @@
     "changelog": "更新日志",
     "privacy": "隐私说明",
     "localAi": "个人秘书",
-    "localWorkspace": "本地工作区"
+    "localWorkspace": "本地工作区",
+    "search": "搜索",
+    "sectionWorkspace": "工作区",
+    "help": "帮助与关于"
   },
   "theme": {
     "light": "浅色",
     "dark": "深色",
-    "toggle": "切换主题"
+    "toggle": "切换主题",
+    "system": "跟随系统",
+    "appearance": "外观"
   },
   "language": {
     "select": "语言",
@@ -35,121 +40,6 @@
     "zh": "中文",
     "ja": "日本語",
     "fr": "Français"
-  },
-  "landing": {
-    "hero": {
-      "benefitPrivate": "纯本地私有存储",
-      "benefitOffline": "本地硬件直接运行",
-      "headlinePrefix": "笔记、会议与文档。",
-      "headlineDynamic": "全部在您的本机离线处理。",
-      "subheadline": "在无需连接任何云端服务器的情况下录制会议语音、精读与问答各类文档、录屏自动标注文档并系统化整理笔记。通过本地 Ollama 驱动，所有数据绝对保存在您的计算机上。",
-      "openWorkspace": "打开工作区",
-      "downloadApp": "下载客户端",
-      "downloadAll": "下载 (Mac / Win / Linux)",
-      "screenStudio": "录屏工坊",
-      "quickSetup": "快速安装",
-      "star": "标星",
-      "clientDb": "100% 电脑本地安全保存",
-      "autoAnnotation": "自动生成清晰图文步骤",
-      "zeroCloudLatency": "完全支持离线使用"
-    },
-    "demo": {
-      "badge": "实时交互演示",
-      "title": "亲身体验 HuskyNote",
-      "description": "探索实时语音转写、Ollama 本地 AI 智能摘要、动态无遮挡边框标注以及结构化会议笔记——全程在您的设备端本地运行。",
-      "interactiveStudio": "交互式演练",
-      "walkthroughVideo": "视频演示",
-      "watchDemo": "观看演示",
-      "replay": "重播"
-    },
-    "howItWorks": {
-      "badge": "工作流程",
-      "title": "从实时语音到条理清晰的笔记。",
-      "description": "通话结束后的大多数会议讨论往往被遗忘。HuskyNote 记录全部要点，提炼核心决策，并在您的计算机本地将其转化为永久沉淀的笔记。",
-      "step1Title": "实时语音录制",
-      "step1Desc": "浏览器端原生录音，逐句生成带精确时间戳的实时文字稿。",
-      "step2Title": "关键决策与亮点",
-      "step2Desc": "无需任何外部网络传输，自动识别关键结论、方案决策与执行承诺。",
-      "step3Title": "待办清单提取",
-      "step3Desc": "系统化提取责任人、交付物与时间节点，梳理成直观核对清单。",
-      "step4Title": "清晰耐用笔记",
-      "step4Desc": "把零散的口头对话转化为结构严密、可随时检索的本地知识。",
-      "preview": "预览",
-      "next": "下一步",
-      "prev": "上一步",
-      "restart": "重新开始 (01)"
-    },
-    "summaries": {
-      "badge": "智能自动总结",
-      "title": "从纷繁复杂的对话到清晰明确的行动项。",
-      "description": "拖动对比滑块，感受原始语音转写如何秒级演变为结构分明的高管决策与可落地成果。"
-    },
-    "features": {
-      "badge": "核心功能",
-      "title": "专为真实日常办公打造。",
-      "description": "全部直接运行在您的电脑本地，无需注册账号，无需网络也能顺畅使用。",
-      "showcase": "功能展示",
-      "panelMeetingsTitle": "会议录音与即时纪要",
-      "panelMeetingsDesc": "在浏览器内直接录音。自动生成清晰文本、突出决策要点并整理行动清单。",
-      "panelDocumentsTitle": "文档精读与深度分析",
-      "panelDocumentsDesc": "支持导入 PDF、Word、演示文稿与纯文本。支持跨文档提问、划词高亮与核心摘要提取。",
-      "panelOperationsTitle": "屏幕录制与步骤手册",
-      "panelOperationsDesc": "录制复杂操作流程。HuskyNote 自动捕获截图、提取步骤并编排标准作业规程 (SOP)。",
-      "panelAiTitle": "私密本地 AI 助手",
-      "panelAiDesc": "借助 Ollama 在本机全离线运行大模型。在笔记与文档间自由提问，绝无数据外泄之虞。",
-      "panelAnnotationTitle": "动态逐步自动标注",
-      "panelAnnotationDesc": "实时识别界面元素与操作动线。精准勾勒边框坐标，自动生成图文并茂的图示指南。",
-      "panelVaultTitle": "本地 IndexedDB 知识库",
-      "panelVaultDesc": "所有笔记、录音稿与电子书仅保存在本机浏览器数据库中。极速即时搜索，零外部数据交换。",
-      "panelZenTitle": "专注无扰的 Husky 笔记",
-      "panelZenDesc": "为深度思考而设计的暗黑极简笔记环境。支持完整 Markdown、历史回滚与专注白噪音氛围音效。",
-      "panelExportTitle": "一键多格式通用导出",
-      "panelExportDesc": "会议纪要、操作手册与摘要均可一键导出为精美排版 PDF、标准 Markdown 或结构化 JSON。"
-    },
-    "setup": {
-      "badge": "快速部署",
-      "title": "一条命令，自动就绪。",
-      "description": "HuskyNote 配备自动化引导程序，可自动检测本地 Ollama、配置跨域权限、拉取推荐模型并打开工作区。",
-      "oneClickInit": "一键初始化",
-      "whatLauncherAutomates": "引导脚本包含的操作：",
-      "checkOllama": "检查 Ollama 是否安装（若未安装则提示指引）",
-      "configCors": "自动配置本地浏览器访问所需的跨域环境变量",
-      "pullModels": "自动检测并拉取轻量高效的推荐模型",
-      "startServer": "启动本地服务并在默认浏览器中唤起工作区",
-      "supportedModels": "支持的本地模型",
-      "supportedModelsDesc": "完美兼容在 Ollama 上运行的任意模型，包括 llama3.2、gemma、mistral、qwen2.5、phi3 及 llava。",
-      "privacyBoundaries": "隐私边界保障",
-      "privacyBoundariesDesc": "所有笔记与录音永远不离开您的设备。AI 请求仅限于浏览器与本机 http://localhost:11434 之间进行交互。"
-    },
-    "why": {
-      "badge": "为何选择 HUSKYNOTE",
-      "title": "为隐私、极速与数据自主而生",
-      "card1Tag": "默认绝对私有",
-      "card1Title": "数据始终完全归属于你",
-      "card1Desc": "所有内容直接存放在本机 IndexedDB 中。没有任何远端服务器能读取或存储您的内容。",
-      "card2Tag": "零追踪行为",
-      "card2Title": "无广告、无埋点追踪",
-      "card2Desc": "绝不植入任何统计代码、Cookies 或分析程序。您的笔记、会议与思考全程保密。",
-      "card3Tag": "开放通用格式",
-      "card3Title": "随时自由导出迁移",
-      "card3Desc": "只需轻轻一点，即可将所有笔记、会议记录与指南导出为标准 Markdown 和高质量 PDF。",
-      "card4Tag": "开源透明",
-      "card4Title": "完全免费、代码可审计",
-      "card4Desc": "基于 MIT 协议完全开源。您可以随时查阅源代码、在任何环境中离线部署或参与改进。"
-    },
-    "cta": {
-      "title": "让专属个人 AI 秘书帮您整理知识与工作。",
-      "description": "无需注册账号，无需信用卡。您的工作区完整生存在您的浏览器与本地存储中。",
-      "openApp": "打开 HuskyNote",
-      "downloadApp": "下载客户端"
-    },
-    "footer": {
-      "copyright": "HuskyNote. 您的个人 AI 秘书。",
-      "description": "您的专属个人 AI 秘书，轻松管理笔记、会议纪要与文档。所有内容完全保存在您的电脑本地——无需注册账号，绝无隐私追踪，不依赖任何云端服务。",
-      "privacyNotice": "运行在您本地电脑上的个人 AI 秘书。无需注册账号，绝无隐私追踪，不向云端发送任何数据。",
-      "licenseNotice": "MIT 协议 • 开源免费 • 运行于您的设备",
-      "privateByDefault": "默认绝对私有"
-    }
   },
   "dashboard": {
     "greeting": "工作空间",

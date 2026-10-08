@@ -40,6 +40,14 @@ const TEXT_DOC_LAYOUT = {
   charsPerLine: 72,    // approximate at 14px sans-serif in ~520px content area
 };
 
+// Step box colors: stored on the annotation and burned into the exported screenshots (canvas drawing, not UI chrome)
+// design-exception: annotation overlay colors
+const ANNOTATION_COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#10b981'];
+
+// The generated "digital paper" screenshot is a white document page in both themes (canvas drawing)
+// design-exception: paper page colors for canvas-rendered screenshots
+const PAPER_COLORS = { page: '#ffffff', rule: '#e4e4e7', meta: '#71717a', text: '#18181b', footer: '#a1a1aa', badgeText: '#ffffff' } as const;
+
 export class DocumentAutoAnnotatorService {
 
   /**
@@ -254,7 +262,7 @@ export class DocumentAutoAnnotatorService {
     text?: string;
     stepIndex?: number;
   }): Annotation {
-    const colors = ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#10b981'];
+    const colors = ANNOTATION_COLORS;
     const colorIdx = (params.stepIndex || 0) % colors.length;
 
     return {
@@ -293,7 +301,7 @@ export class DocumentAutoAnnotatorService {
     // Draw PDF page
     ctx.drawImage(canvas, 0, 0, width, height);
 
-    const colors = ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#10b981'];
+    const colors = ANNOTATION_COLORS;
     const color = colors[(stepIndex || 0) % colors.length];
 
     const boxX = (boxCoords.x / 100) * width;
@@ -319,7 +327,7 @@ export class DocumentAutoAnnotatorService {
     ctx.fillStyle = color;
     ctx.fillRect(boxX, Math.max(2, boxY - badgeH), badgeW, badgeH);
 
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = PAPER_COLORS.badgeText;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(badgeText, boxX + badgeW / 2, Math.max(2, boxY - badgeH) + badgeH / 2);
@@ -352,16 +360,16 @@ export class DocumentAutoAnnotatorService {
     if (!ctx) return '';
 
     // Page background
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = PAPER_COLORS.page;
     ctx.fillRect(0, 0, width, height);
 
     // Subtle page border
-    ctx.strokeStyle = '#e4e4e7';
+    ctx.strokeStyle = PAPER_COLORS.rule;
     ctx.lineWidth = 2;
     ctx.strokeRect(0, 0, width, height);
 
     // Header
-    ctx.fillStyle = '#71717a';
+    ctx.fillStyle = PAPER_COLORS.meta;
     ctx.font = 'bold 16px monospace';
     ctx.textAlign = 'left';
     ctx.fillText(`PAGE ${params.pageNumber} OF ${params.pageCount}`, 50, 60);
@@ -369,7 +377,7 @@ export class DocumentAutoAnnotatorService {
     ctx.textAlign = 'right';
     ctx.fillText(params.fileName, width - 50, 60);
 
-    ctx.strokeStyle = '#e4e4e7';
+    ctx.strokeStyle = PAPER_COLORS.rule;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(50, 75);
@@ -377,7 +385,7 @@ export class DocumentAutoAnnotatorService {
     ctx.stroke();
 
     // Body text
-    ctx.fillStyle = '#18181b';
+    ctx.fillStyle = PAPER_COLORS.text;
     ctx.font = '19px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
@@ -390,7 +398,7 @@ export class DocumentAutoAnnotatorService {
     }
 
     // Annotation: BORDER ONLY -- no inner fill
-    const colors = ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#10b981'];
+    const colors = ANNOTATION_COLORS;
     const color = colors[(params.stepIndex || 0) % colors.length];
 
     const boxX = (params.boxCoords.x / 100) * width;
@@ -412,21 +420,21 @@ export class DocumentAutoAnnotatorService {
     ctx.fillStyle = color;
     ctx.fillRect(boxX, Math.max(6, boxY - badgeH), badgeW, badgeH);
 
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = PAPER_COLORS.badgeText;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(labelText, boxX + badgeW / 2, Math.max(6, boxY - badgeH) + badgeH / 2);
     ctx.restore();
 
     // Footer
-    ctx.strokeStyle = '#e4e4e7';
+    ctx.strokeStyle = PAPER_COLORS.rule;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(50, height - 55);
     ctx.lineTo(width - 50, height - 55);
     ctx.stroke();
 
-    ctx.fillStyle = '#a1a1aa';
+    ctx.fillStyle = PAPER_COLORS.footer;
     ctx.font = '14px monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';

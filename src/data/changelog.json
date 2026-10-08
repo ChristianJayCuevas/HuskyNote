@@ -1,5 +1,30 @@
 [
   {
+    "version": "v0.6.0",
+    "date": "2026-10-08",
+    "title": "ChatGPT Sign-In, Teams Transcripts, Meeting Merge & a New Look",
+    "highlights": [
+      "Use your ChatGPT plan for AI: choose ChatGPT (Codex) in Settings → AI. HuskyNote runs the Codex app on this computer, signed in with your ChatGPT account, so there is no API key to manage. Codex runs with its tools turned off and can only read what HuskyNote sends it. Available in the Windows app and when running HuskyNote from source.",
+      "A new look throughout the app: buttons, menus, dialogs, lists, and pages are rebuilt in a calm, Notion-style design with the Geist font, a simpler sidebar and topbar, and a Light, Dark, or System theme choice.",
+      "A redesigned landing page and refreshed HuskyNote logo and icons.",
+      "Home shows your work at a glance: meeting and note totals, open action items you can tick off, time spent in meetings, what is coming up, meetings still without a report, open questions, and recent work.",
+      "Import a meeting from a Microsoft Teams transcript (.vtt or .docx), from transcript text copied out of Teams, or from a recording, which is transcribed on this device.",
+      "Supplement a meeting's transcript with the Teams transcript: HuskyNote lines up the two by time, takes speaker names from Teams, adds lines it missed, and can have the AI correct the wording. Restore original undoes it.",
+      "The browser extension (2.1.2) can collect the whole transcript from an open Teams meeting recap, even when downloading is not allowed. It scrolls the transcript panel and reads only the text Teams shows you; the result is ready in HuskyNote's Supplement and Import dialogs.",
+      "Merge recordings that belong to one meeting into a single meeting, with the pauses between them marked. Unmerge splits them again. A recording that was interrupted can be finished from its saved audio.",
+      "Recordings no longer fail to save during long meetings, the recording timer no longer runs two to three times too fast, and if the device's storage fails mid-meeting, HuskyNote stops and saves everything captured so far.",
+      "Generate a meeting report later when none was written at the time (for example, before an AI was connected). Edit a finished meeting's title, and polish its Topics discussed with AI, with Undo.",
+      "The PDF meeting report is redesigned and now includes Key Decisions and Action Items, with completed action items ticked.",
+      "Markdown export is ready to hand to another AI: meeting details, the full report, your notes, and the complete transcript from start to finish with a timestamp on every line, plus where recording paused and which lines came from Teams.",
+      "Complete backups: Settings → Storage prepares a .huskybackup file with everything in the current profile, including audio, and restores it into a new profile. It also shows how much storage is used and whether the browser keeps it permanently.",
+      "Transcription setup is one step with download sizes and a microphone test. Filipino and Taglish language choices are fixed, recordings are saved every second with phrases queued so none are lost, and Whisper Small and Turbo are available to try, with a local accuracy benchmark.",
+      "Notes show whether changes are saved, saving, or failed, with Retry. Deleting a note can be undone, and Search and Commands now have separate buttons.",
+      "Dialogs, lists, and menus work fully with the keyboard and keep focus inside while open.",
+      "All click and interaction sounds are removed.",
+      "Checked checkboxes and pressed toggles are visible again in dark mode."
+    ]
+  },
+  {
     "version": "v0.5.0",
     "date": "2026-09-27",
     "title": "Profiles, GPU Transcription, Linux App & GitHub-Style Dark Mode",

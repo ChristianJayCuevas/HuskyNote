@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Annotation } from '../../types';
+import { X } from 'lucide-react';
 
 interface AnnotationLayerProps {
   annotations: Annotation[];
@@ -20,7 +21,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
 
   return (
     <div
-      className="absolute inset-0 pointer-events-none overflow-hidden w-full h-full"
+      className="pointer-events-none absolute inset-0 h-full w-full overflow-hidden"
       style={width && height ? { width, height } : undefined}
     >
       {pageAnnotations.map((ann) => {
@@ -34,13 +35,14 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           return (
             <div
               key={ann.id}
-              className="absolute bg-yellow-400/30 mix-blend-multiply border-b border-yellow-500/50 pointer-events-auto cursor-pointer group"
+              // design-exception: annotation overlay colors are document content drawn on the white page
+              className="group absolute cursor-pointer border-b border-yellow-500/50 bg-yellow-400/30 mix-blend-multiply pointer-events-auto"
               style={{ left, top, width: itemWidth, height: itemHeight }}
               title={ann.text || 'Highlighted section'}
               onClick={() => onRemoveAnnotation?.(ann.id)}
             >
               {ann.label && (
-                <span className="absolute -top-4 left-0 text-[9px] bg-slate-50 dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 px-1 py-0.2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                <span className="absolute -top-5 left-0 whitespace-nowrap rounded-sm bg-paper-foreground px-1 py-px text-xs text-paper opacity-0 transition-opacity duration-100 group-hover:opacity-100">
                   {ann.label}
                 </span>
               )}
@@ -49,25 +51,27 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         }
 
         if (ann.type === 'rectangle') {
+          // design-exception: annotation colors are stored with the annotation and drawn as document content
+          const color = ann.color || '#ef4444';
           return (
             <div
               key={ann.id}
-              className="absolute border-2 rounded-sm pointer-events-auto cursor-pointer group bg-transparent transition-all"
+              className="group absolute cursor-pointer rounded-sm border-2 bg-transparent pointer-events-auto"
               style={{
                 left,
                 top,
                 width: itemWidth,
                 height: itemHeight,
-                borderColor: ann.color || '#ef4444',
-                boxShadow: `0 0 0 1px ${ann.color || '#ef4444'}30`,
+                borderColor: color,
+                boxShadow: `0 0 0 1px ${color}30`,
               }}
               title={ann.text ? `${ann.label ? ann.label + ': ' : ''}${ann.text}` : 'Annotation'}
               onClick={() => onRemoveAnnotation?.(ann.id)}
             >
               {ann.label && (
                 <span
-                  className="absolute -top-5 left-0 text-[10px] font-semibold text-slate-950 dark:text-white px-1.5 py-0.5 rounded shadow whitespace-nowrap pointer-events-none"
-                  style={{ backgroundColor: ann.color || '#ef4444' }}
+                  className="pointer-events-none absolute -top-6 left-0 whitespace-nowrap rounded-sm px-1.5 py-0.5 text-xs font-semibold text-paper-foreground shadow-sm"
+                  style={{ backgroundColor: color }}
                 >
                   {ann.label}
                 </span>
@@ -79,10 +83,11 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                   e.stopPropagation();
                   onRemoveAnnotation?.(ann.id);
                 }}
-                className="absolute -top-5 right-0 text-[9px] bg-slate-50 dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white hover:bg-red-600 px-1.5 py-0.5 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-auto"
+                className="pointer-events-auto absolute -top-6 right-0 flex size-5 items-center justify-center rounded-sm bg-paper text-paper-foreground opacity-0 shadow-sm ring-1 ring-paper-foreground/15 transition-opacity duration-100 hover:bg-destructive hover:text-destructive-foreground focus-visible:opacity-100 group-hover:opacity-100"
                 title="Remove annotation"
+                aria-label="Remove annotation"
               >
-                ✕
+                <X className="size-3" />
               </button>
             </div>
           );
@@ -92,7 +97,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           return (
             <div
               key={ann.id}
-              className="absolute -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-900 dark:bg-white text-white dark:text-black font-bold text-xs flex items-center justify-center shadow-lg border border-black pointer-events-auto cursor-pointer"
+              className="absolute flex size-6 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-paper-foreground text-xs font-bold text-paper shadow-lg ring-2 ring-paper pointer-events-auto"
               style={{ left, top }}
               title={ann.label || `Step ${ann.stepNumber || 1}`}
               onClick={() => onRemoveAnnotation?.(ann.id)}
@@ -106,11 +111,11 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           return (
             <div
               key={ann.id}
-              className="absolute bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 text-[11px] p-2 rounded shadow-xl max-w-xs pointer-events-auto cursor-pointer"
+              className="absolute max-w-xs cursor-pointer rounded-md bg-paper p-2 text-xs text-paper-foreground shadow-lg ring-1 ring-paper-foreground/15 pointer-events-auto"
               style={{ left, top }}
               onClick={() => onRemoveAnnotation?.(ann.id)}
             >
-              <div className="font-semibold text-slate-900 dark:text-zinc-100 text-[10px] mb-0.5">Note</div>
+              <div className="mb-0.5 text-xs font-semibold">Note</div>
               <div>{ann.text}</div>
             </div>
           );

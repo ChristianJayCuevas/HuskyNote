@@ -22,6 +22,41 @@ import {
   MessageSquare,
   Volume2,
 } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Input } from '../ui/input';
+import { Separator } from '../ui/separator';
+import { StatusDot } from '../ui/status-dot';
+import { cn } from '@/lib/utils';
+
+/*
+ * The always-on-top Picture-in-Picture window is plain HTML without the app stylesheet,
+ * so it uses literal colors that mirror the dark theme tokens.
+ */
+// design-exception: PiP inline HTML (background, popover, border, foreground, muted, destructive)
+const PIP = { bg: '#191919', surface: '#252525', border: '#2F2F2F', text: '#E3E2E0', muted: '#9B9A97', destructive: '#F06A63' } as const;
+// design-exception: PiP inline HTML shadow
+const PIP_SHADOW = '0 3px 6px rgba(0, 0, 0, 0.3), 0 9px 24px rgba(0, 0, 0, 0.5)';
+const PIP_FONT = '"Geist Variable", "Segoe UI", system-ui, sans-serif';
+
+// Lucide icon paths for the PiP window's plain-HTML buttons (no emoji; the PiP document can't render React icons)
+const PIP_ICON_PATHS = {
+  stop: '<rect width="14" height="14" x="5" y="5" rx="2" fill="currentColor" stroke="none"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  crop: '<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>',
+  message: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  bookmark: '<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>',
+  note: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  pause: '<rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/>',
+  play: '<polygon points="6 3 20 12 6 21 6 3"/>',
+  mic: '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>',
+  micOff:
+    '<line x1="2" x2="22" y1="2" y2="22"/><path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"/><path d="M5 10v2a7 7 0 0 0 12 5"/><path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12"/><line x1="12" x2="12" y1="19" y2="22"/>',
+  focus: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  grip: '<circle cx="12" cy="9" r="1"/><circle cx="19" cy="9" r="1"/><circle cx="5" cy="9" r="1"/><circle cx="12" cy="15" r="1"/><circle cx="19" cy="15" r="1"/><circle cx="5" cy="15" r="1"/>',
+} as const;
+const pipIcon = (name: keyof typeof PIP_ICON_PATHS) =>
+  `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PIP_ICON_PATHS[name]}</svg>`;
 
 export interface FloatingMeetingControllerProps {
   elapsedSeconds: number;
@@ -43,8 +78,8 @@ export interface FloatingMeetingControllerProps {
 }
 
 /**
- * FloatingMeetingController provides a draggable, Always-on-Top capable,
- * strictly monochrome white/gray glassmorphic HUD toolbar during meeting recording.
+ * FloatingMeetingController provides a draggable, Always-on-Top capable
+ * control bar during meeting recording (popover surface, theme tokens).
  *
  * It provides the complete expanded suite of quick actions:
  * - Quick Stop & Compile Single Report
@@ -77,6 +112,11 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
   onAddQuickNote,
   onRemoveScreenshot,
 }) => {
+  // The always-on-top window wires its buttons once, when it opens. Reading the
+  // handlers through this ref keeps them current; otherwise Stop saved the
+  // meeting with the title, notes, screenshots and 0:00 duration from that moment.
+  const actionsRef = useRef({ onStopAndCompile, onTogglePause, onToggleMicMute, onTakeFullScreenshot, onStartPortionSnip, onAddBookmark, onAddQuickNote });
+  actionsRef.current = { onStopAndCompile, onTogglePause, onToggleMicMute, onTakeFullScreenshot, onStartPortionSnip, onAddBookmark, onAddQuickNote };
   // Position state (defaults to bottom-center so it doesn't obstruct top controls)
   const [position, setPosition] = useState<{ x: number; y: number }>(() => {
     const defaultX = typeof window !== 'undefined' ? Math.max(20, (window.innerWidth - 680) / 2) : 200;
@@ -153,6 +193,18 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
     };
   }, [isDragging]);
 
+  // Toasts stack from the bottom-center too: while the bar sits near the bottom, lift them above it
+  // (the Toaster reads --meeting-controls-offset).
+  useEffect(() => {
+    const root = document.documentElement;
+    const fromBottom = window.innerHeight - position.y;
+    if (!isPiPActive && fromBottom < 160) root.style.setProperty('--meeting-controls-offset', `${fromBottom + 12}px`);
+    else root.style.removeProperty('--meeting-controls-offset');
+    return () => {
+      root.style.removeProperty('--meeting-controls-offset');
+    };
+  }, [position.y, isPiPActive]);
+
   // Copy transcript so far
   const handleCopyTranscript = () => {
     const text = transcript.map((s) => `[${formatSecondsToTime(s.timestampSeconds)}] ${s.speaker}: ${s.text}`).join('\n');
@@ -181,21 +233,21 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
       const badge = doc.getElementById('pip-tr-badge');
       if (badge) badge.textContent = String(transcript.length);
       const pauseBtn = doc.getElementById('pip-pause-btn');
-      if (pauseBtn) pauseBtn.textContent = isPaused ? '▶' : '⏸';
+      if (pauseBtn) pauseBtn.innerHTML = pipIcon(isPaused ? 'play' : 'pause');
       const micBtn = doc.getElementById('pip-mic-btn');
-      if (micBtn) micBtn.textContent = isMicMuted ? '🔇' : '🎙';
+      if (micBtn) micBtn.innerHTML = pipIcon(isMicMuted ? 'micOff' : 'mic');
 
       // Live transcript drawer update inside PiP
       const drawer = doc.getElementById('pip-drawer');
       if (drawer && drawer.style.display !== 'none') {
         drawer.innerHTML =
           transcript.length === 0
-            ? '<span style="color:#71717a">Listening for meeting speech...</span>'
+            ? `<span style="color:${PIP.muted}">Listening for meeting speech...</span>`
             : transcript
                 .slice(-10)
                 .map(
                   (s) =>
-                    `<div style="margin-bottom:6px;"><span style="color:#10b981;font-weight:600;font-size:10px;">${s.speaker}</span> <span style="color:#71717a;font-size:9px;">${formatSecondsToTime(s.timestampSeconds)}</span><br/><span style="color:#f4f4f5;">${s.text}</span></div>`
+                    `<div style="margin-bottom:6px;"><span style="color:${PIP.text};font-weight:600;font-size:10px;">${s.speaker}</span> <span style="color:${PIP.muted};font-size:9px;">${formatSecondsToTime(s.timestampSeconds)}</span><br/><span style="color:${PIP.text};">${s.text}</span></div>`
                 )
                 .join('');
         drawer.scrollTop = drawer.scrollHeight;
@@ -232,9 +284,9 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
             <style>
               * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
               html, body {
-                background: #09090b !important;
-                color: #fff;
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                background: ${PIP.bg} !important;
+                color: ${PIP.text};
+                font-family: ${PIP_FONT};
                 height: 100vh;
                 overflow: hidden;
                 display: flex;
@@ -245,10 +297,10 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
                 align-items: center;
                 gap: 6px;
                 padding: 6px 10px;
-                background: rgba(18, 18, 22, 0.96);
-                border: 1px solid rgba(255, 255, 255, 0.18);
+                background: ${PIP.surface};
+                border: 1px solid ${PIP.border};
                 border-radius: 14px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+                box-shadow: ${PIP_SHADOW};
                 height: 48px;
                 margin: auto 4px;
               }
@@ -256,7 +308,7 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                color: #71717a;
+                color: ${PIP.muted};
                 cursor: grab;
                 padding: 0 4px;
                 font-size: 14px;
@@ -265,8 +317,8 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                background: rgba(255,255,255,0.06);
-                border: 1px solid rgba(255,255,255,0.12);
+                background: ${PIP.bg};
+                border: 1px solid ${PIP.border};
                 border-radius: 10px;
                 padding: 4px 8px;
               }
@@ -274,8 +326,8 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
                 width: 7px;
                 height: 7px;
                 border-radius: 50%;
-                background: #fff;
-                box-shadow: 0 0 6px #fff;
+                background: ${PIP.destructive};
+                box-shadow: 0 0 6px ${PIP.destructive};
                 animation: pulse 1.5s infinite;
               }
               @keyframes pulse {
@@ -286,7 +338,7 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
                 font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                 font-size: 11px;
                 font-weight: 700;
-                color: #fff;
+                color: ${PIP.text};
                 line-height: 1.1;
               }
               .hud-label {
@@ -294,7 +346,7 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
                 font-weight: 600;
                 text-transform: uppercase;
                 letter-spacing: 0.8px;
-                color: #a1a1aa;
+                color: ${PIP.muted};
                 line-height: 1;
               }
               .hud-waves {
@@ -306,7 +358,7 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
               }
               .hud-wave-bar {
                 width: 2px;
-                background: #d4d4d8;
+                background: ${PIP.muted};
                 border-radius: 1px;
                 transition: height 0.08s ease;
                 min-height: 2px;
@@ -314,7 +366,7 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
               .hud-divider {
                 width: 1px;
                 height: 20px;
-                background: rgba(255,255,255,0.14);
+                background: ${PIP.border};
                 margin: 0 2px;
               }
               .hud-btn {
@@ -323,9 +375,10 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
                 gap: 4px;
                 padding: 5px 9px;
                 border-radius: 8px;
-                border: 1px solid rgba(255,255,255,0.12);
-                background: rgba(255,255,255,0.06);
-                color: #e4e4e7;
+                border: 1px solid ${PIP.border};
+                background: ${PIP.surface};
+                color: ${PIP.text};
+                font-family: inherit;
                 font-size: 11px;
                 font-weight: 600;
                 cursor: pointer;
@@ -333,23 +386,23 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
                 white-space: nowrap;
               }
               .hud-btn:hover {
-                background: rgba(255,255,255,0.16);
-                color: #fff;
-                border-color: rgba(255,255,255,0.25);
+                background: ${PIP.border};
+                color: ${PIP.text};
+                border-color: ${PIP.muted};
               }
               .hud-btn-stop {
-                background: #ffffff !important;
-                color: #000000 !important;
-                border: 1px solid #ffffff !important;
+                background: ${PIP.destructive} !important;
+                color: ${PIP.bg} !important;
+                border: 1px solid ${PIP.destructive} !important;
                 font-weight: 700 !important;
                 padding: 5px 11px !important;
               }
               .hud-btn-stop:hover {
-                background: #e4e4e7 !important;
+                opacity: 0.9;
               }
               .hud-badge {
-                background: rgba(255,255,255,0.22);
-                color: #fff;
+                background: ${PIP.border};
+                color: ${PIP.text};
                 font-size: 9px;
                 font-family: monospace;
                 padding: 0 4px;
@@ -358,19 +411,19 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
               .hud-drawer {
                 display: none;
                 flex: 1;
-                background: #121216;
-                border: 1px solid rgba(255,255,255,0.15);
+                background: ${PIP.surface};
+                border: 1px solid ${PIP.border};
                 border-radius: 10px;
                 margin: 4px;
                 padding: 8px 10px;
                 overflow-y: auto;
                 font-size: 11px;
-                color: #e4e4e7;
+                color: ${PIP.text};
                 line-height: 1.4;
               }
             </style>
             <div class="hud-bar">
-              <div class="hud-grip" title="Always on Top Window (Google Meet & Windows)">⠿</div>
+              <div class="hud-grip" title="Always on Top Window (Google Meet & Windows)">${pipIcon('grip')}</div>
               <div class="hud-status">
                 <div class="hud-dot" id="pip-dot"></div>
                 <div>
@@ -386,15 +439,15 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
                 </div>
               </div>
               <div class="hud-divider"></div>
-              <button class="hud-btn hud-btn-stop" id="pip-stop-btn" title="End recording and generate documentation">■ Stop & Report</button>
-              <button class="hud-btn" id="pip-full-btn" title="Capture full screenshot">📷 Full</button>
-              <button class="hud-btn" id="pip-snip-btn" title="Capture portion screenshot">✂ Snip</button>
-              <button class="hud-btn" id="pip-tr-btn" title="View live transcript">💬 Transcribe <span class="hud-badge" id="pip-tr-badge">${transcript.length}</span></button>
-              <button class="hud-btn" id="pip-bm-btn" title="Add milestone bookmark">🔖 Bookmark</button>
-              <button class="hud-btn" id="pip-note-btn" title="Add timestamped note">📝 Note</button>
-              <button class="hud-btn" id="pip-pause-btn" title="Pause / Resume" style="padding: 5px 7px;">${isPaused ? '▶' : '⏸'}</button>
-              <button class="hud-btn" id="pip-mic-btn" title="Mute / Unmute Mic" style="padding: 5px 7px;">${isMicMuted ? '🔇' : '🎙'}</button>
-              <button class="hud-btn" id="pip-focus-btn" title="Focus HuskyNote tab" style="padding: 5px 7px;">⤢</button>
+              <button class="hud-btn hud-btn-stop" id="pip-stop-btn" title="End recording and generate documentation">${pipIcon('stop')} Stop & Report</button>
+              <button class="hud-btn" id="pip-full-btn" title="Capture full screenshot">${pipIcon('camera')} Full</button>
+              <button class="hud-btn" id="pip-snip-btn" title="Capture portion screenshot">${pipIcon('crop')} Snip</button>
+              <button class="hud-btn" id="pip-tr-btn" title="View live transcript">${pipIcon('message')} Transcribe <span class="hud-badge" id="pip-tr-badge">${transcript.length}</span></button>
+              <button class="hud-btn" id="pip-bm-btn" title="Add milestone bookmark">${pipIcon('bookmark')} Bookmark</button>
+              <button class="hud-btn" id="pip-note-btn" title="Add timestamped note">${pipIcon('note')} Note</button>
+              <button class="hud-btn" id="pip-pause-btn" title="Pause / Resume" aria-label="Pause or resume" style="padding: 5px 7px;">${pipIcon(isPaused ? 'play' : 'pause')}</button>
+              <button class="hud-btn" id="pip-mic-btn" title="Mute / Unmute Mic" aria-label="Mute or unmute microphone" style="padding: 5px 7px;">${pipIcon(isMicMuted ? 'micOff' : 'mic')}</button>
+              <button class="hud-btn" id="pip-focus-btn" title="Focus HuskyNote tab" aria-label="Focus HuskyNote tab" style="padding: 5px 7px;">${pipIcon('focus')}</button>
             </div>
             <div class="hud-drawer" id="pip-drawer"></div>
           `;
@@ -402,16 +455,16 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
           // Button event listeners in the Always-on-Top PiP window
           pipWindow.document.getElementById('pip-stop-btn')?.addEventListener('click', () => {
             pipWindow.close();
-            onStopAndCompile();
+            actionsRef.current.onStopAndCompile();
           });
 
           pipWindow.document.getElementById('pip-full-btn')?.addEventListener('click', () => {
-            onTakeFullScreenshot();
+            actionsRef.current.onTakeFullScreenshot();
           });
 
           pipWindow.document.getElementById('pip-snip-btn')?.addEventListener('click', () => {
             window.focus();
-            onStartPortionSnip();
+            actionsRef.current.onStartPortionSnip();
           });
 
           pipWindow.document.getElementById('pip-tr-btn')?.addEventListener('click', () => {
@@ -426,22 +479,22 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
           });
 
           pipWindow.document.getElementById('pip-bm-btn')?.addEventListener('click', () => {
-            onAddBookmark('highlight');
+            actionsRef.current.onAddBookmark('highlight');
           });
 
           pipWindow.document.getElementById('pip-note-btn')?.addEventListener('click', () => {
             const note = pipWindow.prompt('Enter quick meeting note:');
             if (note && note.trim()) {
-              onAddQuickNote(note.trim());
+              actionsRef.current.onAddQuickNote(note.trim());
             }
           });
 
           pipWindow.document.getElementById('pip-pause-btn')?.addEventListener('click', () => {
-            onTogglePause();
+            actionsRef.current.onTogglePause();
           });
 
           pipWindow.document.getElementById('pip-mic-btn')?.addEventListener('click', () => {
-            onToggleMicMute();
+            actionsRef.current.onToggleMicMute();
           });
 
           pipWindow.document.getElementById('pip-focus-btn')?.addEventListener('click', () => {
@@ -475,64 +528,54 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
   // When PiP is active, the floating bar lives inside the PiP window — hide the in-page bar
   if (isPiPActive) return null;
 
+  const drawerClass = 'rounded-xl border bg-popover p-3 text-popover-foreground shadow-lg';
+  // Drawers open above the bar when it sits in the lower half of the window (its default spot), so they stay on screen
+  const opensUp = typeof window !== 'undefined' && position.y > window.innerHeight / 2;
+  const toggleClass = (active: boolean) =>
+    cn('text-muted-foreground', active && 'bg-accent text-accent-foreground');
+
   return (
-    <aside
-      aria-label="Floating meeting controls"
-      className="fixed z-[9999] select-none pointer-events-auto transition-shadow"
+    <div
+      role="region"
+      aria-label="Meeting controls"
+      className="pointer-events-auto fixed z-[9999] select-none"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
       }}
       onMouseDown={handleMouseDown}
     >
-      {/* Main Glassmorphic HUD Bar */}
-      <div
-        className="flex items-center gap-2 p-2 rounded-2xl border shadow-2xl backdrop-blur-3xl transition-all duration-300"
-        style={{
-          backgroundColor: 'rgba(15, 15, 18, 0.78)',
-          borderColor: 'rgba(255, 255, 255, 0.20)',
-          boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1)',
-        }}
-      >
+      {/* Main control bar */}
+      <div className="flex items-center gap-1 rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-lg">
         {/* Draggable Grip Handle */}
         <div
-          className="px-1.5 py-2 cursor-grab active:cursor-grabbing text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="flex h-7 cursor-grab items-center px-1 text-muted-foreground transition-colors duration-100 hover:text-foreground active:cursor-grabbing"
           title="Drag to reposition HUD"
         >
-          <GripHorizontal className="w-4 h-4" />
+          <GripHorizontal className="size-4" />
         </div>
 
         {/* Status Indicator & Timer */}
-        <div className="flex items-center gap-2.5 px-2 py-1 rounded-xl bg-white/5 border border-white/10">
-          <div className="relative flex items-center justify-center">
-            <span
-              className={`w-2.5 h-2.5 rounded-full ${
-                isPaused ? 'bg-zinc-500' : 'bg-white'
-              } transition-colors`}
-            />
-            {!isPaused && (
-              <span className="absolute w-4 h-4 rounded-full border border-white/60 animate-ping" />
-            )}
-          </div>
-
-          <div className="flex flex-col">
-            <span className="font-mono text-xs font-bold tracking-wider text-white">
+        <div className="flex h-8 items-center gap-2 rounded-md bg-secondary px-2.5">
+          <StatusDot tone={isPaused ? 'muted' : 'destructive'} pulse={!isPaused} />
+          <div className="flex flex-col leading-none">
+            <span className="font-mono text-xs font-medium tabular-nums text-foreground">
               {formatSecondsToTime(elapsedSeconds)}
             </span>
-            <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400">
+            <span className="mt-0.5 text-xs leading-none text-muted-foreground">
               {isPaused ? 'Paused' : isRecording ? 'Recording' : 'Standby'}
             </span>
           </div>
 
           {/* Audio Soundwave Bars reacting to level */}
           {!isMicMuted && !isPaused && (
-            <div className="flex items-end gap-0.5 h-4 ml-1 px-1">
+            <div className="ml-0.5 flex h-4 items-end gap-0.5" aria-hidden="true">
               {[0.4, 0.8, 0.5, 1.0, 0.6].map((scale, i) => {
                 const height = Math.max(3, Math.min(16, (audioLevel / 100) * 16 * scale));
                 return (
                   <div
                     key={i}
-                    className="w-0.5 rounded-full bg-zinc-300 transition-all duration-75"
+                    className="w-0.5 rounded-full bg-muted-foreground transition-[height] duration-75"
                     style={{ height: `${height}px` }}
                   />
                 );
@@ -541,365 +584,336 @@ export const FloatingMeetingController: React.FC<FloatingMeetingControllerProps>
           )}
         </div>
 
-        {/* Compact Pill divider */}
         {!isCollapsed && (
           <>
-            <div className="h-6 w-[1px] bg-white/15 mx-1" />
+            <Separator orientation="vertical" className="mx-1 h-5" />
 
-            {/* Quick Stop Button (Prominent Monochrome White Pill) */}
-            <button
+            {/* Quick Stop Button */}
+            <Button
+              variant="destructive"
+              size="sm"
               onClick={onStopAndCompile}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-black hover:bg-zinc-200 active:bg-zinc-300 text-xs font-bold transition-all shadow-md active:scale-95"
               title="End meeting and compile into Single Report"
             >
-              <Square className="w-3.5 h-3.5 fill-current" />
+              <Square className="fill-current" />
               <span>Stop & Report</span>
-            </button>
+            </Button>
 
             {/* Visual Capture Group: Full Screenshot & Portion Snip */}
-            <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
-              <button
-                onClick={onTakeFullScreenshot}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-white/15 text-zinc-200 hover:text-white text-xs font-semibold transition-all active:scale-95"
-                title="Full Screen Screenshot (1-Click)"
-              >
-                <Camera className="w-3.5 h-3.5 text-zinc-300" />
-                <span className="hidden sm:inline">Full</span>
-              </button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onTakeFullScreenshot}
+              className="text-muted-foreground"
+              title="Full Screen Screenshot (1-Click)"
+            >
+              <Camera />
+              <span className="hidden sm:inline">Full</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onStartPortionSnip}
+              className="text-muted-foreground"
+              title="Snip Portion (Interactive Rectangle Crop)"
+            >
+              <Crop />
+              <span className="hidden sm:inline">Snip</span>
+            </Button>
 
-              <button
-                onClick={onStartPortionSnip}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-white/15 text-zinc-200 hover:text-white text-xs font-semibold transition-all active:scale-95"
-                title="Snip Portion (Interactive Rectangle Crop)"
-              >
-                <Crop className="w-3.5 h-3.5 text-zinc-300" />
-                <span className="hidden sm:inline">Snip</span>
-              </button>
-            </div>
+            <Separator orientation="vertical" className="mx-1 h-5" />
 
             {/* Live Transcriber Toggle */}
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setActiveDrawer(activeDrawer === 'transcriber' ? null : 'transcriber')}
-              className={`p-2 rounded-xl border transition-all text-xs flex items-center gap-1.5 ${
-                activeDrawer === 'transcriber'
-                  ? 'bg-white/25 border-white/40 text-white shadow-inner'
-                  : 'bg-white/5 border-white/10 text-zinc-300 hover:bg-white/15 hover:text-white'
-              }`}
+              aria-pressed={activeDrawer === 'transcriber'}
+              className={toggleClass(activeDrawer === 'transcriber')}
               title="Toggle Live Transcriber Drawer"
             >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span className="text-[11px] font-medium hidden md:inline">Transcribe</span>
+              <MessageSquare />
+              <span className="hidden md:inline">Transcribe</span>
               {transcript.length > 0 && (
-                <span className="text-[10px] font-mono px-1 rounded bg-white/20 text-white">
+                <Badge variant="secondary" className="px-1 font-mono tabular-nums">
                   {transcript.length}
-                </span>
+                </Badge>
               )}
-            </button>
+            </Button>
 
             {/* AI Bookmark Quick Actions */}
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setActiveDrawer(activeDrawer === 'bookmarks' ? null : 'bookmarks')}
-              className={`p-2 rounded-xl border transition-all text-xs flex items-center gap-1 ${
-                activeDrawer === 'bookmarks'
-                  ? 'bg-white/25 border-white/40 text-white'
-                  : 'bg-white/5 border-white/10 text-zinc-300 hover:bg-white/15 hover:text-white'
-              }`}
+              aria-pressed={activeDrawer === 'bookmarks'}
+              className={toggleClass(activeDrawer === 'bookmarks')}
               title="Bookmark key moment (Decision, Action Item, Highlight)"
             >
-              <Bookmark className="w-3.5 h-3.5" />
-              <span className="text-[11px] font-medium hidden md:inline">Bookmark</span>
-            </button>
+              <Bookmark />
+              <span className="hidden md:inline">Bookmark</span>
+            </Button>
 
             {/* Quick Note Jotter */}
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setActiveDrawer(activeDrawer === 'notes' ? null : 'notes')}
-              className={`p-2 rounded-xl border transition-all text-xs flex items-center gap-1 ${
-                activeDrawer === 'notes'
-                  ? 'bg-white/25 border-white/40 text-white'
-                  : 'bg-white/5 border-white/10 text-zinc-300 hover:bg-white/15 hover:text-white'
-              }`}
+              aria-pressed={activeDrawer === 'notes'}
+              className={toggleClass(activeDrawer === 'notes')}
               title="Type quick timestamped note"
             >
-              <FileText className="w-3.5 h-3.5" />
-              <span className="text-[11px] font-medium hidden lg:inline">Note</span>
-            </button>
+              <FileText />
+              <span className="hidden lg:inline">Note</span>
+            </Button>
 
             {/* Screenshots Gallery Drawer Toggle */}
             {screenshots.length > 0 && (
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setActiveDrawer(activeDrawer === 'screenshots' ? null : 'screenshots')}
-                className={`p-2 rounded-xl border transition-all text-xs flex items-center gap-1 ${
-                  activeDrawer === 'screenshots'
-                    ? 'bg-white/25 border-white/40 text-white'
-                    : 'bg-white/5 border-white/10 text-zinc-300 hover:bg-white/15 hover:text-white'
-                }`}
+                aria-pressed={activeDrawer === 'screenshots'}
+                className={toggleClass(activeDrawer === 'screenshots')}
                 title="View captured screenshots"
               >
-                <Image className="w-3.5 h-3.5" />
-                <span className="text-[10px] font-mono px-1 rounded bg-white/20 text-white">
+                <Image />
+                <Badge variant="secondary" className="px-1 font-mono tabular-nums">
                   {screenshots.length}
-                </span>
-              </button>
+                </Badge>
+              </Button>
             )}
 
-            {/* Audio Controls: Pause / Mute */}
-            <div className="flex items-center gap-1">
-              <button
-                onClick={onTogglePause}
-                className="p-2 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-zinc-300 hover:text-white transition-all"
-                title={isPaused ? 'Resume recording' : 'Pause recording'}
-              >
-                {isPaused ? <Play className="w-3.5 h-3.5 fill-current" /> : <Pause className="w-3.5 h-3.5" />}
-              </button>
+            <Separator orientation="vertical" className="mx-1 h-5" />
 
-              <button
-                onClick={onToggleMicMute}
-                className={`p-2 rounded-xl border transition-all ${
-                  isMicMuted
-                    ? 'bg-zinc-800 border-zinc-600 text-zinc-400'
-                    : 'bg-white/5 border-white/10 text-zinc-300 hover:bg-white/15 hover:text-white'
-                }`}
-                title={isMicMuted ? 'Unmute microphone' : 'Mute microphone'}
-              >
-                {isMicMuted ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-              </button>
-            </div>
+            {/* Audio Controls: Pause / Mute */}
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onTogglePause}
+              className="text-muted-foreground"
+              title={isPaused ? 'Resume recording' : 'Pause recording'}
+              aria-label={isPaused ? 'Resume recording' : 'Pause recording'}
+            >
+              {isPaused ? <Play className="fill-current" /> : <Pause />}
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onToggleMicMute}
+              aria-pressed={isMicMuted}
+              className={cn(
+                isMicMuted
+                  ? 'bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive'
+                  : 'text-muted-foreground'
+              )}
+              title={isMicMuted ? 'Unmute microphone' : 'Mute microphone'}
+              aria-label={isMicMuted ? 'Unmute microphone' : 'Mute microphone'}
+            >
+              {isMicMuted ? <MicOff /> : <Mic />}
+            </Button>
 
             {/* Always-on-Top PiP Window (Chrome/Edge Document PiP) */}
             {'documentPictureInPicture' in window && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 onClick={handleTogglePiP}
-                className={`p-2 rounded-xl border transition-all flex items-center gap-1 ${
-                  isPiPActive
-                    ? 'bg-emerald-500/25 border-emerald-400 text-emerald-300 shadow-sm'
-                    : 'bg-white/5 border-white/10 text-zinc-400 hover:bg-white/15 hover:text-white'
-                }`}
+                aria-pressed={isPiPActive}
+                className={toggleClass(isPiPActive)}
                 title="Stay on top of Google Meet, other windows & Fullscreen (Always-on-Top PiP)"
+                aria-label="Open always-on-top window"
               >
-                <ExternalLink className="w-3.5 h-3.5" />
-              </button>
+                <ExternalLink />
+              </Button>
             )}
           </>
         )}
 
         {/* Collapse / Expand Toggle */}
-        <button
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-1.5 rounded-lg hover:bg-white/15 text-zinc-400 hover:text-white transition-colors ml-1"
+          className="text-muted-foreground"
           title={isCollapsed ? 'Expand full HUD controls' : 'Collapse to mini pill'}
+          aria-label={isCollapsed ? 'Expand full HUD controls' : 'Collapse to mini pill'}
+          aria-expanded={!isCollapsed}
         >
-          {isCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
-        </button>
+          {isCollapsed ? <ChevronDown /> : <ChevronUp />}
+        </Button>
       </div>
 
-      {/* Expandable Drawers below or above HUD in Monochrome Glassmorphism */}
-
-      {/* 1. Live Transcriber Drawer */}
-      {activeDrawer === 'transcriber' && !isCollapsed && (
-        <div
-          className="mt-2.5 p-3 rounded-2xl border shadow-2xl backdrop-blur-3xl w-[380px] max-w-[90vw] transition-all"
-          style={{
-            backgroundColor: 'rgba(12, 12, 15, 0.88)',
-            borderColor: 'rgba(255, 255, 255, 0.20)',
-          }}
-        >
-          <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-3.5 h-3.5 text-zinc-300" />
-              <span className="text-xs font-bold text-white uppercase tracking-wider">
-                Live Speech Stream
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={handleCopyTranscript}
-                className="px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/20 text-[10px] font-mono text-zinc-200 transition-colors flex items-center gap-1"
-                title="Copy transcript so far"
-              >
-                {copiedTranscript ? <Check className="w-3 h-3 text-white" /> : <Copy className="w-3 h-3" />}
-                <span>{copiedTranscript ? 'Copied' : 'Copy'}</span>
-              </button>
-              <button
-                onClick={() => setActiveDrawer(null)}
-                className="p-1 rounded-md hover:bg-white/15 text-zinc-400 hover:text-white"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-
-          <div className="max-h-48 overflow-y-auto space-y-2 pr-1 text-xs">
-            {transcript.length === 0 ? (
-              <p className="text-zinc-500 italic text-[11px] py-3 text-center">
-                Listening... spoken words will transcribe here in real-time.
-              </p>
-            ) : (
-              transcript.map((seg) => (
-                <div key={seg.id} className="p-2 rounded-lg bg-white/5 border border-white/5 leading-relaxed">
-                  <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 mb-0.5">
-                    <span className="font-semibold text-zinc-300">{seg.speaker}</span>
-                    <span>{formatSecondsToTime(seg.timestampSeconds)}</span>
-                  </div>
-                  <p className="text-zinc-200 text-xs">{seg.text}</p>
-                </div>
-              ))
-            )}
-            <div ref={transcriberEndRef} />
-          </div>
-        </div>
-      )}
-
-      {/* 2. AI Bookmark Popover */}
-      {activeDrawer === 'bookmarks' && !isCollapsed && (
-        <div
-          className="mt-2.5 p-3 rounded-2xl border shadow-2xl backdrop-blur-3xl w-72 transition-all"
-          style={{
-            backgroundColor: 'rgba(12, 12, 15, 0.88)',
-            borderColor: 'rgba(255, 255, 255, 0.20)',
-          }}
-        >
-          <div className="flex items-center justify-between border-b border-white/10 pb-1.5 mb-2.5">
-            <span className="text-xs font-bold text-white uppercase tracking-wider">
-              Mark Moment [{formatSecondsToTime(elapsedSeconds)}]
-            </span>
-            <button
-              onClick={() => setActiveDrawer(null)}
-              className="p-1 rounded-md hover:bg-white/15 text-zinc-400 hover:text-white"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={() => {
-                onAddBookmark('decision');
-                setActiveDrawer(null);
-              }}
-              className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white flex flex-col items-center gap-1 text-center transition-all hover:scale-105"
-            >
-              <span className="text-xs font-bold">Decision</span>
-              <span className="text-[9px] text-zinc-400 font-mono">Agreed point</span>
-            </button>
-
-            <button
-              onClick={() => {
-                onAddBookmark('action');
-                setActiveDrawer(null);
-              }}
-              className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white flex flex-col items-center gap-1 text-center transition-all hover:scale-105"
-            >
-              <span className="text-xs font-bold">Action</span>
-              <span className="text-[9px] text-zinc-400 font-mono">Todo task</span>
-            </button>
-
-            <button
-              onClick={() => {
-                onAddBookmark('highlight');
-                setActiveDrawer(null);
-              }}
-              className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white flex flex-col items-center gap-1 text-center transition-all hover:scale-105"
-            >
-              <span className="text-xs font-bold">Highlight</span>
-              <span className="text-[9px] text-zinc-400 font-mono">Key insight</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 3. Quick Note Jotter Drawer */}
-      {activeDrawer === 'notes' && !isCollapsed && (
-        <form
-          onSubmit={handleSubmitNote}
-          className="mt-2.5 p-3 rounded-2xl border shadow-2xl backdrop-blur-3xl w-80 transition-all"
-          style={{
-            backgroundColor: 'rgba(12, 12, 15, 0.88)',
-            borderColor: 'rgba(255, 255, 255, 0.20)',
-          }}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-white">
-              Quick Note @ {formatSecondsToTime(elapsedSeconds)}
-            </span>
-            <button
-              type="button"
-              onClick={() => setActiveDrawer(null)}
-              className="p-1 rounded-md hover:bg-white/15 text-zinc-400 hover:text-white"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-
-          <input
-            type="text"
-            value={quickNoteText}
-            onChange={(e) => setQuickNoteText(e.target.value)}
-            placeholder="Type bullet point and press Enter..."
-            autoFocus
-            className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/50"
-          />
-
-          <div className="flex justify-end gap-2 mt-2">
-            <button
-              type="button"
-              onClick={() => setActiveDrawer(null)}
-              className="px-2.5 py-1 rounded-lg hover:bg-white/10 text-[11px] text-zinc-400 hover:text-white font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!quickNoteText.trim()}
-              className="px-3 py-1 rounded-lg bg-white text-black hover:bg-zinc-200 disabled:opacity-40 text-[11px] font-bold"
-            >
-              Save Note
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* 4. Screenshot Strip Drawer */}
-      {activeDrawer === 'screenshots' && !isCollapsed && (
-        <div
-          className="mt-2.5 p-3 rounded-2xl border shadow-2xl backdrop-blur-3xl w-[360px] max-w-[90vw] transition-all"
-          style={{
-            backgroundColor: 'rgba(12, 12, 15, 0.88)',
-            borderColor: 'rgba(255, 255, 255, 0.20)',
-          }}
-        >
-          <div className="flex items-center justify-between border-b border-white/10 pb-1.5 mb-2">
-            <span className="text-xs font-bold text-white uppercase tracking-wider">
-              Screenshots ({screenshots.length})
-            </span>
-            <button
-              onClick={() => setActiveDrawer(null)}
-              className="p-1 rounded-md hover:bg-white/15 text-zinc-400 hover:text-white"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {screenshots.map((ss, idx) => (
-              <div key={ss.id} className="relative group shrink-0 w-24 rounded-lg overflow-hidden border border-white/15 bg-black">
-                <img src={ss.dataUrl} alt={`Screenshot ${idx + 1}`} className="w-full h-16 object-cover" />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <button
-                    onClick={() => onRemoveScreenshot(ss.id)}
-                    className="p-1 rounded bg-black/80 hover:bg-zinc-800 text-white"
-                    title="Delete screenshot"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-                <div className="p-1 bg-zinc-950/80 text-[9px] font-mono text-zinc-300 text-center truncate">
-                  {formatSecondsToTime(ss.timestampSeconds)}
-                </div>
+      {/* Drawers (above or below the bar) */}
+      <div className={cn('absolute left-0', opensUp ? 'bottom-full mb-2' : 'top-full mt-2')}>
+        {/* 1. Live Transcriber Drawer */}
+        {activeDrawer === 'transcriber' && !isCollapsed && (
+          <div className={cn(drawerClass, 'w-[380px] max-w-[90vw]')}>
+            <div className="mb-2 flex items-center justify-between border-b pb-2">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="size-3.5 text-muted-foreground" />
+                <span className="text-xs font-medium text-foreground">Live Speech Stream</span>
               </div>
-            ))}
+              <div className="flex items-center gap-0.5">
+                <Button variant="ghost" size="xs" onClick={handleCopyTranscript} title="Copy transcript so far">
+                  {copiedTranscript ? <Check /> : <Copy />}
+                  <span>{copiedTranscript ? 'Copied' : 'Copy'}</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setActiveDrawer(null)}
+                  className="size-6 text-muted-foreground"
+                  aria-label="Close transcript"
+                >
+                  <X />
+                </Button>
+              </div>
+            </div>
+
+            <div className="max-h-48 space-y-1.5 overflow-y-auto pr-1">
+              {transcript.length === 0 ? (
+                <p className="py-3 text-center text-xs text-muted-foreground">
+                  Listening... spoken words will transcribe here in real-time.
+                </p>
+              ) : (
+                transcript.map((seg) => (
+                  <div key={seg.id} className="rounded-md bg-secondary/60 px-2.5 py-2">
+                    <div className="mb-0.5 flex items-center justify-between text-xs">
+                      <span className="font-medium text-foreground">{seg.speaker}</span>
+                      <span className="font-mono tabular-nums text-muted-foreground">{formatSecondsToTime(seg.timestampSeconds)}</span>
+                    </div>
+                    <p className="text-xs leading-5 text-foreground">{seg.text}</p>
+                  </div>
+                ))
+              )}
+              <div ref={transcriberEndRef} />
+            </div>
           </div>
-        </div>
-      )}
-    </aside>
+        )}
+
+        {/* 2. AI Bookmark Popover */}
+        {activeDrawer === 'bookmarks' && !isCollapsed && (
+          <div className={cn(drawerClass, 'w-72')}>
+            <div className="mb-2.5 flex items-center justify-between border-b pb-1.5">
+              <span className="text-xs font-medium text-foreground">
+                Mark Moment [{formatSecondsToTime(elapsedSeconds)}]
+              </span>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setActiveDrawer(null)}
+                className="size-6 text-muted-foreground"
+                aria-label="Close bookmarks"
+              >
+                <X />
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  { type: 'decision', label: 'Decision', hint: 'Agreed point' },
+                  { type: 'action', label: 'Action', hint: 'Todo task' },
+                  { type: 'highlight', label: 'Highlight', hint: 'Key insight' },
+                ] as const
+              ).map(({ type, label, hint }) => (
+                <Button
+                  key={type}
+                  variant="outline"
+                  onClick={() => {
+                    onAddBookmark(type);
+                    setActiveDrawer(null);
+                  }}
+                  className="h-auto flex-col gap-0.5 px-2 py-2"
+                >
+                  <span className="text-xs font-medium">{label}</span>
+                  <span className="text-xs font-normal text-muted-foreground">{hint}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 3. Quick Note Jotter Drawer */}
+        {activeDrawer === 'notes' && !isCollapsed && (
+          <form onSubmit={handleSubmitNote} className={cn(drawerClass, 'w-80')}>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-medium text-foreground">
+                Quick Note @ {formatSecondsToTime(elapsedSeconds)}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setActiveDrawer(null)}
+                className="size-6 text-muted-foreground"
+                aria-label="Close quick note"
+              >
+                <X />
+              </Button>
+            </div>
+
+            <Input
+              type="text"
+              value={quickNoteText}
+              onChange={(e) => setQuickNoteText(e.target.value)}
+              placeholder="Type bullet point and press Enter..."
+              aria-label="Quick note"
+              autoFocus
+            />
+
+            <div className="mt-2 flex justify-end gap-1.5">
+              <Button type="button" variant="ghost" size="xs" onClick={() => setActiveDrawer(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="default" size="xs" disabled={!quickNoteText.trim()}>
+                Save Note
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {/* 4. Screenshot Strip Drawer */}
+        {activeDrawer === 'screenshots' && !isCollapsed && (
+          <div className={cn(drawerClass, 'w-[360px] max-w-[90vw]')}>
+            <div className="mb-2 flex items-center justify-between border-b pb-1.5">
+              <span className="text-xs font-medium text-foreground">Screenshots ({screenshots.length})</span>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setActiveDrawer(null)}
+                className="size-6 text-muted-foreground"
+                aria-label="Close screenshots"
+              >
+                <X />
+              </Button>
+            </div>
+
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {screenshots.map((ss, idx) => (
+                <div key={ss.id} className="group relative w-24 shrink-0 overflow-hidden rounded-md border bg-muted">
+                  <img src={ss.dataUrl} alt={`Screenshot ${idx + 1}`} className="h-16 w-full object-cover" />
+                  <Button
+                    variant="secondary"
+                    size="icon-sm"
+                    onClick={() => onRemoveScreenshot(ss.id)}
+                    className="absolute right-1 top-1 size-6 opacity-0 shadow-sm transition-opacity duration-100 focus-visible:opacity-100 group-hover:opacity-100 coarse:opacity-100"
+                    title="Delete screenshot"
+                    aria-label={`Delete screenshot ${idx + 1}`}
+                  >
+                    <X />
+                  </Button>
+                  <div className="truncate border-t bg-popover px-1 py-0.5 text-center font-mono text-xs tabular-nums text-muted-foreground">
+                    {formatSecondsToTime(ss.timestampSeconds)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };

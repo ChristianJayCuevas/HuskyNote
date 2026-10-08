@@ -42,6 +42,7 @@ async function createEngine(engine: TransformersEngine): Promise<LoadedEngine> {
       const asr = await create('automatic-speech-recognition', engine.model, {
         device: 'webgpu',
         dtype: engine.dtype.webgpu,
+        revision: engine.revision,
         progress_callback,
       });
       // The first GPU run compiles shaders; do it now rather than on the first phrase
@@ -55,8 +56,10 @@ async function createEngine(engine: TransformersEngine): Promise<LoadedEngine> {
   const asr = await create('automatic-speech-recognition', engine.model, {
     device: 'wasm',
     dtype: engine.dtype.wasm,
+    revision: engine.revision,
     progress_callback,
   });
+  await asr(new Float32Array(16000));
   return { engine, asr, device: 'wasm', gpuError };
 }
 

@@ -1,60 +1,79 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useWorkspace } from '../../context/workspace-context';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
 import { CommandPalette } from '../ui/command-palette';
 import { GlobalMascotDock } from '../ui/global-mascot-dock';
 import { SpeechStatusIndicator } from '../ui/speech-status-indicator';
-import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+import { Toaster } from '../ui/toaster';
+import { TooltipProvider } from '../ui/tooltip';
 import { UpdateBanner } from '../updates/update-banner';
 
+/**
+ * App shell: sidebar (the only <aside>), topbar, update banner and the single <main>.
+ * Landing and Download are full width without chrome; Focus mode hides the chrome too.
+ */
 export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { activeView, toasts, removeToast } = useWorkspace();
+  const { activeView } = useWorkspace();
+
+  const [showMascot, setShowMascot] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('huskynote_mascot_hidden') === 'false';
+    } catch {
+      return false;
+    }
+  });
+
+  const updateMascotVisible = (visible: boolean) => {
+    setShowMascot(visible);
+    try {
+      localStorage.setItem('huskynote_mascot_hidden', String(!visible));
+    } catch {
+      /* storage unavailable */
+    }
+  };
+
+  // Lets other parts of the UI (e.g. the sidebar help menu) show the companion again
+  useEffect(() => {
+    const onToggle = (e: Event) => {
+      const visible = (e as CustomEvent<boolean>).detail;
+      setShowMascot(!!visible);
+      try {
+        localStorage.setItem('huskynote_mascot_hidden', String(!visible));
+      } catch {
+        /* storage unavailable */
+      }
+    };
+    window.addEventListener('huskynote:mascot-visible', onToggle);
+    return () => window.removeEventListener('huskynote:mascot-visible', onToggle);
+  }, []);
 
   const isFullWidthPage = activeView === 'landing' || activeView === 'download';
+  // Focus mode is distraction-free: no sidebar or topbar
+  const isFocusMode = activeView === 'zen';
+  const showChrome = !isFullWidthPage && !isFocusMode;
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 dark:bg-canvas text-slate-900 dark:text-zinc-100 antialiased font-sans transition-colors duration-200">
-      {!isFullWidthPage && <Sidebar />}
+    <TooltipProvider delayDuration={400} skipDelayDuration={300}>
+      <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
+        {showChrome && <Sidebar />}
 
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {!isFullWidthPage && <Topbar />}
-        <UpdateBanner />
-        <main className="flex-1 overflow-y-auto relative">{children}</main>
+        <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+          {showChrome && <Topbar />}
+          <UpdateBanner />
+          {/* No bottom padding here: PageContainer already clears the companion button (pb-16), and padding main
+              would leave a blank band under the full-height list/detail views. Views with bottom-anchored controls
+              (the AI composer) read data-mascot via the group/main variant to make room for it. */}
+          <main data-mascot={showMascot && showChrome ? 'true' : undefined} className="group/main relative flex-1 overflow-y-auto">
+            {children}
+          </main>
+        </div>
+
+        <CommandPalette />
+        {showMascot && <GlobalMascotDock onHide={() => updateMascotVisible(false)} />}
+        <SpeechStatusIndicator />
+        <Toaster />
       </div>
-
-      <CommandPalette />
-      <GlobalMascotDock />
-      <SpeechStatusIndicator />
-
-      {/* Toast Notification Container */}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
-        {toasts.map((toast) => {
-          const icons = {
-            success: <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />,
-            error: <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />,
-            warning: <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />,
-            info: <Info className="w-4 h-4 text-zinc-500 dark:text-zinc-300 shrink-0" />,
-          };
-
-          return (
-            <div
-              key={toast.id}
-              className="pointer-events-auto flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl text-xs text-slate-800 dark:text-zinc-200 animate-fade-in max-w-sm"
-            >
-              {icons[toast.type]}
-              <span className="flex-1 leading-normal">{toast.message}</span>
-              <button
-                onClick={() => removeToast(toast.id)}
-                className="text-slate-400 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300 p-0.5 rounded transition-colors"
-                aria-label="Dismiss toast"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    </TooltipProvider>
   );
 };

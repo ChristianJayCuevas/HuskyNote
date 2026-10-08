@@ -3,21 +3,10 @@ import type { DocumentEvidenceNote } from '../../services/documents/auto-annotat
 import { autoAnnotator } from '../../services/documents/auto-annotator';
 import { db } from '../../db';
 import { useWorkspace } from '../../context/workspace-context';
-import { useSound } from '../../context/sound-context';
 import { Button } from '../ui/button';
-import {
-  FileText,
-  Download,
-  Copy,
-  Save,
-  Trash2,
-  X,
-  ChevronDown,
-  ChevronUp,
-  Sparkles,
-  Eye,
-  EyeOff,
-} from 'lucide-react';
+import { Markdown } from '../ui/markdown';
+import { Dialog, DialogBody, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+import { FileText, Download, Copy, Save, Trash2, ChevronDown, ChevronUp, Sparkles, Eye, EyeOff } from 'lucide-react';
 
 interface DocumentNotesModalProps {
   isOpen: boolean;
@@ -37,11 +26,8 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
   onClearNotes,
 }) => {
   const { addToast, setActiveNoteId, setActiveView } = useWorkspace();
-  const { playPop, playThock } = useSound();
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const [showScreenshots, setShowScreenshots] = useState(true);
-
-  if (!isOpen) return null;
 
   const toggleExpanded = (id: string) => {
     setExpandedNotes((prev) => {
@@ -64,7 +50,6 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
   };
 
   const handleDownloadMarkdown = () => {
-    playPop();
     const md = autoAnnotator.compileNotesToMarkdown(notes, documentTitle);
     const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -77,7 +62,6 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
   };
 
   const handleDownloadPdf = () => {
-    playPop();
     try {
       autoAnnotator.compileNotesToPdf(notes, documentTitle);
       addToast('PDF notes compiled and downloaded.', 'success');
@@ -87,7 +71,6 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
   };
 
   const handleCopyMarkdown = async () => {
-    playPop();
     const md = autoAnnotator.compileNotesToMarkdown(notes, documentTitle);
     try {
       await navigator.clipboard.writeText(md);
@@ -98,7 +81,6 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
   };
 
   const handleSaveToWorkspace = async () => {
-    playThock(1.2);
     if (notes.length === 0) return;
 
     try {
@@ -131,66 +113,66 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
     }
   };
 
-  const stepColors = ['bg-red-500', 'bg-amber-500', 'bg-blue-500', 'bg-violet-500', 'bg-emerald-500'];
+  // design-exception: these match the box colors the auto-annotator draws on each note's screenshot
+  const stepColors = ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#10b981'];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
-      <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden text-slate-900 dark:text-zinc-100">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent size="4xl" className="gap-0 p-0">
         {/* Header */}
-        <div className="p-4 border-b dark:border-zinc-850 flex items-center justify-between bg-slate-50/40 dark:bg-zinc-900/40">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded dark:bg-zinc-850 flex items-center justify-center text-slate-700 dark:text-zinc-300">
-              <FileText className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-950 dark:text-white tracking-tight">
-                Document Notes
-              </h3>
-              <p className="text-[11px] text-slate-600 dark:text-zinc-400">
-                {documentTitle} -- {notes.length} {notes.length === 1 ? 'note' : 'notes'} captured
-              </p>
-            </div>
-          </div>
+        <div className="flex flex-col gap-3 border-b px-6 py-4 pr-14 sm:flex-row sm:items-center sm:justify-between">
+          <DialogHeader className="min-w-0 gap-0.5 pr-0">
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="size-4 text-muted-foreground" />
+              Document Notes
+            </DialogTitle>
+            <DialogDescription className="truncate text-xs">
+              {documentTitle} -- {notes.length} {notes.length === 1 ? 'note' : 'notes'} captured
+            </DialogDescription>
+          </DialogHeader>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1">
             {notes.length > 1 && (
-              <div className="flex items-center gap-1">
-                <Button variant="ghost" size="sm" onClick={expandAll} className="text-slate-500 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-200 text-[10px] px-2">
+              <>
+                <Button variant="ghost" size="xs" onClick={expandAll} className="text-muted-foreground">
                   Expand All
                 </Button>
-                <Button variant="ghost" size="sm" onClick={collapseAll} className="text-slate-500 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-200 text-[10px] px-2">
+                <Button variant="ghost" size="xs" onClick={collapseAll} className="text-muted-foreground">
                   Collapse
                 </Button>
-              </div>
+              </>
             )}
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={() => setShowScreenshots(!showScreenshots)}
-              className="p-1.5 rounded text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white transition-colors"
+              aria-pressed={showScreenshots}
+              className="text-muted-foreground"
               title={showScreenshots ? 'Hide screenshots' : 'Show screenshots'}
+              aria-label={showScreenshots ? 'Hide screenshots' : 'Show screenshots'}
             >
-              {showScreenshots ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-            </button>
+              {showScreenshots ? <Eye /> : <EyeOff />}
+            </Button>
             {notes.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={onClearNotes} className="text-slate-500 dark:text-zinc-500 hover:text-red-400">
+              <Button
+                variant="ghost"
+                size="xs"
+                onClick={onClearNotes}
+                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              >
                 Clear All
               </Button>
             )}
-            <button
-              onClick={onClose}
-              className="p-1 rounded text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 text-left">
+        <DialogBody className="mx-0 space-y-2 px-6 py-5">
           {notes.length === 0 ? (
-            <div className="py-16 text-center text-slate-500 dark:text-zinc-500 space-y-3 text-xs">
-              <Sparkles className="w-8 h-8 mx-auto text-slate-400 dark:text-zinc-600" />
-              <p className="text-sm font-medium text-slate-600 dark:text-zinc-400">No Notes Captured Yet</p>
-              <p className="max-w-md mx-auto text-slate-500 dark:text-zinc-500 leading-relaxed">
+            <div className="mx-auto flex max-w-md flex-col items-center py-12 text-center">
+              <Sparkles className="mb-4 size-8 text-muted-foreground/70" strokeWidth={1.5} />
+              <p className="text-base font-medium text-foreground">No Notes Captured Yet</p>
+              <p className="mt-1.5 text-sm text-muted-foreground">
                 Click "Summarize Page", "Main Steps", or ask a question.
                 HuskyNote will locate the referenced text, box it out, take a screenshot, and compile it here.
               </p>
@@ -198,88 +180,80 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
           ) : (
             notes.map((note, idx) => {
               const isExpanded = expandedNotes.has(note.id);
-              const colorClass = stepColors[idx % stepColors.length];
+              const stepColor = stepColors[idx % stepColors.length];
 
               return (
-                <div
-                  key={note.id}
-                  className="rounded-xl border dark:border-zinc-850 bg-slate-50/50 dark:bg-zinc-900/50 overflow-hidden shadow-lg transition-all duration-200"
-                >
-                  {/* Note Header (always visible, clickable to expand/collapse) */}
-                  <button
-                    onClick={() => toggleExpanded(note.id)}
-                    className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-50/80 dark:hover:bg-zinc-900/80 transition-colors"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className={`w-5 h-5 rounded-full ${colorClass} text-slate-950 dark:text-white font-bold text-[10px] flex items-center justify-center shrink-0`}>
+                <div key={note.id} className="overflow-hidden rounded-lg border bg-card">
+                  {/* Note header (click to expand/collapse) */}
+                  <div className="flex items-center gap-1 pr-2 transition-colors duration-100 hover:bg-accent/50">
+                    <button
+                      type="button"
+                      onClick={() => toggleExpanded(note.id)}
+                      aria-expanded={isExpanded}
+                      className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    >
+                      <span
+                        className="flex size-6 shrink-0 items-center justify-center rounded-full border-2 bg-background text-xs font-semibold tabular-nums text-foreground"
+                        style={{ borderColor: stepColor }}
+                      >
                         {idx + 1}
                       </span>
-                      <div className="min-w-0">
-                        <h4 className="font-bold text-sm text-slate-950 dark:text-white truncate">{note.query}</h4>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-[10px] font-mono text-slate-700 dark:text-zinc-300">
-                            PAGE {note.pageNumber}
-                          </span>
-                          <span className="text-[10px] text-slate-500 dark:text-zinc-500">
-                            {new Date(note.timestamp).toLocaleTimeString()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRemoveNote(note.id);
-                        }}
-                        className="p-1 text-slate-500 dark:text-zinc-500 hover:text-red-400 transition-colors"
-                        title="Remove note"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                      {isExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-slate-600 dark:text-zinc-400" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-slate-600 dark:text-zinc-400" />
-                      )}
-                    </div>
-                  </button>
-
-                  {/* Expandable Content */}
-                  {isExpanded && (
-                    <div className="px-4 pb-4 space-y-3 border-t border-slate-200/60 dark:border-zinc-800/60 pt-3 animate-fade-in">
-                      {/* Referenced Excerpt Quote */}
-                      {note.excerpt && (
-                        <div className="p-3 rounded-lg bg-white/80 dark:bg-zinc-950/80 border dark:border-zinc-850 text-xs text-slate-700 dark:text-zinc-300 space-y-1">
-                          <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-500 uppercase tracking-wider block">
-                            Referenced Excerpt
-                          </span>
-                          <p className="italic leading-relaxed font-sans">
-                            "{note.excerpt}"
-                          </p>
-                        </div>
-                      )}
-
-                      {/* AI Explanation */}
-                      <div className="text-xs text-slate-800 dark:text-zinc-200 leading-relaxed space-y-1">
-                        <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-500 uppercase tracking-wider block">
-                          Analysis
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium text-foreground">{note.query}</span>
+                        <span className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="tabular-nums">Page {note.pageNumber}</span>
+                          <span aria-hidden="true">·</span>
+                          <span className="tabular-nums">{new Date(note.timestamp).toLocaleTimeString()}</span>
                         </span>
-                        <div className="whitespace-pre-wrap font-sans">{note.aiSummary}</div>
+                      </span>
+                      {isExpanded ? (
+                        <ChevronUp className="size-4 shrink-0 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+                      )}
+                    </button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => onRemoveNote(note.id)}
+                      className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      title="Remove note"
+                      aria-label="Remove note"
+                    >
+                      <Trash2 />
+                    </Button>
+                  </div>
+
+                  {/* Expandable content */}
+                  {isExpanded && (
+                    <div className="animate-fade-in space-y-4 border-t px-4 py-4">
+                      {/* Referenced excerpt */}
+                      {note.excerpt && (
+                        <div className="space-y-1">
+                          <span className="block text-xs font-medium text-muted-foreground">Referenced Excerpt</span>
+                          <blockquote className="border-l-2 border-border pl-3 text-sm italic leading-6 text-foreground">
+                            "{note.excerpt}"
+                          </blockquote>
+                        </div>
+                      )}
+
+                      {/* AI explanation */}
+                      <div className="space-y-1">
+                        <span className="block text-xs font-medium text-muted-foreground">Analysis</span>
+                        <Markdown size="sm">{note.aiSummary}</Markdown>
                       </div>
 
-                      {/* Annotated Screenshot Preview */}
+                      {/* Annotated screenshot preview */}
                       {showScreenshots && note.screenshotDataUrl && (
                         <div className="space-y-1.5">
-                          <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-500 uppercase tracking-wider block">
+                          <span className="block text-xs font-medium text-muted-foreground">
                             Annotated Screenshot (Page {note.pageNumber})
                           </span>
-                          <div className="rounded-lg border border-slate-200 dark:border-zinc-800 overflow-hidden bg-slate-50 dark:bg-canvas max-h-72 flex items-center justify-center">
+                          <div className="flex max-h-72 items-center justify-center overflow-hidden rounded-md border bg-muted/40">
                             <img
                               src={note.screenshotDataUrl}
                               alt={`Page ${note.pageNumber} annotation`}
-                              className="w-full h-auto max-h-72 object-contain"
+                              className="h-auto max-h-72 w-full object-contain"
                             />
                           </div>
                         </div>
@@ -290,38 +264,38 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
               );
             })
           )}
-        </div>
+        </DialogBody>
 
-        {/* Footer Actions */}
+        {/* Footer actions */}
         {notes.length > 0 && (
-          <div className="p-4 border-t dark:border-zinc-850 bg-slate-50/60 dark:bg-zinc-900/60 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t px-6 py-3">
+            <div className="flex flex-wrap items-center gap-2">
               <Button variant="outline" size="sm" onClick={handleDownloadMarkdown}>
-                <Download className="w-3.5 h-3.5" />
+                <Download />
                 <span>Download .md</span>
               </Button>
               <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
-                <Download className="w-3.5 h-3.5" />
+                <Download />
                 <span>Download .pdf</span>
               </Button>
               <Button variant="outline" size="sm" onClick={handleCopyMarkdown}>
-                <Copy className="w-3.5 h-3.5" />
+                <Copy />
                 <span>Copy</span>
               </Button>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={onClose}>
                 Close
               </Button>
-              <Button variant="primary" size="sm" onClick={handleSaveToWorkspace}>
-                <Save className="w-3.5 h-3.5" />
+              <Button size="sm" onClick={handleSaveToWorkspace}>
+                <Save />
                 <span>Save to Notes</span>
               </Button>
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

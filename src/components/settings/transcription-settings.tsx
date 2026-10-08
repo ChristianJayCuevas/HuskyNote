@@ -9,10 +9,20 @@ import {
   getPreferredTranscriptionEngine,
   getTranscriptionEngine,
   setPreferredTranscriptionEngine,
+  recommendTranscriptionEngine,
 } from '../../services/audio/transcription-engines';
 import { getCachedModel, removeCachedModel, type CachedModelInfo, type CachedModelVariant } from '../../services/audio/model-cache';
 import { detectWebGpu, type WebGpuSupport } from '../../services/audio/asr-protocol';
 import { useSpeechStatus } from '../ui/speech-status-indicator';
+import { TranscriptionSetup } from './transcription-setup';
+import { speechEngine } from '../../services/audio/speech-engine';
+import { TranscriptionBenchmark } from './transcription-benchmark';
+import { cn } from '@/lib/utils';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+import { Card, CardContent } from '../ui/card';
+import { Disclosure } from '../ui/disclosure';
+import { optionCardClass } from './settings-row';
 
 function formatSize(mb: number): string {
   return mb >= 1000 ? `${(mb / 1000).toFixed(1)} GB` : `${mb} MB`;
@@ -27,7 +37,12 @@ const VARIANT_LABEL: Record<CachedModelVariant['id'], string> = {
 };
 
 /** Picks the on-device speech-to-text engine used for meetings and dictation. */
-export const TranscriptionSettings: React.FC<{ spokenLanguage: string }> = ({ spokenLanguage }) => {
+export const TranscriptionSettings: React.FC<{
+  spokenLanguage: string;
+  onLanguageChange: (lang: string) => void;
+  /** Rendered between the setup card and the advanced sections (e.g. language rows) */
+  children?: React.ReactNode;
+}> = ({ spokenLanguage, onLanguageChange, children }) => {
   const { addToast } = useWorkspace();
   const [selectedId, setSelectedId] = useState(() => getPreferredTranscriptionEngine().id);
 
@@ -69,6 +84,8 @@ export const TranscriptionSettings: React.FC<{ spokenLanguage: string }> = ({ sp
     const label = variant === 'all' ? engine.name : `${engine.name} ${VARIANT_LABEL[variant]}`;
     setRemoving(`${engineId}:${variant}`);
     try {
+      if (speechEngine.isBusy()) throw new Error('Transcription is active. Stop it before removing a model.');
+      if (speechEngine.getEngine()?.id === engine.id) speechEngine.cancel();
       await removeCachedModel(engine, variant);
       addToast(`Removed ${label} from this device. It downloads again the next time it is needed.`, 'success');
     } catch {
@@ -84,135 +101,152 @@ export const TranscriptionSettings: React.FC<{ spokenLanguage: string }> = ({ sp
   const downloaded = downloads ? TRANSCRIPTION_ENGINES.filter((e) => downloads[e.id]) : [];
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <AudioLines className="w-4 h-4 text-slate-700 dark:text-zinc-300" />
-        <span className="text-xs font-bold text-slate-900 dark:text-white">Transcription Engine</span>
-      </div>
-      <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
-        All engines run on this device. The model downloads once on first use; the GPU size applies when your computer
-        supports WebGPU, otherwise the smaller CPU version is used.
-      </p>
+    <div className="space-y-8">
+      <TranscriptionSetup language={spokenLanguage} onLanguageChange={(lang) => {
+        onLanguageChange(lang);
+        const cached = Object.entries(downloads ?? {}).filter(([, info]) => info?.completeDevices.length).map(([id]) => id);
+        void handleSelect(recommendTranscriptionEngine(lang, cached).id);
+      }} />
+      {children}
+      <div className="space-y-2 border-t pt-4">
+        <Disclosure summary="Advanced: models and storage" contentClassName="space-y-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <AudioLines className="size-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">Transcription Engine</span>
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              All engines run on this device. The model downloads once on first use; the GPU size applies when your computer
+              supports WebGPU, otherwise the smaller CPU version is used.
+            </p>
+          </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3" role="radiogroup" aria-label="Transcription engine">
-        {TRANSCRIPTION_ENGINES.map((engine) => {
-          const active = engine.id === selectedId;
-          const languages =
-            engine.languages === 'multilingual'
-              ? 'Multilingual'
-              : engine.languages.length === 1
-              ? 'English'
-              : `${engine.languages.length} languages`;
-          return (
-            <button
-              key={engine.id}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => handleSelect(engine.id)}
-              className={`text-left p-4 rounded-xl border transition-colors ${
-                active
-                  ? 'border-slate-900 dark:border-zinc-400 bg-slate-50 dark:bg-zinc-900'
-                  : 'border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold text-slate-950 dark:text-zinc-100">{engine.name}</span>
-                {active && <span className="text-[10px] font-mono uppercase tracking-wider">Active</span>}
-              </div>
-              <p className="mt-1.5 text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed">{engine.description}</p>
-              <div className="mt-2 text-[10px] font-mono text-slate-500 dark:text-zinc-500">
-                {languages} · GPU {formatSize(engine.downloadMb.webgpu)} · CPU {formatSize(engine.downloadMb.wasm)}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      {usesFallback && (
-        <p className="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed">
-          {selected.name} does not support your default spoken language, so recordings in that language use{' '}
-          {getTranscriptionEngine(MULTILINGUAL_FALLBACK_ENGINE).name} automatically.
-        </p>
-      )}
-
-      {gpu && (
-        <p className="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed">
-          {gpu.available && gpu.fp16 ? (
-            <>
-              GPU acceleration is available{gpu.vendor ? ` (${gpu.vendor.toUpperCase()})` : ''}, so engines download and run their
-              GPU version.
-            </>
-          ) : (
-            <>
-              <span className="font-semibold text-slate-900 dark:text-zinc-200">GPU acceleration is not available.</span>{' '}
-              {gpu.available
-                ? 'Whisper and Moonshine still use the GPU, but Parakeet needs fp16 support and runs its slower CPU version.'
-                : 'Every engine runs its slower CPU version.'}{' '}
-              {gpu.reason}
-            </>
-          )}
-        </p>
-      )}
-
-      {speech.engineName && speech.device && (
-        <p className="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed">
-          {speech.engineName} is running on the {speech.device === 'webgpu' ? 'GPU' : 'CPU'}.
-          {speech.gpuError && (
-            <span className="block mt-0.5 text-slate-500 dark:text-zinc-500 break-words">
-              The GPU could not be used: {speech.gpuError}
-            </span>
-          )}
-        </p>
-      )}
-
-      <div className="rounded-xl border border-slate-200 dark:border-zinc-800 p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <HardDrive className="w-3.5 h-3.5 text-slate-700 dark:text-zinc-300" />
-          <span className="text-xs font-semibold text-slate-900 dark:text-white">Downloaded on this device</span>
-        </div>
-
-        {downloads === null ? (
-          <p className="text-[11px] text-slate-500 dark:text-zinc-500">Checking...</p>
-        ) : downloaded.length === 0 ? (
-          <p className="text-[11px] text-slate-500 dark:text-zinc-500">
-            No speech models downloaded yet. The selected engine downloads the first time you record.
-          </p>
-        ) : (
-          <ul className="space-y-2">
-            {downloaded.map((engine) => {
-              const info = downloads[engine.id]!;
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Transcription engine">
+            {TRANSCRIPTION_ENGINES.map((engine) => {
+              const active = engine.id === selectedId;
+              const languages =
+                engine.languages === 'multilingual'
+                  ? 'Multilingual'
+                  : engine.languages.length === 1
+                  ? 'English'
+                  : `${engine.languages.length} languages`;
               return (
-                <li key={engine.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                  <span className="text-xs font-medium text-slate-900 dark:text-zinc-100 min-w-[8rem]">{engine.name}</span>
-                  {info.variants.map((v) => {
-                    const busy = removing === `${engine.id}:${v.id}`;
-                    return (
-                      <span key={v.id} className="inline-flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-zinc-400">
-                        {VARIANT_LABEL[v.id]} · {formatBytes(v.bytes)}
-                        <button
-                          type="button"
-                          onClick={() => handleRemove(engine.id, v.id)}
-                          disabled={busy}
-                          className="p-1 rounded text-slate-400 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-850 disabled:opacity-50 transition-colors"
-                          title={`Remove ${engine.name} ${v.id === 'all' ? '' : VARIANT_LABEL[v.id]}`.trim()}
-                          aria-label={`Remove ${engine.name} ${v.id === 'all' ? 'download' : VARIANT_LABEL[v.id]}`}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </span>
-                    );
-                  })}
-                </li>
+                <button
+                  key={engine.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => handleSelect(engine.id)}
+                  disabled={speech.state === 'loading' || speech.state === 'transcribing'}
+                  className={cn(optionCardClass, 'justify-between')}
+                >
+                  <div className="w-full space-y-1.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-sm font-medium text-foreground">{engine.name}</span>
+                      {active && <Badge variant="secondary">Active</Badge>}
+                    </div>
+                    <p className="text-xs leading-relaxed text-muted-foreground">{engine.description}</p>
+                  </div>
+                  <div className="text-xs tabular-nums text-muted-foreground">
+                    {languages} · GPU {formatSize(engine.downloadMb.webgpu)} · CPU {formatSize(engine.downloadMb.wasm)}
+                  </div>
+                </button>
               );
             })}
-          </ul>
-        )}
+          </div>
 
-        <p className="text-[11px] text-slate-500 dark:text-zinc-500 leading-relaxed">
-          Models are stored by this browser for this app address ({window.location.origin}). Opening HuskyNote in another
-          browser, at another address, or in the desktop app downloads them again.
-        </p>
+          {usesFallback && (
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {selected.name} does not support your default spoken language, so recordings in that language use{' '}
+              {getTranscriptionEngine(MULTILINGUAL_FALLBACK_ENGINE).name} automatically.
+            </p>
+          )}
+
+          {gpu && (
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {gpu.available && gpu.fp16 ? (
+                <>
+                  GPU acceleration is available{gpu.vendor ? ` (${gpu.vendor.toUpperCase()})` : ''}, so engines download and run their
+                  GPU version.
+                </>
+              ) : (
+                <>
+                  <span className="font-medium text-foreground">GPU acceleration is not available.</span>{' '}
+                  {gpu.available
+                    ? 'Whisper and Moonshine still use the GPU, but Parakeet needs fp16 support and runs its slower CPU version.'
+                    : 'Every engine runs its slower CPU version.'}{' '}
+                  {gpu.reason}
+                </>
+              )}
+            </p>
+          )}
+
+          {speech.engineName && speech.device && (
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {speech.engineName} is running on the {speech.device === 'webgpu' ? 'GPU' : 'CPU'}.
+              {speech.gpuError && (
+                <span className="mt-0.5 block break-words">
+                  The GPU could not be used: {speech.gpuError}
+                </span>
+              )}
+            </p>
+          )}
+
+          <Card>
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-2">
+                <HardDrive className="size-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">Downloaded on this device</span>
+              </div>
+
+              {downloads === null ? (
+                <p className="text-xs text-muted-foreground">Checking...</p>
+              ) : downloaded.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No speech models downloaded yet. The selected engine downloads the first time you record.
+                </p>
+              ) : (
+                <ul className="divide-y">
+                  {downloaded.map((engine) => {
+                    const info = downloads[engine.id]!;
+                    return (
+                      <li key={engine.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 first:pt-0 last:pb-0">
+                        <span className="min-w-[8rem] text-sm font-medium text-foreground">{engine.name}</span>
+                        <span className="text-xs text-muted-foreground">{info.completeDevices.length ? `Required files cached: ${info.completeDevices.join(', ')}. Run setup to verify.` : 'Partial or older revision. Run setup to complete.'}</span>
+                        {info.variants.map((v) => {
+                          const busy = removing === `${engine.id}:${v.id}`;
+                          return (
+                            <span key={v.id} className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
+                              {VARIANT_LABEL[v.id]} · {formatBytes(v.bytes)}
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                onClick={() => handleRemove(engine.id, v.id)}
+                                disabled={busy}
+                                className="size-6 text-muted-foreground hover:text-destructive"
+                                title={`Remove ${engine.name} ${v.id === 'all' ? '' : VARIANT_LABEL[v.id]}`.trim()}
+                                aria-label={`Remove ${engine.name} ${v.id === 'all' ? 'download' : VARIANT_LABEL[v.id]}`}
+                              >
+                                <Trash2 className="size-3.5" />
+                              </Button>
+                            </span>
+                          );
+                        })}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Models are stored by this browser for this app address ({window.location.origin}). Opening HuskyNote in another
+                browser, at another address, or in the desktop app downloads them again.
+              </p>
+            </CardContent>
+          </Card>
+        </Disclosure>
+        <TranscriptionBenchmark language={spokenLanguage} />
       </div>
     </div>
   );

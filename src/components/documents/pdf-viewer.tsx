@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import type { DocumentEntity, Annotation, AnnotationType } from '../../types';
 import { db } from '../../db';
 import { pdfjsLib } from '../../services/pdf/extractor';
@@ -6,14 +6,28 @@ import { AnnotationLayer } from './annotation-layer';
 import { AISuggestionsModal } from './ai-suggestions-modal';
 import { StepsModeModal } from './steps-mode';
 import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 import { Modal } from '../ui/modal';
+import { Markdown } from '../ui/markdown';
+import { Separator } from '../ui/separator';
+import { Spinner } from '../ui/spinner';
+import { StatusDot } from '../ui/status-dot';
+import { Sheet, SheetContent, SheetTitle } from '../ui/sheet';
+import { Toolbar, ToolbarGroup, ToolbarSeparator } from '../ui/toolbar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
+import { cn } from '../../lib/utils';
 import { useAI } from '../../context/ai-context';
+import { PROVIDER_NAMES, PROVIDER_RECIPIENTS } from '../../services/ai/active-provider';
 import { useWorkspace } from '../../context/workspace-context';
 import { chunkDocumentPages, retrieveRelevantChunks, buildRAGPrompt } from '../../services/ai/rag';
 import { ai } from '../../services/ai/active-provider';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import DOMPurify from 'dompurify';
 import { autoAnnotator, DocumentEvidenceNote } from '../../services/documents/auto-annotator';
 import { DocumentNotesModal } from './document-notes-modal';
 import {
@@ -27,18 +41,17 @@ import {
   MessageSquare,
   Sparkles,
   ListOrdered,
-  Send,
+  ArrowUp,
   Save,
   Trash2,
-  CheckCircle,
+  Eraser,
+  MoreHorizontal,
   PanelLeftClose,
   PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
   FileText,
-  Download,
   Mic,
-  MicOff,
 } from 'lucide-react';
 import { LiveSpeechTranscriber } from '../../services/audio/transcriber';
 
@@ -49,18 +62,38 @@ interface PDFViewerProps {
   isListOpen?: boolean;
 }
 
+const LARGE_SCREEN_QUERY = '(min-width: 1024px)';
+const DEFAULT_PDF_SCALE = 1.2;
+const MIN_PDF_SCALE = 0.6;
+
+/** True while the viewport is lg or wider (the assistant docks inline there, and opens as a sheet below). */
+function useIsLargeScreen(): boolean {
+  const [matches, setMatches] = useState<boolean>(
+    () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(LARGE_SCREEN_QUERY).matches
+  );
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const query = window.matchMedia(LARGE_SCREEN_QUERY);
+    const update = () => setMatches(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+  return matches;
+}
+
 export const PDFViewer: React.FC<PDFViewerProps> = ({
   document: docEntity,
   onDeleted,
   onToggleList,
   isListOpen,
 }) => {
-  const { selectedModel, isConnected } = useAI();
+  const { selectedModel, isConnected, provider } = useAI();
   const { addToast, setActiveView, setActiveNoteId } = useWorkspace();
 
   const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.2);
+  const [scale, setScale] = useState<number>(DEFAULT_PDF_SCALE);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [activeTool, setActiveTool] = useState<AnnotationType | null>(null);
   const [isAssistantOpen, setIsAssistantOpen] = useState<boolean>(() => {
@@ -87,6 +120,21 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const [autoBoxoutEnabled, setAutoBoxoutEnabled] = useState(true);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isQuestionDictating, setIsQuestionDictating] = useState(false);
+  const isLargeScreen = useIsLargeScreen();
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [toolbarWidth, setToolbarWidth] = useState<number>(1200);
+
+  // Measure the toolbar so actions that do not fit move into its overflow menu
+  useLayoutEffect(() => {
+    const el = toolbarRef.current;
+    if (!el) return;
+    const update = () => setToolbarWidth(el.clientWidth);
+    update();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const renderTaskRef = useRef<any>(null);
@@ -334,9 +382,37 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     };
   }, [docEntity]);
 
-  // Auto-generate AI overview if not already generated
+  // Open at fit-to-width when the stage (narrowed by the list and assistant panels) can't show the page at
+  // the default 120%; otherwise keep 120%. Zoom stays manual after that.
   useEffect(() => {
-    if (docEntity && !aiResponse && !isAiLoading && isConnected && selectedModel) {
+    if (!pdfDoc) return;
+    let cancelled = false;
+    void pdfDoc
+      .getPage(1)
+      .then((page: any) => {
+        const stage = containerRef.current;
+        if (cancelled || !stage) return;
+        const styles = window.getComputedStyle(stage);
+        const available = stage.clientWidth - parseFloat(styles.paddingLeft) - parseFloat(styles.paddingRight);
+        const pageWidth = page.getViewport({ scale: 1 }).width;
+        if (available > 0 && pageWidth * DEFAULT_PDF_SCALE > available) {
+          setScale(Math.max(MIN_PDF_SCALE, Math.floor((available / pageWidth) * 20) / 20));
+        } else {
+          setScale(DEFAULT_PDF_SCALE);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [pdfDoc]);
+
+  // Auto-generate AI overview if not already generated. The ref keeps it to one request per document
+  // (a second concurrent run, e.g. React StrictMode's effect replay, would interleave two streamed answers).
+  const overviewRequestedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (docEntity && !aiResponse && !isAiLoading && isConnected && selectedModel && overviewRequestedFor.current !== docEntity.id) {
+      overviewRequestedFor.current = docEntity.id;
       askDocumentAI(`Provide an executive summary and 3 key takeaways of this document: "${docEntity.title}"`);
     }
   }, [docEntity?.id, isConnected, selectedModel]);
@@ -427,6 +503,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         width: type === 'marker' ? 4 : 80,
         height: type === 'marker' ? 4 : 8,
       },
+      // design-exception: annotation colors are document content drawn on the page
       color: type === 'rectangle' ? '#ef4444' : '#eab308',
       text: selectedText || undefined,
       label: label || (type === 'marker' ? `Step` : undefined),
@@ -695,232 +772,594 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const currentPageText =
     docEntity.extractedPages.find((p) => p.pageNumber === currentPage)?.text || '';
 
-  return (
-    <div
-      className="flex-1 flex h-full bg-slate-50 dark:bg-canvas overflow-hidden relative select-text"
-      onMouseUp={handleMouseUp}
-    >
-      {/* Center Main: Document Canvas & Controls */}
-      <div className="flex-1 flex flex-col h-full min-w-0 border-r dark:border-zinc-850">
-        {/* Top Viewer Controls */}
-        <div className="h-12 border-b dark:border-zinc-850 px-3 sm:px-4 flex items-center justify-between shrink-0 bg-white/60 dark:bg-zinc-950/60 gap-2 overflow-x-auto">
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {onToggleList && (
-              <button
-                onClick={onToggleList}
-                className="p-1.5 rounded-md text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors"
-                title={isListOpen ? 'Hide document list' : 'Show document list'}
-                aria-label={isListOpen ? 'Hide document list' : 'Show document list'}
-              >
-                {isListOpen ? (
-                  <PanelLeftClose className="w-3.5 h-3.5" />
-                ) : (
-                  <PanelLeftOpen className="w-3.5 h-3.5" />
-                )}
-              </button>
-            )}
+  // The toolbar follows its own width (the list and assistant columns squeeze it): page navigation,
+  // compiled notes, the assistant toggle and the overflow menu always show; the rest is added in
+  // priority order while it fits, and whatever does not fit moves into the overflow menu.
+  const toolbarTiers = (() => {
+    const tiers = {
+      zoom: false,
+      annotate: false,
+      aiActions: false,
+      notesLabel: false,
+      assistantLabel: false,
+      docActions: false,
+      aiActionLabels: false,
+      annotateLabels: false,
+    };
+    // While the list is open the selected row already names the document, so the title may shrink further
+    const titleReserve = isListOpen ? 48 : 120;
+    const padding = toolbarWidth >= 640 ? 24 : 16;
+    // list toggle, page group, separator, compiled notes (icon + count), assistant toggle, overflow menu, safety margin
+    const fixed = padding + (onToggleList ? 32 : 0) + 4 + 102 + 13 + 60 + 32 + 32 + 24;
+    let budget = toolbarWidth - fixed - titleReserve;
+    const order: Array<[keyof typeof tiers, number]> = [
+      ['zoom', 102],
+      ['annotate', 109],
+      ['aiActions', 77],
+      ['notesLabel', 108],
+      ['assistantLabel', 88],
+      ['docActions', annotations.length > 0 ? 100 : 0],
+      ['aiActionLabels', 114],
+      ['annotateLabels', 188],
+    ];
+    for (const [tier, cost] of order) {
+      if (budget < cost) break;
+      budget -= cost;
+      tiers[tier] = true;
+    }
+    return { ...tiers, titleWidth: budget + titleReserve + 24 };
+  })();
+  const showZoomInline = toolbarTiers.zoom;
+  const showAnnotateInline = toolbarTiers.annotate;
+  const showAiActionsInline = toolbarTiers.aiActions;
+  const showDocActionsInline = toolbarTiers.docActions;
+  const showAnnotateLabels = toolbarTiers.annotateLabels;
+  const showAiActionLabels = toolbarTiers.aiActionLabels;
+  const showNotesLabel = toolbarTiers.notesLabel;
+  const showAssistantLabel = toolbarTiers.assistantLabel;
+  const showToolbarTitle = toolbarTiers.titleWidth >= 64;
+  const isPresentationDoc =
+    docEntity.fileName.toLowerCase().endsWith('.pptx') || docEntity.fileName.toLowerCase().endsWith('.ppt');
 
-            <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200 truncate max-w-[120px] sm:max-w-[200px]">
-              {docEntity.title}
-            </span>
+  const quickPrompts: Array<{ label: string; prompt: string }> = [
+    { label: 'Summarize Page', prompt: 'Summarize this page in 3 concise bullet points.' },
+    { label: 'Main Steps', prompt: 'What are the main procedural steps or actions required?' },
+    { label: 'Requirements', prompt: 'What are the critical requirements, warnings, or prerequisites?' },
+    { label: 'Key Takeaways', prompt: 'What are the 3 most important takeaways from this page?' },
+  ];
 
-            <div className="flex items-center gap-1 bg-slate-50 dark:bg-zinc-900 border dark:border-zinc-850 rounded px-1.5 py-0.5 text-xs font-mono text-slate-600 dark:text-zinc-400">
-              <button
-                disabled={currentPage <= 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className="p-1 hover:text-slate-950 dark:hover:text-white disabled:opacity-30"
-                title="Previous page"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </button>
-              <span className="text-[11px]">
-                {currentPage} / {docEntity.pageCount}
-              </span>
-              <button
-                disabled={currentPage >= docEntity.pageCount}
-                onClick={() => setCurrentPage((p) => Math.min(docEntity.pageCount, p + 1))}
-                className="p-1 hover:text-slate-950 dark:hover:text-white disabled:opacity-30"
-                title="Next page"
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
+  const renderAssistant = (inSheet: boolean) => (
+    <>
+      <div className="flex h-11 shrink-0 items-center gap-2 border-b px-3">
+        <Sparkles className="size-4 text-muted-foreground" />
+        {inSheet ? (
+          <SheetTitle className="text-sm font-medium">Document Assistant</SheetTitle>
+        ) : (
+          <h2 className="text-sm font-medium text-foreground">Document Assistant</h2>
+        )}
+        <span className="ml-auto text-xs tabular-nums text-muted-foreground">Page {currentPage}</span>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => setIsAssistantOpen(false)}
+          className="text-muted-foreground"
+          title="Close assistant panel"
+          aria-label="Close assistant panel"
+        >
+          <PanelRightClose />
+        </Button>
+      </div>
 
-          {/* Zoom and Annotation Tools */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <div className="hidden sm:flex items-center bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded px-1">
-              <button
-                onClick={() => setScale((s) => Math.max(0.6, s - 0.2))}
-                className="p-1 text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white"
-                title="Zoom Out"
-              >
-                <ZoomOut className="w-3.5 h-3.5" />
-              </button>
-              <span className="text-[10px] font-mono text-slate-600 dark:text-zinc-400 px-1.5">
-                {Math.round(scale * 100)}%
-              </span>
-              <button
-                onClick={() => setScale((s) => Math.min(2.5, s + 0.2))}
-                className="p-1 text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white"
-                title="Zoom In"
-              >
-                <ZoomIn className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="hidden md:block w-px h-4 bg-slate-100 dark:bg-zinc-800 mx-0.5" />
-
-            {/* Quick manual annotation buttons */}
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => addAnnotationAtCoords('highlight')}
-              title="Add Highlight Box"
-              className="px-2"
-            >
-              <Highlighter className="w-3.5 h-3.5" />
-              <span className="hidden xl:inline">Highlight</span>
-            </Button>
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => addAnnotationAtCoords('rectangle', 'Caution')}
-              title="Add Warning Box"
-              className="px-2"
-            >
-              <Square className="w-3.5 h-3.5" />
-              <span className="hidden xl:inline">Box</span>
-            </Button>
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => addAnnotationAtCoords('marker')}
-              title="Add Numbered Step Badge"
-              className="px-2"
-            >
-              <Hash className="w-3.5 h-3.5" />
-              <span className="hidden xl:inline">Step Badge</span>
-            </Button>
-
-            <div className="w-px h-4 bg-slate-100 dark:bg-zinc-800 mx-0.5" />
-
-            {/* AI Action Modals */}
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => setIsSuggestionsModalOpen(true)}
-              title="Analyze Page for Suggestions"
-              className="px-2"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Callouts</span>
-            </Button>
-
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => setIsStepsModalOpen(true)}
-              title="Transform Section into Numbered Steps"
-              className="px-2"
-            >
-              <ListOrdered className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Steps</span>
-            </Button>
-
-            {/* Compiled Notes Button */}
-            <Button
-              size="sm"
-              variant={compiledNotes.length > 0 ? 'secondary' : 'outline'}
-              onClick={() => setIsNotesModalOpen(true)}
-              title="View and download compiled document notes"
-              className="px-2.5 flex items-center gap-1.5"
-            >
-              <FileText className="w-3.5 h-3.5 text-slate-700 dark:text-zinc-300" />
-              <span className="hidden sm:inline">Compiled Notes</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-slate-100 dark:bg-zinc-800 text-[10px] font-mono">
-                {compiledNotes.length}
-              </span>
-            </Button>
-
-            {/* AI Assistant Panel Toggle */}
-            <Button
-              size="sm"
-              variant={isAssistantOpen ? 'primary' : 'outline'}
-              onClick={() => setIsAssistantOpen((prev) => !prev)}
-              title={isAssistantOpen ? 'Hide Assistant Panel' : 'Show Assistant Panel'}
-              className="px-2.5"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-slate-700 dark:text-zinc-300" />
-              <span className="hidden sm:inline">AI Assistant</span>
-            </Button>
-
-            {/* Clear Annotations Button */}
-            {annotations.length > 0 && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleClearAllAnnotations}
-                title="Clear all annotations on this document"
-                className="text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 text-xs px-2"
-              >
-                Clear Boxes
-              </Button>
-            )}
-
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setIsDeleteModalOpen(true)}
-              title="Delete document"
-              className="hover:bg-red-950/40 hover:text-red-400"
-            >
-              <Trash2 className="w-3.5 h-3.5 text-slate-600 dark:text-zinc-400 hover:text-red-400" />
-            </Button>
-          </div>
+      {/* Quick question chips with auto-boxout */}
+      <div className="shrink-0 space-y-2.5 border-b px-3 py-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-medium text-muted-foreground">Quick summaries</span>
+          <button
+            type="button"
+            onClick={() => setAutoBoxoutEnabled(!autoBoxoutEnabled)}
+            aria-pressed={autoBoxoutEnabled}
+            className="-mr-1 inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground transition-colors duration-100 hover:bg-accent hover:text-foreground"
+            title="Toggle automatic document text box-out and screenshot"
+          >
+            <StatusDot tone={autoBoxoutEnabled ? 'success' : 'muted'} className="size-1.5" />
+            <span>Highlight answers on page: {autoBoxoutEnabled ? 'On' : 'Off'}</span>
+          </button>
         </div>
 
-        {/* Document Display Area (Canvas for PDF or Digital Reading Sheet for DOCX/PPTX/TXT) */}
-        <div
-          ref={containerRef}
-          className="flex-1 overflow-auto p-8 flex items-start justify-start bg-white/40 dark:bg-zinc-950/40 select-text"
-        >
+        <div className="flex flex-wrap gap-1.5">
+          {quickPrompts.map((chip) => (
+            <Button
+              key={chip.label}
+              variant="outline"
+              size="xs"
+              className="rounded-full px-2.5 font-normal"
+              onClick={() => askDocumentAI(chip.prompt)}
+            >
+              {chip.label}
+            </Button>
+          ))}
+        </div>
+
+        {compiledNotes.length > 0 && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsNotesModalOpen(true)}
+            className="w-full justify-between"
+          >
+            <span className="flex items-center gap-1.5">
+              <FileText />
+              <span>Review Compiled Notes</span>
+            </span>
+            <Badge variant="outline" className="tabular-nums">
+              {compiledNotes.length}
+            </Badge>
+          </Button>
+        )}
+      </div>
+
+      {/* Conversation */}
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-4">
+        {aiResponse ? (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <Sparkles className="size-3.5" />
+              </span>
+              <span className="text-xs font-medium text-muted-foreground">AI Response</span>
+              <span className="ml-auto text-xs tabular-nums text-muted-foreground">Sources: p.{currentPage}</span>
+            </div>
+            <Markdown size="sm" className="pl-8">
+              {aiResponse}
+            </Markdown>
+            <div className="pl-8">
+              <Button variant="outline" size="xs" onClick={handleSaveAiAnswerAsNote}>
+                <Save />
+                <span>Save Analysis as Note</span>
+              </Button>
+            </div>
+          </div>
+        ) : isAiLoading ? (
+          <div className="flex items-start gap-2">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted">
+              <Spinner className="size-3.5" aria-hidden="true" />
+            </span>
+            <p role="status" className="pt-0.5 text-sm text-muted-foreground animate-pulse motion-reduce:animate-none">
+              Reading document chunks and querying {provider === 'ollama' ? 'local Ollama' : PROVIDER_NAMES[provider]}...
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center px-4 py-10 text-center">
+            <MessageSquare className="mb-3 size-6 text-muted-foreground/70" strokeWidth={1.5} />
+            <p className="text-sm text-foreground">Ask any question about this document or click the chips above.</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {PROVIDER_RECIPIENTS[provider]
+                ? `Relevant excerpts are sent to ${PROVIDER_RECIPIENTS[provider]} to answer.`
+                : 'Answers run on this computer through Ollama.'}
+            </p>
+          </div>
+        )}
+
+        {/* Citations */}
+        {aiSources.length > 0 && (
+          <div className="space-y-1.5">
+            <span className="block text-xs font-medium text-muted-foreground">Citations</span>
+            {aiSources.map((src, idx) => (
+              <button
+                type="button"
+                key={idx}
+                onClick={() => setCurrentPage(src.pageNumber)}
+                className="block w-full rounded-md border px-2.5 py-2 text-left transition-colors duration-100 hover:bg-accent"
+              >
+                <span className="mb-0.5 flex items-center justify-between text-xs">
+                  <span className="font-medium tabular-nums text-foreground">Page {src.pageNumber}</span>
+                  <span className="text-muted-foreground">Click to navigate</span>
+                </span>
+                <span className="line-clamp-2 text-xs italic text-muted-foreground">"{src.text}"</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Composer */}
+      {/* Docked at the bottom-right of the window: leave room for the companion button when it is shown */}
+      <div className="shrink-0 border-t p-3 group-data-[mascot=true]/main:pr-14">
+        <div className="flex items-center gap-1 rounded-lg border border-input bg-background py-1 pl-3 pr-1 shadow-xs transition-[color,box-shadow,border-color] duration-100 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/20">
+          <input
+            type="text"
+            placeholder="Ask document question..."
+            aria-label="Ask document question"
+            value={aiQuestion}
+            onChange={(e) => setAiQuestion(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !isAiLoading) {
+                askDocumentAI(aiQuestion);
+                setAiQuestion('');
+              }
+            }}
+            disabled={isAiLoading}
+            className="h-7 min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline-none disabled:opacity-50"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={toggleQuestionDictation}
+            aria-pressed={isQuestionDictating}
+            className={cn(
+              'text-muted-foreground',
+              isQuestionDictating && 'bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive'
+            )}
+            title={isQuestionDictating ? 'Stop speech dictation' : 'Dictate question with mic'}
+            aria-label={isQuestionDictating ? 'Stop speech dictation' : 'Dictate question with mic'}
+          >
+            {isQuestionDictating ? <Mic className="animate-pulse motion-reduce:animate-none" /> : <Mic />}
+          </Button>
+          <Button
+            type="button"
+            size="icon-sm"
+            className="rounded-full"
+            onClick={() => {
+              askDocumentAI(aiQuestion);
+              setAiQuestion('');
+            }}
+            disabled={isAiLoading || !aiQuestion.trim()}
+            title="Send question"
+            aria-label="Send question"
+          >
+            <ArrowUp />
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+
+  const hasOverflowItems =
+    !showZoomInline || !showAnnotateInline || !showAiActionsInline || !showDocActionsInline;
+
+  return (
+    <div className="relative flex h-full min-w-0 flex-1 select-text overflow-hidden bg-background" onMouseUp={handleMouseUp}>
+      {/* Center: document stage and toolbar */}
+      <div className="flex h-full min-w-0 flex-1 flex-col">
+        <Toolbar ref={toolbarRef} className="gap-1 px-2 sm:px-3">
+          {onToggleList && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onToggleList}
+              className="text-muted-foreground"
+              title={isListOpen ? 'Hide document list' : 'Show document list'}
+              aria-label={isListOpen ? 'Hide document list' : 'Show document list'}
+            >
+              {isListOpen ? <PanelLeftClose /> : <PanelLeftOpen />}
+            </Button>
+          )}
+
+          <span className="min-w-0 flex-1 truncate px-1 text-sm font-medium text-foreground" title={docEntity.title}>
+            {showToolbarTitle ? docEntity.title : <span className="sr-only">{docEntity.title}</span>}
+          </span>
+
+          <ToolbarGroup className="shrink-0">
+            {/* Page group */}
+            <div className="inline-flex h-8 items-center rounded-md border px-0.5">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="size-6 text-muted-foreground"
+                disabled={currentPage <= 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                title="Previous page"
+                aria-label="Previous page"
+              >
+                <ChevronLeft />
+              </Button>
+              <span className="min-w-12 px-1 text-center text-xs tabular-nums text-foreground">
+                {currentPage} / {docEntity.pageCount}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="size-6 text-muted-foreground"
+                disabled={currentPage >= docEntity.pageCount}
+                onClick={() => setCurrentPage((p) => Math.min(docEntity.pageCount, p + 1))}
+                title="Next page"
+                aria-label="Next page"
+              >
+                <ChevronRight />
+              </Button>
+            </div>
+
+            {/* Zoom group */}
+            {showZoomInline && (
+              <div className="inline-flex h-8 items-center rounded-md border px-0.5">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="size-6 text-muted-foreground"
+                  onClick={() => setScale((s) => Math.max(MIN_PDF_SCALE, s - 0.2))}
+                  title="Zoom Out"
+                  aria-label="Zoom Out"
+                >
+                  <ZoomOut />
+                </Button>
+                <span className="min-w-11 px-1 text-center text-xs tabular-nums text-foreground">
+                  {Math.round(scale * 100)}%
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="size-6 text-muted-foreground"
+                  onClick={() => setScale((s) => Math.min(2.5, s + 0.2))}
+                  title="Zoom In"
+                  aria-label="Zoom In"
+                >
+                  <ZoomIn />
+                </Button>
+              </div>
+            )}
+
+            {/* Manual annotation tools */}
+            {showAnnotateInline && (
+              <>
+                <ToolbarSeparator />
+                <Button
+                  size={showAnnotateLabels ? 'sm' : 'icon-sm'}
+                  variant="ghost"
+                  onClick={() => addAnnotationAtCoords('highlight')}
+                  title="Add Highlight Box"
+                  aria-label={showAnnotateLabels ? undefined : 'Highlight'}
+                >
+                  <Highlighter />
+                  {showAnnotateLabels && <span>Highlight</span>}
+                </Button>
+                <Button
+                  size={showAnnotateLabels ? 'sm' : 'icon-sm'}
+                  variant="ghost"
+                  onClick={() => addAnnotationAtCoords('rectangle', 'Caution')}
+                  title="Add Warning Box"
+                  aria-label={showAnnotateLabels ? undefined : 'Box'}
+                >
+                  <Square />
+                  {showAnnotateLabels && <span>Box</span>}
+                </Button>
+                <Button
+                  size={showAnnotateLabels ? 'sm' : 'icon-sm'}
+                  variant="ghost"
+                  onClick={() => addAnnotationAtCoords('marker')}
+                  title="Add Numbered Step Badge"
+                  aria-label={showAnnotateLabels ? undefined : 'Step Badge'}
+                >
+                  <Hash />
+                  {showAnnotateLabels && <span>Step Badge</span>}
+                </Button>
+              </>
+            )}
+
+            {/* AI actions */}
+            {showAiActionsInline && (
+              <>
+                <ToolbarSeparator />
+                <Button
+                  size={showAiActionLabels ? 'sm' : 'icon-sm'}
+                  variant="ghost"
+                  onClick={() => setIsSuggestionsModalOpen(true)}
+                  title="Analyze Page for Suggestions"
+                  aria-label={showAiActionLabels ? undefined : 'Callouts'}
+                >
+                  <Sparkles />
+                  {showAiActionLabels && <span>Callouts</span>}
+                </Button>
+                <Button
+                  size={showAiActionLabels ? 'sm' : 'icon-sm'}
+                  variant="ghost"
+                  onClick={() => setIsStepsModalOpen(true)}
+                  title="Transform Section into Numbered Steps"
+                  aria-label={showAiActionLabels ? undefined : 'Steps'}
+                >
+                  <ListOrdered />
+                  {showAiActionLabels && <span>Steps</span>}
+                </Button>
+              </>
+            )}
+
+            <ToolbarSeparator />
+
+            {/* Compiled notes */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsNotesModalOpen(true)}
+              title="View and download compiled document notes"
+              aria-label={showNotesLabel ? undefined : `Compiled Notes (${compiledNotes.length})`}
+              className={cn(!showNotesLabel && 'px-2')}
+            >
+              <FileText />
+              {showNotesLabel && <span>Compiled Notes</span>}
+              <Badge variant="secondary" className="px-1.5 py-0 tabular-nums">
+                {compiledNotes.length}
+              </Badge>
+            </Button>
+
+            {/* AI Assistant panel toggle */}
+            <Button
+              size={showAssistantLabel ? 'sm' : 'icon-sm'}
+              variant="ghost"
+              aria-pressed={isAssistantOpen}
+              onClick={() => setIsAssistantOpen((prev) => !prev)}
+              title={isAssistantOpen ? 'Hide Assistant Panel' : 'Show Assistant Panel'}
+              aria-label={showAssistantLabel ? undefined : 'AI Assistant'}
+              className="aria-pressed:bg-accent aria-pressed:text-accent-foreground"
+            >
+              {isAssistantOpen ? <PanelRightClose /> : <PanelRightOpen />}
+              {showAssistantLabel && <span>AI Assistant</span>}
+            </Button>
+
+            {/* Document actions: inline when there is room, otherwise in the overflow menu */}
+            {showDocActionsInline && (
+              <>
+                {annotations.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleClearAllAnnotations}
+                    title="Clear all annotations on this document"
+                    className="text-muted-foreground"
+                  >
+                    Clear Boxes
+                  </Button>
+                )}
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  title="Delete document"
+                  aria-label="Delete document"
+                  className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 />
+                </Button>
+              </>
+            )}
+
+            {hasOverflowItems && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    className="text-muted-foreground"
+                    title="More document actions"
+                    aria-label="More document actions"
+                  >
+                    <MoreHorizontal />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-60">
+                  {!showZoomInline && (
+                    <>
+                      <DropdownMenuLabel className="flex items-center justify-between">
+                        <span>Zoom</span>
+                        <span className="tabular-nums">{Math.round(scale * 100)}%</span>
+                      </DropdownMenuLabel>
+                      <DropdownMenuItem
+                        title="Zoom Out"
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          setScale((s) => Math.max(MIN_PDF_SCALE, s - 0.2));
+                        }}
+                      >
+                        <ZoomOut />
+                        <span>Zoom Out</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        title="Zoom In"
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          setScale((s) => Math.min(2.5, s + 0.2));
+                        }}
+                      >
+                        <ZoomIn />
+                        <span>Zoom In</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  {!showAnnotateInline && (
+                    <>
+                      <DropdownMenuItem title="Add Highlight Box" onSelect={() => addAnnotationAtCoords('highlight')}>
+                        <Highlighter />
+                        <span>Highlight</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem title="Add Warning Box" onSelect={() => addAnnotationAtCoords('rectangle', 'Caution')}>
+                        <Square />
+                        <span>Box</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem title="Add Numbered Step Badge" onSelect={() => addAnnotationAtCoords('marker')}>
+                        <Hash />
+                        <span>Step Badge</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  {!showAiActionsInline && (
+                    <>
+                      <DropdownMenuItem
+                        title="Analyze Page for Suggestions"
+                        onSelect={() => setTimeout(() => setIsSuggestionsModalOpen(true), 0)}
+                      >
+                        <Sparkles />
+                        <span>Callouts</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        title="Transform Section into Numbered Steps"
+                        onSelect={() => setTimeout(() => setIsStepsModalOpen(true), 0)}
+                      >
+                        <ListOrdered />
+                        <span>Steps</span>
+                      </DropdownMenuItem>
+                      {!showDocActionsInline && <DropdownMenuSeparator />}
+                    </>
+                  )}
+                  {!showDocActionsInline && (
+                    <>
+                      {annotations.length > 0 && (
+                        <DropdownMenuItem title="Clear all annotations on this document" onSelect={handleClearAllAnnotations}>
+                          <Eraser />
+                          <span>Clear Boxes</span>
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem
+                        variant="destructive"
+                        title="Delete document"
+                        onSelect={() => setTimeout(() => setIsDeleteModalOpen(true), 0)}
+                      >
+                        <Trash2 />
+                        <span>Delete document</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </ToolbarGroup>
+        </Toolbar>
+
+        {/* Document stage: canvas for PDFs, a paper sheet for DOCX/PPTX/TXT */}
+        <div ref={containerRef} className="flex flex-1 select-text items-start justify-start overflow-auto bg-muted/40 p-4 sm:p-8">
           {isTextDocument ? (
-            <div ref={textDocRef} className="relative mx-auto paper-desk-shadow border dark:border-zinc-750 bg-white rounded-sm w-full max-w-2xl min-h-[720px] p-10 flex flex-col justify-between text-slate-900 dark:text-zinc-900 shadow-2xl select-text">
+            <div
+              ref={textDocRef}
+              className="relative mx-auto flex min-h-[720px] w-full max-w-2xl select-text flex-col justify-between rounded-sm bg-paper p-6 text-paper-foreground shadow-lg ring-1 ring-border sm:p-10"
+            >
               <div>
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-slate-900 dark:border-zinc-200 pb-3 mb-6 text-[10px] font-mono text-slate-500 dark:text-zinc-500 uppercase">
-                  <span className="font-bold tracking-wider">
-                    {docEntity.fileName.toLowerCase().endsWith('.pptx') || docEntity.fileName.toLowerCase().endsWith('.ppt')
-                      ? `SLIDE ${currentPage} OF ${docEntity.pageCount}`
-                      : `PAGE ${currentPage} OF ${docEntity.pageCount}`}
+                <div className="mb-6 flex items-center justify-between gap-4 border-b border-paper-foreground/15 pb-3 text-xs text-paper-foreground/60">
+                  <span className="font-medium tabular-nums">
+                    {isPresentationDoc
+                      ? `Slide ${currentPage} of ${docEntity.pageCount}`
+                      : `Page ${currentPage} of ${docEntity.pageCount}`}
                   </span>
-                  <span>{docEntity.fileName}</span>
+                  <span className="truncate">{docEntity.fileName}</span>
                 </div>
 
-                {/* Page Content */}
-                <div ref={textContentRef} className="text-sm font-sans text-slate-900 dark:text-zinc-900 leading-relaxed space-y-4 whitespace-pre-wrap font-normal select-text">
+                {/* Page content */}
+                <div ref={textContentRef} className="select-text space-y-4 whitespace-pre-wrap text-sm leading-relaxed text-paper-foreground">
                   {currentPageText || 'Empty page content.'}
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="pt-6 border-t border-slate-900 dark:border-zinc-200 flex items-center justify-between text-[10px] font-mono text-slate-600 dark:text-zinc-400">
-                <span>LOCAL INDEXEDDB PERSISTED</span>
-                <span>HUSKYNOTE INTELLIGENCE</span>
+              <div className="flex items-center justify-between border-t border-paper-foreground/15 pt-6 text-xs text-paper-foreground/60">
+                <span>Saved on this device</span>
+                <span>HuskyNote</span>
               </div>
 
-              <AnnotationLayer
-                annotations={annotations}
-                pageNumber={currentPage}
-                onRemoveAnnotation={handleRemoveAnnotation}
-              />
+              <AnnotationLayer annotations={annotations} pageNumber={currentPage} onRemoveAnnotation={handleRemoveAnnotation} />
             </div>
           ) : (
             // Auto margins center the page but, unlike justify-center, never push a zoomed page past the left edge
-            <div className="relative mx-auto shrink-0 paper-desk-shadow border dark:border-zinc-750 bg-white rounded-sm">
+            <div className="relative mx-auto shrink-0 rounded-sm bg-paper shadow-lg ring-1 ring-border">
               <canvas ref={canvasRef} className="block rounded-sm" />
               <AnnotationLayer
                 annotations={annotations}
@@ -934,202 +1373,24 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         </div>
       </div>
 
-      {/* Right Panel: AI Document Intelligence Assistant */}
-      {isAssistantOpen && (
-        <div className="w-80 lg:w-96 bg-white dark:bg-zinc-950 flex flex-col h-full shrink-0 select-none border-l dark:border-zinc-850 animate-fade-in">
-          <div className="p-3.5 border-b dark:border-zinc-850 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-slate-700 dark:text-zinc-300" />
-              <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">
-                Document Assistant
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-mono">Page {currentPage}</span>
-              <button
-                onClick={() => setIsAssistantOpen(false)}
-                className="p-1 text-slate-500 dark:text-zinc-500 hover:text-slate-950 dark:hover:text-white rounded transition-colors"
-                title="Close assistant panel"
-                aria-label="Close assistant panel"
-              >
-                <PanelRightClose className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Question Chips with Auto-Boxout */}
-          <div className="p-3 border-b dark:border-zinc-850 flex flex-col gap-2 bg-white/60 dark:bg-zinc-950/60">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-500 uppercase tracking-wider">Quick Summaries</span>
-              <button
-                onClick={() => setAutoBoxoutEnabled(!autoBoxoutEnabled)}
-                className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 hover:text-emerald-300 transition-colors"
-                title="Toggle automatic document text box-out and screenshot"
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    autoBoxoutEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-slate-300 dark:bg-zinc-600'
-                  }`}
-                />
-                <span>AUTO-BOXOUT: {autoBoxoutEnabled ? 'ON' : 'OFF'}</span>
-              </button>
-            </div>
-
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                onClick={() => askDocumentAI('Summarize this page in 3 concise bullet points.')}
-                className="text-[11px] text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-2 py-1 rounded transition-colors"
-              >
-                Summarize Page
-              </button>
-              <button
-                onClick={() => askDocumentAI('What are the main procedural steps or actions required?')}
-                className="text-[11px] text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-2 py-1 rounded transition-colors"
-              >
-                Main Steps
-              </button>
-              <button
-                onClick={() => askDocumentAI('What are the critical requirements, warnings, or prerequisites?')}
-                className="text-[11px] text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-2 py-1 rounded transition-colors"
-              >
-                Requirements
-              </button>
-              <button
-                onClick={() => askDocumentAI('What are the 3 most important takeaways from this page?')}
-                className="text-[11px] text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-2 py-1 rounded transition-colors"
-              >
-                Key Takeaways
-              </button>
-            </div>
-
-            {compiledNotes.length > 0 && (
-              <button
-                onClick={() => setIsNotesModalOpen(true)}
-                className="mt-0.5 w-full py-1.5 px-2.5 rounded bg-slate-50 dark:bg-zinc-900 border dark:border-zinc-750 text-xs text-slate-800 dark:text-zinc-200 hover:text-slate-950 dark:hover:text-white dark:hover:bg-zinc-850 flex items-center justify-between transition-colors shadow-sm"
-              >
-                <span className="flex items-center gap-1.5 font-medium">
-                  <FileText className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Review Compiled Notes</span>
-                </span>
-                <span className="px-1.5 py-0.2 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 text-[10px] font-mono">
-                  {compiledNotes.length}
-                </span>
-              </button>
-            )}
-          </div>
-
-          {/* AI Conversation View */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {aiResponse ? (
-              <div className="space-y-3">
-                <div className="p-4 rounded-lg bg-slate-50/70 dark:bg-zinc-900/70 border dark:border-zinc-850 text-xs text-slate-800 dark:text-zinc-200 space-y-2 leading-relaxed">
-                  <div className="font-semibold text-slate-900 dark:text-zinc-100 flex items-center justify-between">
-                    <span>AI Response</span>
-                    <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-mono">
-                      Sources: p.{currentPage}
-                    </span>
-                  </div>
-                  <div className="markdown-content">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {DOMPurify.sanitize(aiResponse)}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-
-                {/* Save as Note Action */}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleSaveAiAnswerAsNote}
-                  className="w-full flex items-center justify-center gap-1.5"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Save Analysis as Note</span>
-                </Button>
-              </div>
-            ) : isAiLoading ? (
-              <div className="flex flex-col items-center justify-center py-12 text-slate-500 dark:text-zinc-500 space-y-3 text-xs">
-                <Sparkles className="w-5 h-5 text-slate-600 dark:text-zinc-400 animate-spin" />
-                <span>Reading document chunks and querying local Ollama...</span>
-              </div>
-            ) : (
-              <div className="py-12 text-center text-slate-500 dark:text-zinc-500 space-y-2 text-xs">
-                <MessageSquare className="w-6 h-6 mx-auto text-slate-400 dark:text-zinc-600" />
-                <p>Ask any question about this document or click the chips above.</p>
-                <p className="text-[10px] text-slate-400 dark:text-zinc-600">
-                  Queries stay strictly local against client-side chunks.
-                </p>
-              </div>
-            )}
-
-            {/* Citations Card */}
-            {aiSources.length > 0 && (
-              <div className="p-3 rounded-lg bg-white dark:bg-zinc-950 border dark:border-zinc-850 space-y-2 text-[11px]">
-                <span className="font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider text-[10px]">
-                  Citations
-                </span>
-                {aiSources.map((src, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => setCurrentPage(src.pageNumber)}
-                    className="p-2 rounded bg-slate-50/60 dark:bg-zinc-900/60 border border-slate-200/80 dark:border-zinc-800/80 cursor-pointer hover:border-slate-300 dark:hover:border-zinc-700 transition-colors"
-                  >
-                    <div className="flex items-center justify-between font-mono text-[10px] text-slate-600 dark:text-zinc-400 mb-1">
-                      <span>Page {src.pageNumber}</span>
-                      <span className="text-emerald-400">Click to navigate</span>
-                    </div>
-                    <p className="text-slate-700 dark:text-zinc-300 line-clamp-2 italic text-[11px]">"{src.text}"</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* AI Question Prompt Input */}
-          <div className="p-3 border-t dark:border-zinc-850 bg-white/80 dark:bg-zinc-950/80">
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 focus-within:border-slate-300 dark:focus-within:border-zinc-700">
-              <input
-                type="text"
-                placeholder="Ask document question..."
-                value={aiQuestion}
-                onChange={(e) => setAiQuestion(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !isAiLoading) {
-                    askDocumentAI(aiQuestion);
-                    setAiQuestion('');
-                  }
-                }}
-                disabled={isAiLoading}
-                className="flex-1 bg-transparent text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-500 dark:placeholder-zinc-500 focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={toggleQuestionDictation}
-                className={`p-1.5 rounded transition-all ${
-                  isQuestionDictating
-                    ? 'bg-red-950/80 border border-red-700 text-white animate-pulse'
-                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white'
-                }`}
-                title={isQuestionDictating ? 'Stop speech dictation' : 'Dictate question with mic'}
-              >
-                {isQuestionDictating ? <Mic className="w-3.5 h-3.5 text-red-400" /> : <Mic className="w-3.5 h-3.5" />}
-              </button>
-              <button
-                onClick={() => {
-                  askDocumentAI(aiQuestion);
-                  setAiQuestion('');
-                }}
-                disabled={isAiLoading || !aiQuestion.trim()}
-                className="p-1 rounded text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white disabled:opacity-30 transition-colors"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Right panel: document assistant (inline at lg+, a sheet on smaller screens) */}
+      {isAssistantOpen && isLargeScreen && (
+        <section
+          aria-label="Document Assistant"
+          className="flex h-full w-80 shrink-0 animate-fade-in flex-col border-l bg-background 2xl:w-96"
+        >
+          {renderAssistant(false)}
+        </section>
+      )}
+      {!isLargeScreen && (
+        <Sheet open={isAssistantOpen} onOpenChange={setIsAssistantOpen}>
+          <SheetContent side="right" hideClose className="w-full max-w-sm gap-0 p-0 sm:max-w-sm" aria-describedby={undefined}>
+            {renderAssistant(true)}
+          </SheetContent>
+        </Sheet>
       )}
 
-      {/* Floating Selection Contextual Toolbar */}
+      {/* Floating selection toolbar */}
       {selectionToolbarPos && (
         <div
           style={{
@@ -1138,42 +1399,32 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
             top: selectionToolbarPos.y,
             transform: 'translateX(-50%)',
           }}
-          className="z-50 flex items-center gap-1 bg-slate-50 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700 rounded-lg p-1 shadow-2xl animate-fade-in text-xs select-none"
+          className="z-50 flex animate-fade-in select-none items-center gap-0.5 rounded-lg border bg-popover p-1 text-popover-foreground shadow-lg"
         >
-          <button
-            onClick={() => handleSelectionAction('explain')}
-            className="px-2 py-1 rounded text-slate-800 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
-          >
+          <Button variant="ghost" size="xs" onClick={() => handleSelectionAction('explain')}>
             Explain
-          </button>
-          <button
-            onClick={() => handleSelectionAction('summarize')}
-            className="px-2 py-1 rounded text-slate-800 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
-          >
+          </Button>
+          <Button variant="ghost" size="xs" onClick={() => handleSelectionAction('summarize')}>
             Summarize
-          </button>
-          <button
-            onClick={() => handleSelectionAction('simplify')}
-            className="px-2 py-1 rounded text-slate-800 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
-          >
+          </Button>
+          <Button variant="ghost" size="xs" onClick={() => handleSelectionAction('simplify')}>
             Simplify
-          </button>
-          <div className="w-px h-3 bg-slate-200 dark:bg-zinc-700 mx-0.5" />
-          <button
-            onClick={() => handleSelectionAction('note')}
-            className="px-2 py-1 rounded text-slate-800 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
-          >
+          </Button>
+          <Separator orientation="vertical" className="mx-0.5 h-4" />
+          <Button variant="ghost" size="xs" onClick={() => handleSelectionAction('note')}>
             Make Note
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="xs"
             onClick={() => {
               addAnnotationAtCoords('highlight');
               setSelectionToolbarPos(null);
             }}
-            className="px-2 py-1 rounded text-yellow-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
           >
+            <Highlighter />
             Highlight
-          </button>
+          </Button>
         </div>
       )}
 
@@ -1221,38 +1472,29 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
           onClose={() => setIsDeleteModalOpen(false)}
           title="Delete Document"
           description="Are you sure you want to delete this document? This action cannot be undone."
-          maxWidth="sm"
+          maxWidth="md"
         >
-          <div className="p-6 space-y-4">
-            <div className="p-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg flex items-center gap-3">
-              <FileText className="w-5 h-5 text-slate-700 dark:text-zinc-300 shrink-0" />
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 rounded-lg border bg-muted/40 px-3 py-2.5">
+              <FileText className="size-4 shrink-0 text-muted-foreground" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-slate-900 dark:text-zinc-100 truncate">{docEntity.title}</p>
-                <p className="text-[10px] font-mono text-slate-600 dark:text-zinc-400">
+                <p className="truncate text-sm font-medium text-foreground">{docEntity.title}</p>
+                <p className="truncate text-xs text-muted-foreground">
                   {docEntity.fileName} • {(docEntity.fileSize / 1024 / 1024).toFixed(2)} MB
                 </p>
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
+            <p className="text-sm text-muted-foreground">
               This will permanently remove the file, extracted pages, and all associated AI annotations and notes from your local storage.
             </p>
 
             <div className="flex items-center justify-end gap-2 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsDeleteModalOpen(false)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setIsDeleteModalOpen(false)}>
                 Cancel
               </Button>
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={confirmDeleteDocument}
-                className="bg-red-600 hover:bg-red-700 text-white"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
+              <Button variant="destructive" size="sm" onClick={confirmDeleteDocument}>
+                <Trash2 />
                 <span>Delete Permanently</span>
               </Button>
             </div>

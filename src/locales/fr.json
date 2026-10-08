@@ -22,12 +22,17 @@
     "changelog": "Journal des modifications",
     "privacy": "Confidentialité",
     "localAi": "Secrétaire personnelle",
-    "localWorkspace": "Espace local"
+    "localWorkspace": "Espace local",
+    "search": "Rechercher",
+    "sectionWorkspace": "Espace de travail",
+    "help": "Aide et à propos"
   },
   "theme": {
     "light": "Clair",
     "dark": "Sombre",
-    "toggle": "Changer de thème"
+    "toggle": "Changer de thème",
+    "system": "Système",
+    "appearance": "Apparence"
   },
   "language": {
     "select": "Langue",
@@ -35,121 +40,6 @@
     "zh": "中文",
     "ja": "日本語",
     "fr": "Français"
-  },
-  "landing": {
-    "hero": {
-      "benefitPrivate": "Privé & 100% sur l'appareil",
-      "benefitOffline": "Exécuté sur votre processeur",
-      "headlinePrefix": "Notes, réunions et documents.",
-      "headlineDynamic": "traités entièrement hors ligne.",
-      "subheadline": "Capturez l'audio de vos réunions, analysez des PDF, enregistrez vos écrans avec annotation dynamique et organisez vos connaissances sans dépendre d'un serveur distant. Grâce à Ollama, tout reste strictement sur votre machine.",
-      "openWorkspace": "Ouvrir l'espace de travail",
-      "downloadApp": "Télécharger l'application",
-      "downloadAll": "Télécharger (Mac / Win / Linux)",
-      "screenStudio": "Studio d'enregistrement",
-      "quickSetup": "Configuration rapide",
-      "star": "Étoile",
-      "clientDb": "100% privé sur votre ordinateur",
-      "autoAnnotation": "Guides pas à pas automatiques",
-      "zeroCloudLatency": "Fonctionne entièrement hors ligne"
-    },
-    "demo": {
-      "badge": "DÉMO INTERACTIVE EN DIRECT",
-      "title": "Découvrez HuskyNote en action",
-      "description": "Explorez la transcription de réunions en temps réel, les synthèses IA locales via Ollama, l'annotation dynamique de documents et la génération de comptes-rendus structurés.",
-      "interactiveStudio": "Studio interactif",
-      "walkthroughVideo": "Vidéo de présentation",
-      "watchDemo": "Voir la démo",
-      "replay": "Rejouer"
-    },
-    "howItWorks": {
-      "badge": "FONCTIONNEMENT",
-      "title": "De la conversation orale aux notes structurées.",
-      "description": "La plupart des échanges en réunion sont oubliés sitôt l'appel terminé. HuskyNote capture les propos, souligne les décisions clés et les transforme en notes pérennes directement sur votre ordinateur.",
-      "step1Title": "Enregistrement vocal",
-      "step1Desc": "Audio enregistré localement dans votre navigateur. Les paroles s'affichent en temps réel avec des horodatages cliquables.",
-      "step2Title": "Décisions clés & Faits marquants",
-      "step2Desc": "Les décisions, résolutions et engagements sont identifiés automatiquement sans transfert de données vers l'extérieur.",
-      "step3Title": "Actions à mener",
-      "step3Desc": "Extraction des tâches, des responsables et des échéances sous forme de liste de contrôle ordonnée.",
-      "step4Title": "Notes synthétiques",
-      "step4Desc": "Les conversations orales deviennent des connaissances claires et durables enregistrées dans votre espace.",
-      "preview": "Aperçu",
-      "next": "Suivant",
-      "prev": "Précédent",
-      "restart": "Recommencer (01)"
-    },
-    "summaries": {
-      "badge": "RÉSUMÉS AUTOMATIQUES",
-      "title": "D'une conversation brute à des actions limpides.",
-      "description": "Glissez le curseur pour voir comment une transcription brute se transforme en décisions stratégiques et livrables concrets."
-    },
-    "features": {
-      "badge": "FONCTIONNALITÉS",
-      "title": "Conçu pour le travail quotidien réel.",
-      "description": "Tout fonctionne directement sur votre ordinateur. Rapide, confidentiel et sans connexion Internet requise.",
-      "showcase": "Vitrine des fonctionnalités",
-      "panelMeetingsTitle": "Enregistrement vocal & Notes instantanées",
-      "panelMeetingsDesc": "Enregistrez vos réunions directement depuis votre navigateur. Obtenez instantanément des transcriptions claires et des actions ordonnées.",
-      "panelDocumentsTitle": "Lecture & Analyse de documents",
-      "panelDocumentsDesc": "Importez PDF, documents Word, présentations et fichiers texte. Interrogez vos documents et extrayez des résumés précis.",
-      "panelOperationsTitle": "Enregistrement d'écran & Manuels pas à pas",
-      "panelOperationsDesc": "Enregistrez vos flux de travail à l'écran. HuskyNote extrait captures d'écran et étapes pour générer un manuel opératoire standardisé.",
-      "panelAiTitle": "Assistant IA privé",
-      "panelAiDesc": "Exécutez vos modèles d'IA sur votre propre ordinateur via Ollama. Posez des questions sans envoyer vos données à des tiers.",
-      "panelAnnotationTitle": "Auto-annotation dynamique pas à pas",
-      "panelAnnotationDesc": "Détecte les composants d'interface et les flux d'action en temps réel. Encadre les coordonnées et compile des guides illustrés.",
-      "panelVaultTitle": "Coffre de connaissances IndexedDB local",
-      "panelVaultDesc": "Notes, transcriptions et documents restent confinés dans la base de données locale du navigateur. Recherche instantanée à zéro latence.",
-      "panelZenTitle": "Espace de rédaction Husky Notes",
-      "panelZenDesc": "Éditeur de texte épuré et immersif. Support complet du Markdown, historique des versions et ambiances sonores apaisantes.",
-      "panelExportTitle": "Export multi-format universel en un clic",
-      "panelExportDesc": "Exportez comptes-rendus, manuels opératoires et synthèses en PDF prêt à l'impression, Markdown standard ou JSON."
-    },
-    "setup": {
-      "badge": "INSTALLATION RAPIDE",
-      "title": "Une seule commande pour tout initialiser.",
-      "description": "HuskyNote inclut un lanceur automatisé qui vérifie votre installation locale d'Ollama, configure les autorisations du navigateur, télécharge les modèles recommandés et ouvre votre espace de travail.",
-      "oneClickInit": "INITIALISATION EN UN CLIC",
-      "whatLauncherAutomates": "Ce que le script automatise :",
-      "checkOllama": "Vérifie la présence d'Ollama (propose l'installation si manquant)",
-      "configCors": "Configure les en-têtes cross-origin pour la communication locale",
-      "pullModels": "Télécharge automatiquement les modèles légers recommandés",
-      "startServer": "Démarre le serveur local et ouvre votre espace dans le navigateur",
-      "supportedModels": "Modèles locaux compatibles",
-      "supportedModelsDesc": "Compatible avec tous les modèles supportés par Ollama, notamment llama3.2, gemma, mistral, qwen2.5, phi3 et llava.",
-      "privacyBoundaries": "Garanties de confidentialité",
-      "privacyBoundariesDesc": "Vos notes et enregistrements ne quittent jamais votre équipement. Les requêtes IA circulent exclusivement entre votre navigateur et http://localhost:11434."
-    },
-    "why": {
-      "badge": "POURQUOI CHOISIR HUSKYNOTE",
-      "title": "Conçu pour la confidentialité, la rapidité et la souveraineté",
-      "card1Tag": "Privé par défaut",
-      "card1Title": "Vos données vous appartiennent",
-      "card1Desc": "Tout est stocké directement dans votre navigateur avec IndexedDB. Aucun serveur distant ne lit ni ne stocke vos informations.",
-      "card2Tag": "Zéro traçage",
-      "card2Title": "Sans publicité ni télémétrie",
-      "card2Desc": "Aucun cookie d'analyse ni script de pistage. Vos notes, réunions et pensées restent strictement confidentielles.",
-      "card3Tag": "Formats universels",
-      "card3Title": "Exportez à tout moment",
-      "card3Desc": "Exportez vos notes, comptes-rendus et manuels vers des fichiers Markdown et PDF propres en un seul clic.",
-      "card4Tag": "Open Source",
-      "card4Title": "Gratuit et auditable",
-      "card4Desc": "Libre d'utilisation sous licence MIT. Vous pouvez inspecter le code source, l'exécuter n'importe où ou y contribuer."
-    },
-    "cta": {
-      "title": "Organisez vos journées avec votre secrétaire IA personnelle.",
-      "description": "Aucune création de compte requise. Aucune carte bancaire. Votre espace de travail s'exécute entièrement dans votre navigateur.",
-      "openApp": "Ouvrir HuskyNote",
-      "downloadApp": "Télécharger l'application"
-    },
-    "footer": {
-      "copyright": "HuskyNote. Votre secrétaire IA personnelle.",
-      "description": "Votre secrétaire IA personnelle pour vos notes, réunions et documents. Tout reste privé sur votre ordinateur — sans compte, sans pistage et sans cloud.",
-      "privacyNotice": "Votre secrétaire IA personnelle exécutée en toute confidentialité sur votre appareil. Pas de compte, pas de pistage et aucun serveur cloud.",
-      "licenseNotice": "Licence MIT • Open Source • Exécuté sur votre appareil",
-      "privateByDefault": "Privé par défaut"
-    }
   },
   "dashboard": {
     "greeting": "Votre espace",

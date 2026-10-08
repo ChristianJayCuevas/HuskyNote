@@ -92,6 +92,16 @@ export function createProfile(name: string): Profile {
   return profile;
 }
 
+/** Publish a fully restored database only after its transaction commits. Fail loudly on quota errors. */
+export function registerRestoredProfile(profile: Profile): void {
+  const name = cleanName(profile.name);
+  assertUnique(name);
+  if (!/^restore-[a-f0-9-]+$/.test(profile.id) || listProfiles().some((p) => p.id === profile.id)) {
+    throw new Error('Invalid restored profile identifier.');
+  }
+  localStorage.setItem(PROFILES_KEY, JSON.stringify([...listProfiles(), { ...profile, name }]));
+}
+
 export function renameProfile(id: string, name: string): void {
   const clean = cleanName(name);
   assertUnique(clean, id);

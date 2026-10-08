@@ -4,8 +4,39 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db';
 import { useWorkspace } from '../../context/workspace-context';
 import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Card } from '../ui/card';
+import { Field } from '../ui/field';
+import { Input } from '../ui/input';
 import { Modal } from '../ui/modal';
-import { BookOpen, Plus, FileText, Check } from 'lucide-react';
+import { NativeSelect } from '../ui/native-select';
+import { PageContainer, PageHeader } from '../ui/page';
+import { Textarea } from '../ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
+import { Plus, FileText } from 'lucide-react';
+
+/** Plain-text preview of markdown: strips syntax, keeps line breaks. */
+function templateExcerpt(md: string): string {
+  return (md || '')
+    .replace(/```[\s\S]*?```/g, '')
+    .split(/\r?\n/)
+    .map((line) =>
+      line
+        .replace(/^\s{0,3}#{1,6}\s+/, '')
+        .replace(/^\s*>\s?/, '')
+        .replace(/^\s*[-*+]\s+\[[ xX]\]\s+/, '- ')
+        .replace(/^(\s*)[*+]\s+/, '$1- ')
+        .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+        .replace(/(\*\*|__|\*|_|`|~~)/g, '')
+        .replace(/^\s*\|?[-:| ]{3,}\|?\s*$/, '')
+        .replace(/\|/g, ' ')
+        .trimEnd()
+    )
+    .filter((l, idx, arr) => l !== '' || (idx > 0 && arr[idx - 1] !== ''))
+    .join('\n')
+    .trim()
+    .slice(0, 400);
+}
 
 export const TemplateGallery: React.FC = () => {
   const { setActiveView, setActiveNoteId, addToast } = useWorkspace();
@@ -63,127 +94,120 @@ export const TemplateGallery: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-black p-8 overflow-y-auto max-w-5xl mx-auto w-full select-none">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b dark:border-zinc-850 pb-5 mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-slate-950 dark:text-white tracking-tight">Templates Gallery</h2>
-          <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1">
-            Standard structures for meeting notes, project briefs, SOPs, and engineering logs.
-          </p>
-        </div>
+    <PageContainer width="wide">
+      <PageHeader
+        title="Templates Gallery"
+        description="Standard structures for meeting notes, project briefs, SOPs, and engineering logs."
+        actions={
+          <Button size="sm" variant="default" onClick={() => setIsCustomModalOpen(true)}>
+            <Plus />
+            <span>Create Custom Template</span>
+          </Button>
+        }
+      >
+        {/* Categories */}
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          value={selectedCategory}
+          onValueChange={(value) => value && setSelectedCategory(value)}
+          aria-label="Template category"
+        >
+          {['all', 'meeting', 'operation', 'general'].map((cat) => (
+            <ToggleGroupItem key={cat} value={cat} className="px-3 capitalize">
+              {cat}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      </PageHeader>
 
-        <Button size="sm" variant="primary" onClick={() => setIsCustomModalOpen(true)}>
-          <Plus className="w-3.5 h-3.5" />
-          <span>Create Custom Template</span>
-        </Button>
-      </div>
-
-      {/* Categories */}
-      <div className="flex items-center gap-2 mb-6">
-        {['all', 'meeting', 'operation', 'general'].map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
-              selectedCategory === cat
-                ? 'bg-slate-100 dark:bg-zinc-800 text-slate-950 dark:text-white'
-                : 'bg-slate-50/50 dark:bg-zinc-900/50 text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-900'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {/* Grid of Templates */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      {/* Grid of templates */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((tmpl) => (
-          <div
-            key={tmpl.id}
-            className="bg-white dark:bg-zinc-950 border dark:border-zinc-850 rounded-xl p-5 flex flex-col justify-between hover:border-slate-300 dark:hover:border-zinc-700 transition-colors"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-900 dark:text-zinc-100">{tmpl.title}</span>
-                <span className="text-[10px] text-slate-600 dark:text-zinc-400 uppercase tracking-wider bg-slate-50 dark:bg-zinc-900 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-800">
-                  {tmpl.category}
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-zinc-400 mb-4 leading-relaxed">{tmpl.description}</p>
-              <div className="bg-slate-50/40 dark:bg-zinc-900/40 p-3 rounded-lg border dark:border-zinc-850 text-[11px] font-mono text-slate-600 dark:text-zinc-400 max-h-24 overflow-hidden line-clamp-3 mb-4">
-                {tmpl.defaultContent}
+          <Card key={tmpl.id} className="flex flex-col p-4 transition-colors duration-100 hover:bg-accent/40">
+            <div className="flex items-start gap-2.5">
+              <FileText className="mt-0.5 size-5 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <h2 className="text-sm font-medium leading-6 text-foreground">{tmpl.title}</h2>
+                  <Badge variant="secondary" className="mt-0.5 capitalize">{tmpl.category}</Badge>
+                </div>
+                <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-muted-foreground">{tmpl.description}</p>
               </div>
             </div>
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleUseTemplate(tmpl)}
-              className="w-full"
-            >
-              <FileText className="w-3.5 h-3.5" />
+            <div className="mt-3 flex-1 rounded-md bg-muted p-3">
+              <div className="line-clamp-5 whitespace-pre-line text-xs leading-5 text-muted-foreground">
+                {templateExcerpt(tmpl.defaultContent)}
+              </div>
+            </div>
+            <Button size="sm" variant="ghost" onClick={() => handleUseTemplate(tmpl)} className="-ml-2 mt-2 self-start">
+              <FileText />
               <span>Use This Template</span>
             </Button>
-          </div>
+          </Card>
         ))}
       </div>
 
-      {/* Create Custom Template Modal */}
-      {isCustomModalOpen && (
-        <Modal
-          isOpen={isCustomModalOpen}
-          onClose={() => setIsCustomModalOpen(false)}
-          title="New Workspace Template"
-          description="Design a reusable structure for your notes and operations"
-          maxWidth="lg"
+      {/* Create custom template */}
+      <Modal
+        isOpen={isCustomModalOpen}
+        onClose={() => setIsCustomModalOpen(false)}
+        title="New Workspace Template"
+        description="Design a reusable structure for your notes and operations"
+        maxWidth="lg"
+      >
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleCreateCustom();
+          }}
         >
-          <div className="space-y-4 text-xs">
-            <div>
-              <label className="block text-slate-700 dark:text-zinc-300 font-medium mb-1">Template Title</label>
-              <input
-                type="text"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="e.g., Weekly Incident Retrospective"
-                className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-md p-2.5 text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-slate-300 dark:focus:border-zinc-700"
-              />
-            </div>
+          <Field label="Template Title" htmlFor="template-title">
+            <Input
+              id="template-title"
+              type="text"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder="e.g., Weekly Incident Retrospective"
+              data-dialog-autofocus
+            />
+          </Field>
 
-            <div>
-              <label className="block text-slate-700 dark:text-zinc-300 font-medium mb-1">Category</label>
-              <select
-                value={newCategory}
-                onChange={(e: any) => setNewCategory(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-md p-2.5 text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-slate-300 dark:focus:border-zinc-700"
-              >
-                <option value="general">General</option>
-                <option value="meeting">Meeting</option>
-                <option value="operation">Operation</option>
-              </select>
-            </div>
+          <Field label="Category" htmlFor="template-category">
+            <NativeSelect
+              id="template-category"
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value as typeof newCategory)}
+            >
+              <option value="general">General</option>
+              <option value="meeting">Meeting</option>
+              <option value="operation">Operation</option>
+            </NativeSelect>
+          </Field>
 
-            <div>
-              <label className="block text-slate-700 dark:text-zinc-300 font-medium mb-1">Default Markdown Content</label>
-              <textarea
-                value={newContent}
-                onChange={(e) => setNewContent(e.target.value)}
-                rows={6}
-                placeholder="# Heading\n\n- [ ] Task 1..."
-                className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-md p-2.5 text-slate-800 dark:text-zinc-200 font-mono text-xs focus:outline-none focus:border-slate-300 dark:focus:border-zinc-700"
-              />
-            </div>
+          <Field label="Default Markdown Content" htmlFor="template-content">
+            <Textarea
+              id="template-content"
+              value={newContent}
+              onChange={(e) => setNewContent(e.target.value)}
+              rows={6}
+              placeholder={'# Heading\n\n- [ ] Task 1...'}
+              className="font-mono text-xs"
+            />
+          </Field>
 
-            <div className="pt-2 flex justify-end gap-2">
-              <Button size="sm" variant="ghost" onClick={() => setIsCustomModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button size="sm" variant="primary" onClick={handleCreateCustom}>
-                Save Template
-              </Button>
-            </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" size="sm" variant="outline" onClick={() => setIsCustomModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" size="sm" variant="default">
+              Save Template
+            </Button>
           </div>
-        </Modal>
-      )}
-    </div>
+        </form>
+      </Modal>
+    </PageContainer>
   );
 };

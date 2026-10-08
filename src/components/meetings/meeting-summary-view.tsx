@@ -28,45 +28,68 @@
  * - MeetingSummaryView (default named export)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { Meeting } from '../../types';
 import { db } from '../../db';
+import { deleteMeetingRecording } from '../../services/audio/recording-storage';
 import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Toolbar, ToolbarGroup } from '../ui/toolbar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
+import { NativeSelect } from '../ui/native-select';
+import { EmptyState } from '../ui/empty-state';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 import { formatSecondsToTime } from '../../services/audio/transcriber';
 import { exportMeetingToMarkdown } from '../../services/export/markdown';
 import { exportMeetingToPdf } from '../../services/export/pdf';
 import { useWorkspace } from '../../context/workspace-context';
 import { MeetingSingleReport } from './meeting-single-report';
+import { ScreenshotLightbox } from './screenshot-lightbox';
+import { speakerColorMap, speakerDotClass } from './speaker-colors';
 import {
-  Clock,
-  CheckSquare,
   FileText,
   Download,
   Trash2,
-  List,
   Sparkles,
   Bookmark,
-  Share2,
   ChevronLeft,
   Camera,
   Crop,
-  Image,
   X,
-  User,
   Wand2,
   Languages,
   ArrowRightLeft,
   RotateCw,
   AlertTriangle,
-  ExternalLink,
-  Zap,
-  Star,
+  ChevronDown,
+  Copy,
   TrendingUp,
-  MessageSquare,
-  Tag,
+  CalendarDays,
+  Pencil,
+  Undo2,
+  Combine,
+  Wrench,
+  FilePlus2,
 } from 'lucide-react';
 import { useAI } from '../../context/ai-context';
-import { polishAndDiarizeTranscript, synthesizeMeetingAI } from '../../services/audio/transcriber';
+import { PROVIDER_NAMES } from '../../services/ai/active-provider';
+import { polishAndDiarizeTranscript, polishMeetingTopics, synthesizeMeetingAI } from '../../services/audio/transcriber';
+import { isAiReportMissing, meetingDurationSeconds } from '../../services/meetings/meeting-report';
+import { finishInterruptedRecording, isUnfinishedRecording, unmergeMeeting } from '../../services/meetings/merge';
+import { MergeMeetingsDialog } from './merge-meetings-dialog';
+import { RecordingParts } from './recording-parts';
+import { SupplementTranscriptDialog } from './supplement-transcript-dialog';
+import { restoreOriginalTranscript } from '../../services/meetings/supplement-store';
+import { SETTINGS_TAB_STORAGE_KEY } from '../../views/settings-view';
+import type { ScheduleEvent } from '../../types';
 import {
   SUPPORTED_LANGUAGES,
   TRANSLATION_TARGETS,
@@ -93,17 +116,14 @@ interface MeetingSummaryViewProps {
 
 /**
  * OllamaBanner
- * Renders a persistent, dismissible warning strip when Ollama is offline.
- * Shown once per session and suppressed after the user acknowledges.
- *
- * @param isConnected - Current Ollama connection status from AIContext
- * @param isChecking  - True while the connection probe is in-flight
+ * A compact, dismissible single line shown only when Ollama is the ACTIVE AI
+ * provider and it is offline. Links to Settings for setup.
  */
 const OllamaBanner: React.FC<{
   isConnected: boolean;
   isChecking: boolean;
-  onInstallClick: () => void;
-}> = ({ isConnected, isChecking, onInstallClick }) => {
+  onSetupClick: () => void;
+}> = ({ isConnected, isChecking, onSetupClick }) => {
   const [dismissed, setDismissed] = useState(false);
 
   // Re-show if connection status changes to offline
@@ -113,84 +133,40 @@ const OllamaBanner: React.FC<{
 
   if (isConnected || isChecking || dismissed) return null;
 
+  // role="status" (polite) without an aria-live attribute: aria-live regions stay exposed while a dialog is open
   return (
-    <div
-      role="alert"
-      aria-live="polite"
-      className="mb-5 flex items-start gap-3 rounded-xl border border-amber-400/30 bg-amber-500/10 dark:bg-amber-500/5 p-4 text-xs"
-    >
-      {/* Icon */}
-      <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" aria-hidden="true" />
-
-      {/* Message */}
-      <div className="flex-1 min-w-0">
-        <p className="font-bold text-amber-700 dark:text-amber-400 mb-0.5">
-          Local AI (Ollama) is not running
-        </p>
-        <p className="text-amber-700/80 dark:text-amber-400/70 leading-relaxed">
-          AI features — transcript polishing, multilingual translation, and meeting summary
-          synthesis — require a local Ollama instance. Install it once, it runs entirely on
-          your hardware with no cloud or privacy risk.
-        </p>
-        <div className="flex items-center gap-2 mt-2 flex-wrap">
-          <button
-            id="ollama-install-btn"
-            onClick={onInstallClick}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold transition-colors text-[11px]"
-            aria-label="Install Ollama — runs local AI on your machine"
-          >
-            <Zap className="w-3 h-3" aria-hidden="true" />
-            1-Click Install Ollama
-          </button>
-          <a
-            href="https://ollama.com/download"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400 hover:underline text-[11px]"
-            aria-label="Open Ollama download page in new tab"
-          >
-            <ExternalLink className="w-3 h-3" aria-hidden="true" />
-            ollama.com/download
-          </a>
-        </div>
-      </div>
-
-      {/* Dismiss */}
-      <button
+    <Alert variant="warning" role="status" className="mb-6 flex items-center gap-2 py-1.5 pl-3 pr-1.5 [&>svg]:translate-y-0">
+      <AlertTriangle aria-hidden="true" />
+      <span className="min-w-0 flex-1 truncate">Local AI (Ollama) is not running</span>
+      <Button id="ollama-install-btn" variant="link" size="xs" onClick={onSetupClick} className="font-semibold">
+        Set up
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
         onClick={() => setDismissed(true)}
-        className="p-1 rounded text-amber-500 hover:text-amber-700 dark:hover:text-amber-300 transition-colors shrink-0"
+        className="text-muted-foreground hover:bg-warning/10"
         aria-label="Dismiss Ollama offline notification"
       >
-        <X className="w-3.5 h-3.5" aria-hidden="true" />
-      </button>
-    </div>
+        <X aria-hidden="true" />
+      </Button>
+    </Alert>
   );
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// KeyPointCard — Highlighted summary fact
+// KeyStat — one fact in the inline key-metrics row
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * KeyPointCard
- * A compact highlighted card that visually elevates a single key data point
- * (e.g., number of decisions, action items, topics).
- */
-const KeyPointCard: React.FC<{
-  icon: React.ReactNode;
+const KeyStat: React.FC<{
   label: string;
   value: string | number;
-  accent?: string;
-}> = ({ icon, label, value, accent = 'bg-slate-100 dark:bg-zinc-900' }) => (
-  <div
-    className={`flex flex-col items-center justify-center gap-1 p-3 rounded-xl border border-slate-200 dark:border-zinc-800 ${accent} text-center min-w-[80px] flex-1`}
-    aria-label={`${label}: ${value}`}
-  >
-    <span className="text-slate-500 dark:text-zinc-400">{icon}</span>
-    <span className="text-lg font-black text-slate-900 dark:text-white leading-none">{value}</span>
-    <span className="text-[9px] font-mono uppercase tracking-wider text-slate-500 dark:text-zinc-500">
-      {label}
-    </span>
+  title?: string;
+  mono?: boolean;
+}> = ({ label, value, title, mono }) => (
+  <div className="min-w-0" title={title}>
+    <dt className="text-xs text-muted-foreground">{label}</dt>
+    <dd className={cn('mt-0.5 text-sm font-semibold tabular-nums text-foreground', mono && 'font-mono')}>{value}</dd>
   </div>
 );
 
@@ -204,8 +180,12 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
   onBackToList,
 }) => {
   // ── Context ──────────────────────────────────────────────────────────────
-  const { addToast, setActiveView, setActiveNoteId } = useWorkspace();
-  const { isConnected, isChecking, selectedModel, startOllamaService, checkConnection } = useAI();
+  const { addToast, setActiveView, setActiveNoteId, setActiveMeetingId } = useWorkspace();
+  const [isMergeOpen, setIsMergeOpen] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false);
+  const [isUnmerging, setIsUnmerging] = useState(false);
+  const [isSupplementOpen, setIsSupplementOpen] = useState(false);
+  const { isConnected, isChecking, selectedModel, provider } = useAI();
 
   // ── Local State ───────────────────────────────────────────────────────────
   const [currentMeeting, setCurrentMeeting] = useState<Meeting>(meeting);
@@ -217,82 +197,138 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
   const [isPolishingAI, setIsPolishingAI] = useState<boolean>(false);
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [isResynthesizing, setIsResynthesizing] = useState<boolean>(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState('');
+  // Enter saves and unmounts the input, which can also fire blur; save once
+  const titleEditOpenRef = useRef(false);
+  const [isPolishingTopics, setIsPolishingTopics] = useState(false);
+  const [topicsBeforePolish, setTopicsBeforePolish] = useState<string[] | null>(null);
   const [transcriptViewMode, setTranscriptViewMode] = useState<'dual' | 'translated' | 'original'>(
     'dual'
   );
-  const [showOllamaInstalling, setShowOllamaInstalling] = useState(false);
 
   // Sync meeting prop changes (e.g., parent re-fetches)
   useEffect(() => {
     setCurrentMeeting(meeting);
   }, [meeting]);
 
+  useEffect(() => {
+    titleEditOpenRef.current = false;
+    setIsEditingTitle(false);
+    setTopicsBeforePolish(null);
+  }, [meeting.id]);
+
   // ── Derived Values ─────────────────────────────────────────────────────────
-  const screenshotCount = meeting.screenshots?.length || 0;
+  const screenshotCount = currentMeeting.screenshots?.length || 0;
   const decisionCount = currentMeeting.summary?.decisions?.length || 0;
   const actionItemCount = currentMeeting.summary?.actionItems?.length || 0;
   const topicCount = currentMeeting.summary?.topics?.length || 0;
   const segmentCount = currentMeeting.transcript.length;
+  const providerName = PROVIDER_NAMES[provider];
+  const reportMissing = isAiReportMissing(currentMeeting);
+  const reportLanguage = currentMeeting.summary?.summaryLanguage || 'en';
+  const durationSeconds = meetingDurationSeconds(currentMeeting);
+  // Speaker dots use chart-1..5 in order of first appearance
+  const speakerColors = useMemo(
+    () => speakerColorMap(currentMeeting.transcript.map((s) => s.speaker)),
+    [currentMeeting.transcript]
+  );
 
-  // ── Ollama 1-Click Install ─────────────────────────────────────────────────
+  // ── Title ────────────────────────────────────────────────────────────────
 
-  /**
-   * handleInstallOllama
-   * Attempts to start Ollama via the local companion service.
-   * If the companion is unavailable, opens the official Ollama download
-   * page for the user's OS and begins polling for the service.
-   */
-  const handleInstallOllama = async () => {
-    setShowOllamaInstalling(true);
-    addToast('Attempting to connect to local Ollama service...', 'info');
+  const startEditingTitle = () => {
+    setTitleDraft(currentMeeting.title);
+    titleEditOpenRef.current = true;
+    setIsEditingTitle(true);
+  };
 
-    const result = await startOllamaService();
+  const cancelEditingTitle = () => {
+    titleEditOpenRef.current = false;
+    setIsEditingTitle(false);
+  };
 
-    if (result.success) {
-      addToast('Ollama is now running. AI features are ready!', 'success');
-      setShowOllamaInstalling(false);
+  /** Saves the edited title; an empty title keeps the old one */
+  const saveTitle = async () => {
+    if (!titleEditOpenRef.current) return;
+    titleEditOpenRef.current = false;
+    setIsEditingTitle(false);
+    const title = titleDraft.trim().replace(/\s+/g, ' ');
+    if (!title || title === currentMeeting.title) return;
+    setCurrentMeeting({ ...currentMeeting, title });
+    try {
+      await db.meetings.update(currentMeeting.id, { title });
+    } catch (err) {
+      console.warn('[HuskyNote] Rename meeting error:', err);
+      setCurrentMeeting(currentMeeting);
+      addToast('Could not rename the meeting. Please try again.', 'error');
+    }
+  };
+
+  // ── Topics ───────────────────────────────────────────────────────────────
+
+  /** Asks the AI to merge, shorten and tidy the topics, keeping the old list for Undo */
+  const handlePolishTopics = async () => {
+    const summary = currentMeeting.summary;
+    if (!summary || summary.topics.length === 0) return;
+    if (!isConnected || !selectedModel) {
+      addToast(`${providerName} is not connected. Set it up in Settings, then try again.`, 'warning');
       return;
     }
+    setIsPolishingTopics(true);
+    try {
+      const topics = await polishMeetingTopics(summary.topics, summary.overview, selectedModel, reportLanguage);
+      const updatedSummary = { ...summary, topics };
+      setTopicsBeforePolish(summary.topics);
+      setCurrentMeeting({ ...currentMeeting, summary: updatedSummary });
+      await db.meetings.update(currentMeeting.id, { summary: updatedSummary });
+      addToast(`Topics polished: ${summary.topics.length} became ${topics.length}.`, 'success');
+    } catch (err: any) {
+      console.warn('[HuskyNote] Polish topics error:', err);
+      addToast(`Could not polish topics: ${err?.message || 'the AI did not respond.'}`, 'error');
+    } finally {
+      setIsPolishingTopics(false);
+    }
+  };
 
-    // Detect OS for the right download
-    const ua = navigator.userAgent.toLowerCase();
-    const isMac = ua.includes('macintosh') || ua.includes('mac os');
-    const isWin = ua.includes('windows');
+  const handleUndoTopics = async () => {
+    if (!topicsBeforePolish || !currentMeeting.summary) return;
+    const updatedSummary = { ...currentMeeting.summary, topics: topicsBeforePolish };
+    setTopicsBeforePolish(null);
+    setCurrentMeeting({ ...currentMeeting, summary: updatedSummary });
+    await db.meetings.update(currentMeeting.id, { summary: updatedSummary });
+    addToast('Restored the original topics.', 'info');
+  };
 
-    const downloadUrl = isMac
-      ? 'https://ollama.com/download/Ollama-darwin.zip'
-      : isWin
-      ? 'https://ollama.com/download/OllamaSetup.exe'
-      : 'https://ollama.com/download';
+  const topicsActions = (
+    <div className="ml-auto flex items-center gap-1">
+      {topicsBeforePolish && (
+        <Button size="xs" variant="ghost" onClick={handleUndoTopics} title="Restore the topics from before polishing">
+          <Undo2 aria-hidden="true" />
+          <span>Undo</span>
+        </Button>
+      )}
+      <Button
+        size="xs"
+        variant="outline"
+        onClick={handlePolishTopics}
+        disabled={isPolishingTopics || !isConnected}
+        title={isConnected ? `Merge, shorten and tidy the topics with ${providerName}` : `Connect ${providerName} in Settings to polish topics`}
+      >
+        <Wand2 className={cn(isPolishingTopics && 'animate-pulse')} aria-hidden="true" />
+        <span>{isPolishingTopics ? 'Polishing…' : 'Polish topics'}</span>
+      </Button>
+    </div>
+  );
 
-    addToast(
-      'Ollama not found. Opening the installer download — run it, then come back.',
-      'warning'
-    );
-
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    // Poll for Ollama coming online after user installs
-    let attempts = 0;
-    const pollInterval = setInterval(async () => {
-      attempts++;
-      const ok = await checkConnection();
-      if (ok) {
-        clearInterval(pollInterval);
-        addToast('Ollama detected! AI features are now available.', 'success');
-        setShowOllamaInstalling(false);
-      } else if (attempts >= 30) {
-        // Stop after ~60 seconds
-        clearInterval(pollInterval);
-        setShowOllamaInstalling(false);
-      }
-    }, 2000);
+  /** Opens Settings on the AI tab, where the Claude key or Ollama connection is set up */
+  const openAiSettings = () => {
+    window.dispatchEvent(new CustomEvent('huskynote:settings-tab', { detail: 'ai' }));
+    try { localStorage.setItem(SETTINGS_TAB_STORAGE_KEY, 'ai'); } catch { /* URL remains the fallback */ }
+    setActiveView('settings');
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', 'ai');
+    window.history.replaceState(window.history.state, '', url.toString());
   };
 
   // ── Speaker Renaming ───────────────────────────────────────────────────────
@@ -401,17 +437,16 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
    * @param lang - BCP-47 output language code for the summary
    */
   const handleResynthesizeSummary = async (lang: string) => {
-    if (
-      !isConnected ||
-      !selectedModel ||
-      (currentMeeting.transcript.length === 0 && !currentMeeting.manualNotes.trim())
-    ) {
-      addToast('Local AI is offline or no meeting content to summarize.', 'warning');
+    if (currentMeeting.transcript.length === 0 && !currentMeeting.manualNotes.trim()) {
+      addToast('This meeting has no transcript or notes to summarize.', 'warning');
+      return;
+    }
+    if (!isConnected || !selectedModel) {
+      addToast(`${providerName} is not connected. Set it up in Settings, then try again.`, 'warning');
       return;
     }
     setIsResynthesizing(true);
     const langLabel = getLanguageName(lang);
-    addToast(`Re-synthesizing meeting summary in ${langLabel}...`, 'info');
     try {
       const result = await synthesizeMeetingAI(
         currentMeeting.transcript,
@@ -420,6 +455,15 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
         currentMeeting.title,
         lang
       );
+      if (!result.summary.aiGenerated) {
+        // Keep a report the AI already wrote; only a missing one records why this attempt failed
+        if (reportMissing) {
+          setCurrentMeeting({ ...currentMeeting, summary: result.summary });
+          await db.meetings.update(currentMeeting.id, { summary: result.summary });
+        }
+        addToast(`Could not generate the report: ${result.summary.aiError || 'the AI did not respond.'}`, 'error');
+        return;
+      }
       const updated = {
         ...currentMeeting,
         summary: result.summary,
@@ -430,21 +474,43 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
         summary: result.summary,
         timeline: updated.timeline,
       });
-      addToast(`Meeting summary re-synthesized in ${langLabel}.`, 'success');
+      const added = await addDetectedEvents(result.detectedEvents);
+      addToast(
+        added > 0
+          ? `Report generated in ${langLabel}. ${added} event${added === 1 ? '' : 's'} added to Schedule.`
+          : `Report generated in ${langLabel}.`,
+        'success'
+      );
     } catch (err: any) {
       console.warn('[HuskyNote] Resynthesize error:', err);
-      addToast('Failed to re-synthesize summary.', 'error');
+      addToast(`Could not generate the report: ${err?.message || 'unknown error'}`, 'error');
     } finally {
       setIsResynthesizing(false);
     }
+  };
+
+  /** Saves events the AI found in the meeting, skipping ones already on the schedule */
+  const addDetectedEvents = async (events: ScheduleEvent[]): Promise<number> => {
+    let added = 0;
+    for (const ev of events) {
+      const title = ev.title.toLowerCase();
+      const exists = await db.schedule
+        .filter((e) => e.date === ev.date && (e.time === ev.time || e.title.toLowerCase() === title))
+        .count();
+      if (!exists) {
+        await db.schedule.put(ev);
+        added++;
+      }
+    }
+    return added;
   };
 
   // ── Export Handlers ────────────────────────────────────────────────────────
 
   /** Export the meeting as a Markdown (.md) file download */
   const handleExportMarkdown = () => {
-    const md = exportMeetingToMarkdown(meeting);
-    const filename = `${(meeting.title || 'meeting').toLowerCase().replace(/\s+/g, '_')}.md`;
+    const md = exportMeetingToMarkdown(currentMeeting);
+    const filename = `${(currentMeeting.title || 'meeting').toLowerCase().replace(/\s+/g, '_')}.md`;
     const blob = new Blob([md], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -458,11 +524,21 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
   /** Export the meeting as a publication-quality PDF with screenshots */
   const handleExportPdf = () => {
     try {
-      exportMeetingToPdf(meeting);
+      exportMeetingToPdf(currentMeeting);
       addToast('Meeting exported to PDF with full notes and screenshots.', 'success');
     } catch (err: any) {
       console.error('[HuskyNote] PDF export failed:', err);
       addToast('Failed to generate PDF export.', 'error');
+    }
+  };
+
+  /** Copy the meeting report (Markdown) to the clipboard */
+  const handleCopyReport = async () => {
+    try {
+      await navigator.clipboard.writeText(exportMeetingToMarkdown(currentMeeting));
+      addToast('Report copied to clipboard.', 'info');
+    } catch {
+      addToast('Could not copy to clipboard.', 'error');
     }
   };
 
@@ -473,11 +549,11 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
    */
   const handleConvertToNote = async () => {
     try {
-      const md = exportMeetingToMarkdown(meeting);
+      const md = exportMeetingToMarkdown(currentMeeting, { frontMatter: false });
       const noteId = `note-${Date.now()}`;
       await db.notes.put({
         id: noteId,
-        title: `Meeting Note: ${meeting.title}`,
+        title: `Meeting Note: ${currentMeeting.title}`,
         content: md,
         tags: ['meeting', 'summary'],
         createdAt: Date.now(),
@@ -492,15 +568,60 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
     }
   };
 
+  /** Join an interrupted recording's saved audio and set its real length */
+  const handleFinishSaving = async () => {
+    setIsFinishing(true);
+    try {
+      await finishInterruptedRecording(currentMeeting.id);
+      addToast('Recording finished saving. Its audio and length are fixed.', 'success');
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : 'Could not finish saving this recording.', 'error');
+    } finally {
+      setIsFinishing(false);
+    }
+  };
+
+  /** Undo "Supplement with the Teams transcript" */
+  const handleRestoreTranscript = async () => {
+    if (!confirm('Restore the transcript from before it was supplemented? The supplemented version will be replaced.')) return;
+    try {
+      await restoreOriginalTranscript(currentMeeting.id);
+      addToast('Original transcript restored.', 'success');
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : 'Could not restore the original transcript.', 'error');
+    }
+  };
+
+  /** Remove a merged meeting and bring its original recordings back */
+  const handleUnmerge = async () => {
+    if (!confirm('Unmerge? The merged meeting is removed and its original recordings come back to your Meetings list. Nothing else is deleted.')) return;
+    setIsUnmerging(true);
+    try {
+      const restored = await unmergeMeeting(currentMeeting.id);
+      addToast('Unmerged. The original recordings are back in your Meetings list.', 'success');
+      if (restored[0]) setActiveMeetingId(restored[0]);
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : 'Could not unmerge this meeting.', 'error');
+    } finally {
+      setIsUnmerging(false);
+    }
+  };
+
   /** Permanently delete the meeting and its associated audio blob */
   const handleDelete = async () => {
+    // Deleting a merged meeting only undoes the merge; its recordings are kept
+    if (currentMeeting.parts?.length) {
+      await handleUnmerge();
+      return;
+    }
     if (confirm('Permanently delete this meeting recording and summary?')) {
-      await db.meetings.delete(meeting.id);
-      if (meeting.audioBlobId) {
-        await db.blobs.delete(meeting.audioBlobId);
+      try {
+        await deleteMeetingRecording(currentMeeting.id);
+        addToast('Meeting deleted.', 'info');
+        if (onDeleted) onDeleted();
+      } catch {
+        addToast('Could not delete currentMeeting. Please try again.', 'error');
       }
-      addToast('Meeting deleted.', 'info');
-      if (onDeleted) onDeleted();
     }
   };
 
@@ -520,867 +641,693 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
   // Render
   // ─────────────────────────────────────────────────────────────────────────
 
-  return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-canvas text-slate-900 dark:text-white p-4 sm:p-8 overflow-y-auto max-w-5xl mx-auto w-full transition-colors duration-500 font-sans">
+  const exportItems = [
+    { label: 'PDF', icon: <Download />, run: handleExportPdf },
+    { label: 'Markdown', icon: <FileText />, run: handleExportMarkdown },
+    { label: 'Copy', icon: <Copy />, run: handleCopyReport },
+    { label: 'Save as note', icon: <Bookmark />, run: handleConvertToNote },
+  ];
+  const hasTranslation = currentMeeting.transcript.some((s) => s.translation);
+  const summaryLanguageName = currentMeeting.summary?.summaryLanguage
+    ? getLanguageName(currentMeeting.summary.summaryLanguage)
+    : 'English';
 
-      {/* ── Ollama Offline Banner ── */}
-      <OllamaBanner
-        isConnected={isConnected}
-        isChecking={isChecking}
-        onInstallClick={handleInstallOllama}
+  return (
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col bg-background text-foreground">
+      <SupplementTranscriptDialog
+        open={isSupplementOpen}
+        onOpenChange={setIsSupplementOpen}
+        meeting={currentMeeting}
+        onDone={(message) => addToast(message, 'success')}
       />
 
-      {/* ── Ollama Installing Feedback ── */}
-      {showOllamaInstalling && (
-        <div className="mb-4 flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3 animate-pulse">
-          <RotateCw className="w-3.5 h-3.5 animate-spin shrink-0" aria-hidden="true" />
-          <span>Waiting for Ollama to start at localhost:11434…</span>
-        </div>
-      )}
+      <MergeMeetingsDialog
+        open={isMergeOpen}
+        onOpenChange={setIsMergeOpen}
+        current={currentMeeting}
+        onMerged={(mergedId) => {
+          addToast('Meetings merged. Generate one report for the whole meeting below.', 'success');
+          setActiveMeetingId(mergedId);
+        }}
+        onError={(message) => addToast(`Could not merge: ${message}`, 'error')}
+      />
 
-      {/* ── Header ── */}
-      <div
-        className="border-b border-slate-200 dark:border-zinc-850 pb-5 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-        role="banner"
-      >
-        <div>
-          {/* Back button (mobile only) */}
-          <div className="flex items-center gap-2">
-            {onBackToList && (
-              <button
-                onClick={onBackToList}
-                className="md:hidden flex items-center gap-1 text-xs text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white px-2 py-1 rounded bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800"
-                title="Back to meetings list"
-                aria-label="Back to meetings list"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Meetings</span>
-              </button>
-            )}
-            <h2 className="text-xl font-bold text-slate-950 dark:text-white tracking-tight">
-              {meeting.title}
-            </h2>
-          </div>
+      {/* ── Detail toolbar: back (phones) and meeting actions ── */}
+      <Toolbar className="gap-2 px-3 sm:px-4">
+        {onBackToList && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBackToList}
+            className="-ml-1 md:hidden"
+            title="Back to meetings list"
+            aria-label="Back to meetings list"
+          >
+            <ChevronLeft aria-hidden="true" />
+            <span>Meetings</span>
+          </Button>
+        )}
 
-          {/* Metadata row */}
-          <div
-            className="flex items-center gap-3 text-xs text-slate-600 dark:text-zinc-400 mt-1.5 font-medium flex-wrap"
-            aria-label="Meeting metadata"
-          >
-            <span className="font-mono">{new Date(meeting.startTime).toLocaleString()}</span>
-            <span aria-hidden="true">•</span>
-            <span className="flex items-center gap-1 font-mono" title="Meeting duration">
-              <Clock className="w-3.5 h-3.5" aria-hidden="true" />
-              {formatSecondsToTime(meeting.durationSeconds)}
-            </span>
-            <span aria-hidden="true">•</span>
-            <span title={`${segmentCount} transcript segments recorded`}>
-              {segmentCount} segments
-            </span>
-            {currentMeeting.spokenLanguage && (
-              <>
-                <span aria-hidden="true">•</span>
-                <span className="flex items-center gap-1 font-mono text-emerald-600 dark:text-emerald-400" title="Spoken language detected">
-                  <Languages className="w-3 h-3" aria-hidden="true" />
-                  <span>Spoken: {getLanguageName(currentMeeting.spokenLanguage)}</span>
-                </span>
-              </>
-            )}
-            {currentMeeting.translationLanguage && (
-              <>
-                <span aria-hidden="true">•</span>
-                <span className="flex items-center gap-1 font-mono text-cyan-600 dark:text-cyan-400" title="Transcript translated to this language">
-                  <ArrowRightLeft className="w-3 h-3" aria-hidden="true" />
-                  <span>Translated: {getLanguageName(currentMeeting.translationLanguage)}</span>
-                </span>
-              </>
-            )}
-            {screenshotCount > 0 && (
-              <>
-                <span aria-hidden="true">•</span>
-                <span className="flex items-center gap-1" title={`${screenshotCount} screenshot${screenshotCount !== 1 ? 's' : ''} captured`}>
-                  <Camera className="w-3 h-3" aria-hidden="true" />
-                  {screenshotCount} screenshot{screenshotCount !== 1 ? 's' : ''}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap" role="group" aria-label="Meeting actions">
+        <ToolbarGroup className="ml-auto" role="group" aria-label="Meeting actions">
+          {!currentMeeting.parts?.length && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsMergeOpen(true)}
+              title="Merge with other recordings of this meeting"
+            >
+              <Combine aria-hidden="true" />
+              <span className="hidden sm:inline">Merge</span>
+            </Button>
+          )}
+          {currentMeeting.transcript.length > 0 && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsSupplementOpen(true)}
+              title="Improve this transcript with the Teams transcript of the same meeting"
+            >
+              <FilePlus2 aria-hidden="true" />
+              <span className="hidden sm:inline">Supplement</span>
+            </Button>
+          )}
+          <DropdownMenu open={isExportOpen} onOpenChange={setIsExportOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline" title="Export or save this meeting">
+                <Download aria-hidden="true" />
+                <span>Export</span>
+                <ChevronDown
+                  className={cn('text-muted-foreground transition-transform duration-150', isExportOpen && 'rotate-180')}
+                  aria-hidden="true"
+                />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48" aria-label="Export meeting">
+              {exportItems.map((item) => (
+                <DropdownMenuItem key={item.label} onSelect={() => item.run()}>
+                  {item.icon}
+                  <span>{item.label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {!reportMissing && (
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              onClick={() => handleResynthesizeSummary(reportLanguage)}
+              disabled={isResynthesizing || !isConnected}
+              title={isConnected ? `Regenerate the report with ${providerName}` : `Connect ${providerName} in Settings to regenerate the report`}
+              aria-label="Regenerate report"
+              className="text-muted-foreground"
+            >
+              <RotateCw className={cn(isResynthesizing && 'animate-spin')} aria-hidden="true" />
+            </Button>
+          )}
           <Button
-            size="sm"
-            variant="outline"
-            onClick={handleConvertToNote}
-            className="whitespace-nowrap shrink-0"
-            title="Save as a Markdown note in your workspace"
-          >
-            <FileText className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            <span>Save as Note</span>
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleExportMarkdown}
-            className="whitespace-nowrap shrink-0"
-            title="Download as Markdown file"
-          >
-            <Download className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            <span>Export MD</span>
-          </Button>
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={handleExportPdf}
-            className="whitespace-nowrap shrink-0"
-            title="Download publication-quality PDF with screenshots"
-          >
-            <Download className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            <span>Export PDF</span>
-          </Button>
-          <Button
-            size="icon"
+            size="icon-sm"
             variant="ghost"
             onClick={handleDelete}
             title="Permanently delete this meeting"
             aria-label="Delete meeting"
-            className="shrink-0"
+            className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           >
-            <Trash2 className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400" aria-hidden="true" />
+            <Trash2 aria-hidden="true" />
           </Button>
-        </div>
-      </div>
+        </ToolbarGroup>
+      </Toolbar>
 
-      {/* ── Key Points Strip ── */}
-      {/*
-        Shows a quick at-a-glance summary of the meeting's quantitative facts.
-        This strip is always visible regardless of the active tab, giving the
-        user instant context without needing to navigate.
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-3xl px-4 pb-16 pt-8 sm:px-6 lg:px-12">
+          {/* ── Ollama Offline Banner (only when Ollama is the active provider) ── */}
+          {provider === 'ollama' && !reportMissing && (
+            <OllamaBanner
+              isConnected={isConnected}
+              isChecking={isChecking}
+              onSetupClick={() => setActiveView('settings')}
+            />
+          )}
 
-        It and the tab bar need shrink-0: they scroll horizontally, and a
-        scroll container in this height-limited flex column has no minimum
-        height, so long tab content squeezed both rows down to slivers.
-      */}
-      <div
-        className="flex items-stretch gap-2 mb-6 overflow-x-auto pb-1 shrink-0"
-        role="region"
-        aria-label="Meeting key metrics"
-      >
-        <KeyPointCard
-          icon={<Clock className="w-3.5 h-3.5" />}
-          label="Duration"
-          value={formatSecondsToTime(meeting.durationSeconds)}
-        />
-        <KeyPointCard
-          icon={<MessageSquare className="w-3.5 h-3.5" />}
-          label="Segments"
-          value={segmentCount}
-        />
-        {decisionCount > 0 && (
-          <KeyPointCard
-            icon={<CheckSquare className="w-3.5 h-3.5" />}
-            label="Decisions"
-            value={decisionCount}
-            accent="bg-emerald-50 dark:bg-emerald-950/30"
-          />
-        )}
-        {actionItemCount > 0 && (
-          <KeyPointCard
-            icon={<Star className="w-3.5 h-3.5" />}
-            label="Action Items"
-            value={actionItemCount}
-            accent="bg-blue-50 dark:bg-blue-950/30"
-          />
-        )}
-        {topicCount > 0 && (
-          <KeyPointCard
-            icon={<Tag className="w-3.5 h-3.5" />}
-            label="Topics"
-            value={topicCount}
-            accent="bg-purple-50 dark:bg-purple-950/30"
-          />
-        )}
-        {screenshotCount > 0 && (
-          <KeyPointCard
-            icon={<Camera className="w-3.5 h-3.5" />}
-            label="Screenshots"
-            value={screenshotCount}
-          />
-        )}
-      </div>
-
-      {/* ── Tab Navigation ── */}
-      <div
-        className="flex items-center border-b border-slate-200 dark:border-zinc-850 mb-6 gap-2 overflow-x-auto shrink-0"
-        role="tablist"
-        aria-label="Meeting sections"
-      >
-        {(
-          [
-            { id: 'report', label: 'Single Report', icon: <FileText className="w-3.5 h-3.5" /> },
-            { id: 'summary', label: 'Executive Summary', icon: null },
-            { id: 'transcript', label: `Verbal Transcript (${segmentCount})`, icon: null },
-            { id: 'timeline', label: `Timeline (${currentMeeting.timeline.length})`, icon: null },
-          ] as const
-        ).map((tab) => (
-          <button
-            key={tab.id}
-            role="tab"
-            aria-selected={activeTab === tab.id}
-            aria-controls={`panel-${tab.id}`}
-            id={`tab-${tab.id}`}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 shrink-0 ${
-              activeTab === tab.id
-                ? 'border-slate-900 text-slate-950 dark:border-white dark:text-white font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-950 dark:text-zinc-400 dark:hover:text-zinc-200'
-            }`}
-          >
-            {tab.icon}
-            <span>{tab.label}</span>
-          </button>
-        ))}
-
-        {screenshotCount > 0 && (
-          <button
-            role="tab"
-            aria-selected={activeTab === 'screenshots'}
-            aria-controls="panel-screenshots"
-            id="tab-screenshots"
-            onClick={() => setActiveTab('screenshots')}
-            className={`px-4 py-2 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 shrink-0 ${
-              activeTab === 'screenshots'
-                ? 'border-slate-900 text-slate-950 dark:border-white dark:text-white font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-950 dark:text-zinc-400 dark:hover:text-zinc-200'
-            }`}
-          >
-            <Image className="w-3.5 h-3.5" aria-hidden="true" />
-            Screenshots ({screenshotCount})
-          </button>
-        )}
-      </div>
-
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {/* TAB PANELS                                                          */}
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-
-      {/* ── Tab: Single Compiled Report ── */}
-      {activeTab === 'report' && (
-        <div role="tabpanel" id="panel-report" aria-labelledby="tab-report">
-          <MeetingSingleReport meeting={currentMeeting} onBack={onBackToList} />
-        </div>
-      )}
-
-      {/* ── Tab: Executive Summary ── */}
-      {activeTab === 'summary' && (
-        <div
-          className="space-y-6"
-          role="tabpanel"
-          id="panel-summary"
-          aria-labelledby="tab-summary"
-        >
-          {/* ── AI Language Re-synthesis Bar ── */}
-          {/*
-            Allows re-generating the entire meeting summary in a different
-            language. The dropdown contains all supported Ollama-translated
-            languages. Useful for multinational teams.
-          */}
-          <div
-            className="flex items-center justify-between p-3.5 rounded-xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 flex-wrap gap-2 text-xs shadow-xs"
-            role="toolbar"
-            aria-label="Summary language options"
-          >
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-500" aria-hidden="true" />
-              <span className="font-semibold text-slate-800 dark:text-zinc-200">
-                Summary Language:
-              </span>
-              {/* Current language pill */}
-              <span
-                className="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 font-bold"
-                aria-label={`Current summary language: ${
-                  currentMeeting.summary?.summaryLanguage
-                    ? getLanguageName(currentMeeting.summary.summaryLanguage)
-                    : 'English'
-                }`}
-              >
-                {currentMeeting.summary?.summaryLanguage
-                  ? `${TRANSLATION_TARGETS.find((t) => t.code === currentMeeting.summary?.summaryLanguage)?.flag || '🌐'} ${getLanguageName(currentMeeting.summary?.summaryLanguage)}`
-                  : '🇺🇸 English'}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleResynthesizeSummary('en')}
-                disabled={isResynthesizing || !isConnected}
-                className="text-xs font-mono py-1 px-2.5 h-7"
-                title="Re-generate summary in English using local AI"
-              >
-                <RotateCw className={`w-3 h-3 mr-1 text-cyan-500 ${isResynthesizing ? 'animate-spin' : ''}`} aria-hidden="true" />
-                <span>🇺🇸 English</span>
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleResynthesizeSummary('fil')}
-                disabled={isResynthesizing || !isConnected}
-                className="text-xs font-mono py-1 px-2.5 h-7"
-                title="Re-generate summary in Filipino using local AI"
-              >
-                <RotateCw className={`w-3 h-3 mr-1 text-amber-500 ${isResynthesizing ? 'animate-spin' : ''}`} aria-hidden="true" />
-                <span>🇵🇭 Filipino</span>
-              </Button>
-              <select
-                onChange={(e) => {
-                  if (e.target.value) {
-                    handleResynthesizeSummary(e.target.value);
-                  }
+          {/* ── Title (click to rename) ── */}
+          <div className="flex min-w-0 items-start">
+            {isEditingTitle ? (
+              <input
+                autoFocus
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={() => void saveTitle()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void saveTitle();
+                  if (e.key === 'Escape') cancelEditingTitle();
                 }}
-                disabled={isResynthesizing || !isConnected}
-                defaultValue=""
-                aria-label="Re-synthesize summary in another language"
-                className="bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded px-2.5 py-1 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-slate-400 dark:focus:border-zinc-700 font-medium cursor-pointer"
-                title="Re-synthesize summary in any supported language"
-              >
-                <option value="" disabled>Other Languages...</option>
-                {TRANSLATION_TARGETS.filter(
-                  (t) => t.code !== 'none' && t.code !== 'en' && t.code !== 'fil'
-                ).map((t) => (
-                  <option key={t.code} value={t.code}>
-                    {t.flag} {t.name.replace('Translate to ', '')}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* ── Executive Overview ── */}
-          {/*
-            A high-level paragraph generated by the local AI that captures
-            the purpose, context, and outcome of the meeting in plain language.
-          */}
-          <section
-            className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 shadow-xs dark:shadow-none transition-colors duration-500"
-            aria-labelledby="section-overview"
-          >
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-zinc-300 uppercase tracking-wider mb-3">
-              <Sparkles className="w-4 h-4 text-slate-500 dark:text-zinc-400" aria-hidden="true" />
-              <h3 id="section-overview">Overview</h3>
-              <span className="ml-auto text-[9px] font-normal text-slate-400 dark:text-zinc-600 normal-case tracking-normal">
-                AI-synthesized
-              </span>
-            </div>
-            <p className="text-sm text-slate-900 dark:text-zinc-200 leading-relaxed">
-              {currentMeeting.summary?.overview || (
-                <span className="italic text-slate-400 dark:text-zinc-600">
-                  No overview generated. Use the Summary Language bar above to synthesize one with AI.
-                </span>
-              )}
-            </p>
-          </section>
-
-          {/* ── Key Decisions ── */}
-          {/*
-            Lists formal decisions made during the meeting as identified by
-            the local AI. Each bullet is a confirmed agreement or resolution.
-            Empty state renders if the AI found no decisions.
-          */}
-          {meeting.summary && meeting.summary.decisions.length > 0 && (
-            <section
-              className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 shadow-xs dark:shadow-none transition-colors duration-500"
-              aria-labelledby="section-decisions"
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <h3
-                  id="section-decisions"
-                  className="text-xs font-bold text-slate-800 dark:text-zinc-300 uppercase tracking-wider"
+                onFocus={(e) => e.currentTarget.select()}
+                maxLength={120}
+                aria-label="Meeting title"
+                className="-mx-1.5 w-full min-w-0 rounded-md bg-transparent px-1.5 text-3xl font-bold leading-tight tracking-tight text-foreground outline-none ring-1 ring-ring/40 focus-visible:ring-[3px] focus-visible:ring-ring/20 sm:text-4xl"
+              />
+            ) : (
+              // The heading wraps the rename button (a heading inside a button is invalid HTML)
+              <h2 className="-mx-1.5 min-w-0 text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
+                <button
+                  type="button"
+                  onClick={startEditingTitle}
+                  title="Rename meeting"
+                  className="group flex min-w-0 max-w-full items-start gap-2 rounded-md px-1.5 text-left transition-colors duration-100 hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  Key Decisions
-                </h3>
-                {/* Pill badge showing decision count for quick scanning */}
-                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold border border-emerald-200 dark:border-emerald-800">
-                  {meeting.summary.decisions.length}
-                </span>
-              </div>
-              <ul className="space-y-2" aria-label="Meeting decisions">
-                {meeting.summary.decisions.map((dec, i) => (
-                  <li key={i} className="text-xs text-slate-800 dark:text-zinc-200 flex items-start gap-2.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" aria-hidden="true" />
-                    <span>{dec}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {/* ── Action Items ── */}
-          {/*
-            Structured task list extracted by the AI. Each item has a task
-            description and optionally an owner (@mention). These can be
-            exported to Markdown or PDF and assigned to team members.
-          */}
-          {meeting.summary && meeting.summary.actionItems.length > 0 && (
-            <section
-              className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 shadow-xs dark:shadow-none transition-colors duration-500"
-              aria-labelledby="section-actions"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <h3
-                    id="section-actions"
-                    className="text-xs font-bold text-slate-800 dark:text-zinc-300 uppercase tracking-wider"
-                  >
-                    Action Items
-                  </h3>
-                  <span className="px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 text-[10px] font-bold border border-blue-200 dark:border-blue-800">
-                    {meeting.summary.actionItems.length}
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-2.5" role="list" aria-label="Action items">
-                {meeting.summary.actionItems.map((item, idx) => (
-                  <div
-                    key={idx}
-                    role="listitem"
-                    className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-850 text-xs"
-                  >
-                    <CheckSquare
-                      className="w-4 h-4 text-blue-500 dark:text-blue-400 mt-0.5 shrink-0"
-                      aria-hidden="true"
-                    />
-                    <div className="flex-1">
-                      <span className="text-slate-900 dark:text-zinc-200 font-bold">{item.task}</span>
-                      {item.owner && (
-                        <span
-                          className="ml-2 text-[10px] text-slate-700 bg-slate-200 dark:text-zinc-400 dark:bg-zinc-800 px-2 py-0.5 rounded border border-slate-300 dark:border-zinc-700 font-medium"
-                          aria-label={`Assigned to ${item.owner}`}
-                        >
-                          @{item.owner}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* ── Discussion Topics ── */}
-          {/*
-            Tag cloud of the main topics discussed. Useful for quickly
-            identifying the meeting's thematic scope without reading the
-            full transcript.
-          */}
-          {meeting.summary && meeting.summary.topics.length > 0 && (
-            <section
-              className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 shadow-xs dark:shadow-none transition-colors duration-500"
-              aria-labelledby="section-topics"
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <h3
-                  id="section-topics"
-                  className="text-xs font-bold text-slate-800 dark:text-zinc-300 uppercase tracking-wider"
-                >
-                  Topics Discussed
-                </h3>
-                <span className="px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-400 text-[10px] font-bold border border-purple-200 dark:border-purple-800">
-                  {meeting.summary.topics.length}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2" role="list" aria-label="Discussion topics">
-                {meeting.summary.topics.map((t, i) => (
-                  <span
-                    key={i}
-                    role="listitem"
-                    className="text-xs text-slate-800 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-3 py-1.5 rounded-md font-medium"
-                  >
-                    #{t}
-                  </span>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* ── Participant Notes ── */}
-          {/*
-            Manual notes typed by the participant during the meeting using
-            the live note-taking textarea. Shown verbatim in monospace font.
-          */}
-          {meeting.manualNotes.trim() && (
-            <section
-              className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 shadow-xs dark:shadow-none transition-colors duration-500"
-              aria-labelledby="section-notes"
-            >
-              <h3
-                id="section-notes"
-                className="text-xs font-bold text-slate-800 dark:text-zinc-300 uppercase tracking-wider mb-3"
-              >
-                Participant Notes
-              </h3>
-              <div className="font-mono text-xs text-slate-800 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed">
-                {meeting.manualNotes}
-              </div>
-            </section>
-          )}
-
-          {/* Empty state when no summary has been generated yet */}
-          {!meeting.summary && (
-            <div className="text-center py-16 space-y-3">
-              <TrendingUp className="w-10 h-10 text-slate-300 dark:text-zinc-700 mx-auto" aria-hidden="true" />
-              <p className="text-sm text-slate-500 dark:text-zinc-500 font-medium">
-                No AI summary generated yet
-              </p>
-              <p className="text-xs text-slate-400 dark:text-zinc-600 max-w-sm mx-auto leading-relaxed">
-                Use the language buttons above (requires Ollama) to synthesize an executive
-                summary from the transcript and participant notes.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Tab: Verbal Transcript ── */}
-      {/*
-        Displays all speech segments captured during the meeting in
-        chronological order. Supports:
-        - Speaker renaming (click speaker badge)
-        - Language translation via local Ollama
-        - Dual-view (original + translation side by side)
-        - AI grammar polish & speaker diarization
-        - Timestamp highlighting from Timeline tab
-      */}
-      {activeTab === 'transcript' && (
-        <div
-          className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 space-y-3 shadow-xs dark:shadow-none transition-colors duration-500"
-          role="tabpanel"
-          id="panel-transcript"
-          aria-labelledby="tab-transcript"
-        >
-          <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-zinc-850 mb-2 flex-wrap gap-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className="text-xs font-mono text-slate-600 dark:text-zinc-400 font-bold uppercase tracking-wider"
-                aria-label={`${segmentCount} transcript segments`}
-              >
-                Verbal Transcript ({segmentCount} segments)
-              </span>
-              {currentMeeting.translationLanguage && (
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-400 border border-cyan-300 dark:border-cyan-800">
-                  Translated: {getLanguageName(currentMeeting.translationLanguage)}
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap" role="group" aria-label="Transcript actions">
-              {/* Language translation dropdown */}
-              <div className="flex items-center gap-1.5 text-xs">
-                <Languages className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400" aria-hidden="true" />
-                <select
-                  disabled={isTranslating || !isConnected}
-                  onChange={(e) => {
-                    const target = e.target.value;
-                    if (target) handleTranslateTranscript(target);
-                  }}
-                  defaultValue=""
-                  aria-label="Translate transcript to another language"
-                  title={!isConnected ? 'Ollama must be running to translate' : 'Translate transcript to another language'}
-                  className="bg-slate-100 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 rounded px-2 py-1 text-xs text-slate-900 dark:text-white focus:outline-none font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <option value="" disabled>
-                    {isTranslating ? 'Translating...' : 'Translate Transcript...'}
-                  </option>
-                  {TRANSLATION_TARGETS.filter((t) => t.code !== 'none').map((t) => (
-                    <option key={t.code} value={t.code}>
-                      {t.flag} {t.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Dual/Translated/Original view toggle (only visible when translation exists) */}
-              {currentMeeting.transcript.some((s) => s.translation) && (
-                <div
-                  className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg p-0.5 text-[11px] font-mono"
-                  role="group"
-                  aria-label="Transcript view mode"
-                >
-                  {(['dual', 'translated', 'original'] as const).map((mode) => (
-                    <button
-                      key={mode}
-                      onClick={() => setTranscriptViewMode(mode)}
-                      aria-pressed={transcriptViewMode === mode}
-                      className={`px-2 py-0.5 rounded transition-all capitalize ${
-                        transcriptViewMode === mode
-                          ? 'bg-white dark:bg-zinc-800 text-slate-950 dark:text-white font-bold shadow-xs'
-                          : 'text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white'
-                      }`}
-                    >
-                      {mode === 'dual' ? 'Dual View' : mode === 'translated' ? 'Translation' : 'Original'}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* AI Polish button — grammar correction + speaker diarization */}
-              {currentMeeting.transcript.length > 0 && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handlePolishTranscript}
-                  disabled={isPolishingAI || !isConnected}
-                  className="text-xs font-mono py-1 px-3 h-7"
-                  title={
-                    !isConnected
-                      ? 'Ollama must be running to use AI polish'
-                      : 'Use local AI to correct grammar and identify speaker turns (diarization)'
-                  }
-                >
-                  <Wand2
-                    className={`w-3.5 h-3.5 mr-1 text-emerald-500 ${isPolishingAI ? 'animate-spin' : ''}`}
+                  <span className="min-w-0 break-words">{currentMeeting.title}</span>
+                  <Pencil
+                    className="mt-2.5 size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity duration-100 group-hover:opacity-100 group-focus-visible:opacity-100 coarse:opacity-100 sm:mt-3.5"
                     aria-hidden="true"
                   />
-                  <span>{isPolishingAI ? 'Diarizing...' : 'AI Polish & Diarize'}</span>
+                </button>
+              </h2>
+            )}
+          </div>
+
+          {/* ── Metadata row ── */}
+          <div
+            className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground"
+            aria-label="Meeting metadata"
+          >
+            <span className="inline-flex items-center gap-1.5" title="Meeting start time">
+              <CalendarDays className="size-3.5" aria-hidden="true" />
+              {new Date(currentMeeting.startTime).toLocaleString()}
+            </span>
+            {currentMeeting.spokenLanguage && (
+              <span className="inline-flex items-center gap-1.5" title="Spoken language detected">
+                <Languages className="size-3.5" aria-hidden="true" />
+                <span>Spoken: {getLanguageName(currentMeeting.spokenLanguage)}</span>
+              </span>
+            )}
+            {currentMeeting.translationLanguage && (
+              <span className="inline-flex items-center gap-1.5" title="Transcript translated to this language">
+                <ArrowRightLeft className="size-3.5" aria-hidden="true" />
+                <span>Translated: {getLanguageName(currentMeeting.translationLanguage)}</span>
+              </span>
+            )}
+          </div>
+
+          {/* ── Interrupted recording: join its audio and fix its length ── */}
+          {isUnfinishedRecording(currentMeeting) && (
+            <Alert variant="info" role="status" className="mt-6">
+              <Wrench aria-hidden="true" />
+              <AlertTitle>This recording didn't finish saving</AlertTitle>
+              <AlertDescription>
+                The page reloaded or Stop failed while it was recording. Its transcript and audio are saved.
+                Finish saving to join the audio into one file and fix the meeting length.
+              </AlertDescription>
+              <div className="col-start-2 mt-2.5 flex flex-wrap gap-2">
+                <Button size="sm" onClick={() => void handleFinishSaving()} disabled={isFinishing}>
+                  {isFinishing ? 'Finishing…' : 'Finish saving'}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setIsMergeOpen(true)}>
+                  Merge with other recordings
+                </Button>
+              </div>
+            </Alert>
+          )}
+
+          {/* ── Supplemented transcript: where it came from, with an undo ── */}
+          {currentMeeting.transcriptSupplement && (
+            <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground" role="status">
+              <FilePlus2 className="size-3.5" aria-hidden="true" />
+              <span>
+                Transcript supplemented with {currentMeeting.transcriptSupplement.fileName} on{' '}
+                {new Date(currentMeeting.transcriptSupplement.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}.
+              </span>
+              {currentMeeting.originalTranscript && (
+                <Button size="xs" variant="link" className="h-auto px-0" onClick={() => void handleRestoreTranscript()}>
+                  Restore original
                 </Button>
               )}
-            </div>
+            </p>
+          )}
+
+          {/* ── Merged meeting: its recordings, playable, with an undo ── */}
+          <RecordingParts meeting={currentMeeting} onUnmerge={() => void handleUnmerge()} busy={isUnmerging} />
+
+          {/* ── Missing report: retry once an AI is connected ── */}
+          {reportMissing && (
+            <Alert variant="warning" role="status" className="mt-6">
+              <Sparkles aria-hidden="true" />
+              <AlertTitle>No AI report yet</AlertTitle>
+              <AlertDescription>
+                {isConnected
+                  ? `${providerName} is ready. Generate the summary, decisions, action items and timeline from the saved transcript.`
+                  : `${currentMeeting.summary?.aiError || 'The AI could not write this report.'} Connect ${providerName} in Settings, then generate it here.`}
+              </AlertDescription>
+              <div className="col-start-2 mt-2.5 flex">
+                {isConnected || isChecking ? (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={() => handleResynthesizeSummary(reportLanguage)}
+                    disabled={isResynthesizing || !isConnected}
+                  >
+                    <RotateCw className={cn(isResynthesizing && 'animate-spin')} aria-hidden="true" />
+                    <span>{isResynthesizing ? 'Generating…' : isChecking && !isConnected ? 'Checking AI…' : 'Generate report'}</span>
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={openAiSettings}>
+                    Open AI settings
+                  </Button>
+                )}
+              </div>
+            </Alert>
+          )}
+
+          {/* ── Key metrics: inline stat row, always visible regardless of the active tab ── */}
+          <div role="region" aria-label="Meeting key metrics" className="mt-6">
+            <dl className="flex flex-wrap gap-x-8 gap-y-3">
+              <KeyStat label="Duration" value={formatSecondsToTime(durationSeconds)} title="Meeting duration" mono />
+              <KeyStat label="Segments" value={segmentCount} title={`${segmentCount} transcript segments recorded`} />
+              {decisionCount > 0 && <KeyStat label="Decisions" value={decisionCount} />}
+              {actionItemCount > 0 && <KeyStat label="Action Items" value={actionItemCount} />}
+              {topicCount > 0 && <KeyStat label="Topics" value={topicCount} />}
+              {screenshotCount > 0 && (
+                <KeyStat
+                  label="Screenshots"
+                  value={screenshotCount}
+                  title={`${screenshotCount} screenshot${screenshotCount !== 1 ? 's' : ''} captured`}
+                />
+              )}
+            </dl>
           </div>
 
-          {/* Transcript segment list */}
-          {currentMeeting.transcript.length === 0 ? (
-            <div className="text-center py-12 text-xs text-slate-500 dark:text-zinc-500">
-              No verbal transcript was recorded for this session.
-            </div>
-          ) : (
-            <div role="list" aria-label="Transcript segments">
-              {currentMeeting.transcript.map((seg, idx) => {
-                const isTarget =
-                  highlightTimestamp !== null &&
-                  Math.abs(seg.timestampSeconds - highlightTimestamp) < 3;
+          {/* ━━ Tabs ━━ */}
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as typeof activeTab)}
+            className="mt-8"
+          >
+            <TabsList variant="line" aria-label="Meeting sections">
+              <TabsTrigger value="report">Report</TabsTrigger>
+              <TabsTrigger value="summary">Summary</TabsTrigger>
+              <TabsTrigger value="transcript">Transcript ({segmentCount})</TabsTrigger>
+              <TabsTrigger value="timeline">Timeline ({currentMeeting.timeline.length})</TabsTrigger>
+              {screenshotCount > 0 && <TabsTrigger value="screenshots">Screenshots ({screenshotCount})</TabsTrigger>}
+            </TabsList>
 
-                // Color-code speakers: speaker 1 (host) = emerald, others = indigo
-                const isSpeaker1 =
-                  seg.speaker.includes('1') ||
-                  seg.speaker.toLowerCase().includes('host') ||
-                  seg.speaker.toLowerCase().includes('you');
-                const badgeColor = isSpeaker1
-                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30'
-                  : 'bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-500/20 dark:text-indigo-300 dark:border-indigo-500/30';
+            {/* ── Tab: Single Compiled Report ── */}
+            <TabsContent value="report" className="mt-8">
+              <MeetingSingleReport meeting={currentMeeting} onBack={onBackToList} topicsActions={topicsActions} />
+            </TabsContent>
 
-                const showDual = transcriptViewMode === 'dual' && seg.translation;
-                const showTranslatedOnly = transcriptViewMode === 'translated' && seg.translation;
-
-                return (
-                  <div
-                    key={seg.id || `sum-seg-${idx}`}
-                    role="listitem"
-                    aria-label={`${seg.speaker} at ${formatSecondsToTime(seg.timestampSeconds)}`}
-                    className={`p-3.5 rounded-lg border text-xs transition-colors space-y-1.5 mb-2 ${
-                      isTarget
-                        ? 'bg-slate-200 dark:bg-zinc-800/80 border-slate-900 dark:border-zinc-400 text-slate-950 dark:text-white shadow-md'
-                        : 'bg-slate-50 dark:bg-zinc-900/40 border-slate-200 dark:border-zinc-850 text-slate-800 dark:text-zinc-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-zinc-400 mb-1 font-medium">
-                      <div className="flex items-center gap-2">
-                        {/* Speaker badge — click to rename */}
-                        <button
-                          onClick={() => handleRenameSpeaker(seg.speaker)}
-                          className={`font-semibold px-2 py-0.5 rounded border text-[10px] font-mono flex items-center gap-1 hover:brightness-110 cursor-pointer ${badgeColor}`}
-                          title={`Click to rename all segments for "${seg.speaker}"`}
-                          aria-label={`Speaker: ${seg.speaker}. Click to rename.`}
-                        >
-                          <User className="w-2.5 h-2.5" aria-hidden="true" />
-                          <span>{seg.speaker}</span>
-                        </button>
-                        {/* Source language tag (if detected) */}
-                        {seg.sourceLanguage && (
-                          <span
-                            className="text-[9px] font-mono px-1 rounded bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border border-slate-300 dark:border-zinc-700"
-                            aria-label={`Source language: ${seg.sourceLanguage}`}
-                          >
-                            {seg.sourceLanguage}
-                          </span>
-                        )}
-                      </div>
-                      <span className="font-mono text-slate-500 dark:text-zinc-400" aria-label={`Timestamp: ${formatSecondsToTime(seg.timestampSeconds)}`}>
-                        {formatSecondsToTime(seg.timestampSeconds)}
-                      </span>
-                    </div>
-
-                    {/* Content: dual / translated-only / original */}
-                    {showDual ? (
-                      <div className="space-y-1 pl-1">
-                        <div className="text-slate-500 dark:text-zinc-400 text-[11px] leading-relaxed italic border-l-2 border-slate-300 dark:border-zinc-700 pl-2">
-                          <span className="text-[9px] font-mono uppercase text-slate-400 dark:text-zinc-500 mr-1.5">
-                            Original:
-                          </span>
-                          {seg.originalText || seg.text}
-                        </div>
-                        <div className="text-slate-900 dark:text-zinc-100 text-xs font-medium leading-relaxed border-l-2 border-emerald-500/60 pl-2">
-                          <span className="text-[9px] font-mono uppercase text-emerald-600 dark:text-emerald-400 mr-1.5">
-                            Translated:
-                          </span>
-                          {seg.translation}
-                        </div>
-                      </div>
-                    ) : showTranslatedOnly ? (
-                      <p className="text-slate-900 dark:text-zinc-100 text-xs leading-relaxed pl-1 font-medium">
-                        {seg.translation}
-                      </p>
-                    ) : (
-                      <p className="leading-relaxed pl-1">{seg.originalText || seg.text}</p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Tab: Milestone Timeline ── */}
-      {/*
-        Chronological event log of notable moments captured during the
-        meeting (topic shifts, key statements, etc.). Each item is clickable
-        and jumps the Transcript tab to the matching timestamp.
-      */}
-      {activeTab === 'timeline' && (
-        <div
-          className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 space-y-4 shadow-xs dark:shadow-none transition-colors duration-500"
-          role="tabpanel"
-          id="panel-timeline"
-          aria-labelledby="tab-timeline"
-        >
-          {meeting.timeline.length === 0 ? (
-            <div className="text-center py-12 text-xs text-slate-500 dark:text-zinc-500">
-              No timeline milestones recorded for this session.
-            </div>
-          ) : (
-            <ol aria-label="Meeting timeline milestones">
-              {meeting.timeline.map((item) => (
-                <li key={item.id}>
-                  <button
-                    onClick={() => jumpToTimestamp(item.timestampSeconds)}
-                    className="w-full flex items-start gap-4 p-3.5 rounded-lg bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-850 hover:bg-slate-100 dark:hover:bg-zinc-900 hover:border-slate-300 dark:hover:border-zinc-750 cursor-pointer transition-all group text-left mb-2"
-                    aria-label={`Jump to ${item.timeFormatted} — ${item.label}`}
-                    title="Click to jump to this moment in the transcript"
-                  >
-                    <span className="font-mono text-xs text-slate-500 dark:text-zinc-400 group-hover:text-slate-950 dark:group-hover:text-white shrink-0 pt-0.5 font-medium">
-                      {item.timeFormatted}
-                    </span>
-                    <div className="w-px h-6 bg-slate-200 dark:bg-zinc-800" aria-hidden="true" />
-                    <div className="flex-1">
-                      <div className="text-xs font-bold text-slate-900 dark:text-zinc-200 group-hover:text-slate-950 dark:group-hover:text-white">
-                        {item.label}
-                      </div>
-                      <span className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase tracking-wider font-semibold">
-                        {item.type} · click to jump to transcript
-                      </span>
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ol>
-          )}
-        </div>
-      )}
-
-      {/* ── Tab: Screenshots ── */}
-      {/*
-        Grid of screenshots captured during the meeting using the in-session
-        camera toolbar. Each card shows timestamp, type (Full/Portion), and
-        caption. Click any image to open the lightbox preview.
-      */}
-      {activeTab === 'screenshots' && (
-        <div
-          className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-850 rounded-xl p-6 shadow-xs dark:shadow-none transition-colors duration-500"
-          role="tabpanel"
-          id="panel-screenshots"
-          aria-labelledby="tab-screenshots"
-        >
-          {!meeting.screenshots || meeting.screenshots.length === 0 ? (
-            <div className="text-center py-12 text-xs text-slate-500 dark:text-zinc-500">
-              No screenshots were captured during this session.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" role="list">
-              {meeting.screenshots.map((ss, idx) => (
-                <div
-                  key={ss.id}
-                  role="listitem"
-                  className="group rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-zinc-600 transition-colors cursor-pointer"
-                  onClick={() => setLightboxScreenshot(ss.dataUrl)}
-                  onKeyDown={(e) => e.key === 'Enter' && setLightboxScreenshot(ss.dataUrl)}
-                  tabIndex={0}
-                  aria-label={`${ss.caption || `Screenshot ${idx + 1}`} at ${formatSecondsToTime(ss.timestampSeconds)}`}
-                >
-                  <div className="relative">
-                    <img
-                      src={ss.dataUrl}
-                      alt={ss.caption || `Screenshot ${idx + 1}`}
-                      className="w-full h-40 object-cover"
-                      loading="lazy"
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-mono text-slate-950/90 dark:text-white/90 font-semibold">
-                          {formatSecondsToTime(ss.timestampSeconds)}
-                        </span>
-                        <span className="text-[10px] text-slate-950/80 dark:text-white/80 font-medium flex items-center gap-1">
-                          {ss.type === 'portion' ? (
-                            <>
-                              <Crop className="w-2.5 h-2.5" aria-hidden="true" />
-                              <span>Portion</span>
-                            </>
-                          ) : (
-                            <>
-                              <Camera className="w-2.5 h-2.5" aria-hidden="true" />
-                              <span>Full</span>
-                            </>
-                          )}
-                        </span>
-                      </div>
-                      {ss.caption && (
-                        <p className="text-[11px] text-slate-950/80 dark:text-white/80 mt-1 line-clamp-1">{ss.caption}</p>
-                      )}
-                    </div>
-                  </div>
+            {/* ── Tab: Executive Summary ── */}
+            <TabsContent value="summary" className="mt-6 space-y-10">
+              {/* Re-generate the whole summary in another language */}
+              <div
+                className="flex flex-wrap items-center gap-2 rounded-lg border bg-card px-3 py-2"
+                role="toolbar"
+                aria-label="Summary language options"
+              >
+                <div className="flex items-center gap-2 text-sm">
+                  <Sparkles className="size-4 text-muted-foreground" aria-hidden="true" />
+                  <span className="font-medium text-foreground">Summary Language:</span>
+                  <Badge variant="secondary" aria-label={`Current summary language: ${summaryLanguageName}`}>
+                    {summaryLanguageName}
+                  </Badge>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* ── Screenshot Lightbox ── */}
-      {lightboxScreenshot && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer"
-          onClick={() => setLightboxScreenshot(null)}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Screenshot preview"
-        >
-          <div className="relative max-w-5xl w-full" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => setLightboxScreenshot(null)}
-              className="absolute -top-10 right-0 p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-white transition-colors"
-              aria-label="Close screenshot preview"
-            >
-              <X className="w-4 h-4" aria-hidden="true" />
-            </button>
-            <img
-              src={lightboxScreenshot}
-              alt="Screenshot full preview"
-              className="w-full rounded-lg border border-zinc-800 shadow-2xl"
-            />
-          </div>
+                <div className="flex flex-wrap items-center gap-1.5 sm:ml-auto">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleResynthesizeSummary('en')}
+                    disabled={isResynthesizing || !isConnected}
+                    title={`Regenerate the summary in English with ${providerName}`}
+                  >
+                    <RotateCw className={cn('text-muted-foreground', isResynthesizing && 'animate-spin')} aria-hidden="true" />
+                    <span>English</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleResynthesizeSummary('fil')}
+                    disabled={isResynthesizing || !isConnected}
+                    title={`Regenerate the summary in Filipino with ${providerName}`}
+                  >
+                    <RotateCw className={cn('text-muted-foreground', isResynthesizing && 'animate-spin')} aria-hidden="true" />
+                    <span>Filipino</span>
+                  </Button>
+                  <NativeSelect
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        handleResynthesizeSummary(e.target.value);
+                      }
+                    }}
+                    disabled={isResynthesizing || !isConnected}
+                    defaultValue=""
+                    aria-label="Re-synthesize summary in another language"
+                    title="Re-synthesize summary in any supported language"
+                    containerClassName="w-auto"
+                    className="h-7 w-44"
+                  >
+                    <option value="" disabled>Other Languages...</option>
+                    {TRANSLATION_TARGETS.filter(
+                      (t) => t.code !== 'none' && t.code !== 'en' && t.code !== 'fil'
+                    ).map((t) => (
+                      <option key={t.code} value={t.code}>
+                        {t.name.replace('Translate to ', '')}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </div>
+              </div>
+
+              {/* ── Executive Overview ── */}
+              <section className="space-y-3" aria-labelledby="section-overview">
+                <div className="flex items-center gap-2">
+                  <h3 id="section-overview" className="text-base font-semibold text-foreground">Overview</h3>
+                  <span className="ml-auto text-xs text-muted-foreground">AI-synthesized</span>
+                </div>
+                <p className="text-sm leading-6 text-foreground">
+                  {currentMeeting.summary?.overview || (
+                    <span className="italic text-muted-foreground">
+                      No overview generated. Use the Summary Language bar above to synthesize one with AI.
+                    </span>
+                  )}
+                </p>
+              </section>
+
+              {/* ── Key Decisions ── */}
+              {currentMeeting.summary && currentMeeting.summary.decisions.length > 0 && (
+                <section className="space-y-3" aria-labelledby="section-decisions">
+                  <div className="flex items-center gap-2">
+                    <h3 id="section-decisions" className="text-base font-semibold text-foreground">
+                      Key Decisions
+                    </h3>
+                    <Badge variant="secondary" className="tabular-nums">{currentMeeting.summary.decisions.length}</Badge>
+                  </div>
+                  <ul className="list-disc space-y-1.5 pl-5 text-sm leading-6 marker:text-muted-foreground" aria-label="Meeting decisions">
+                    {currentMeeting.summary.decisions.map((dec, i) => (
+                      <li key={i} className="pl-1">{dec}</li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {/* ── Action Items ── */}
+              {currentMeeting.summary && currentMeeting.summary.actionItems.length > 0 && (
+                <section className="space-y-3" aria-labelledby="section-actions">
+                  <div className="flex items-center gap-2">
+                    <h3 id="section-actions" className="text-base font-semibold text-foreground">
+                      Action Items
+                    </h3>
+                    <Badge variant="secondary" className="tabular-nums">{currentMeeting.summary.actionItems.length}</Badge>
+                  </div>
+                  <ul className="list-disc space-y-1.5 pl-5 text-sm leading-6 marker:text-muted-foreground" aria-label="Action items">
+                    {currentMeeting.summary.actionItems.map((item, idx) => (
+                      <li key={idx} className="pl-1">
+                        <span className={cn('font-medium text-foreground', item.done && 'text-muted-foreground line-through')}>{item.task}</span>
+                        {item.owner && (
+                          <Badge variant="secondary" className="ml-2 align-text-bottom" aria-label={`Assigned to ${item.owner}`}>
+                            @{item.owner}
+                          </Badge>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {/* ── Discussion Topics ── */}
+              {currentMeeting.summary && currentMeeting.summary.topics.length > 0 && (
+                <section className="space-y-3" aria-labelledby="section-topics">
+                  <div className="flex min-h-7 flex-wrap items-center gap-2">
+                    <h3 id="section-topics" className="text-base font-semibold text-foreground">
+                      Topics Discussed
+                    </h3>
+                    <Badge variant="secondary" className="tabular-nums">{currentMeeting.summary.topics.length}</Badge>
+                    {topicsActions}
+                  </div>
+                  <ul className="flex flex-wrap gap-1.5" aria-label="Discussion topics">
+                    {currentMeeting.summary.topics.map((t, i) => (
+                      <li key={i} className="max-w-full">
+                        <Badge variant="outline" className="h-auto max-w-full whitespace-normal break-words px-2 py-1 text-left font-normal leading-snug">
+                          {t}
+                        </Badge>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {/* ── Participant Notes ── */}
+              {currentMeeting.manualNotes.trim() && (
+                <section className="space-y-3" aria-labelledby="section-notes">
+                  <h3 id="section-notes" className="text-base font-semibold text-foreground">
+                    Participant Notes
+                  </h3>
+                  <div className="whitespace-pre-wrap rounded-lg bg-muted px-4 py-3 text-sm leading-6 text-foreground">
+                    {currentMeeting.manualNotes}
+                  </div>
+                </section>
+              )}
+
+              {/* Empty state when no summary has been generated yet */}
+              {!currentMeeting.summary && (
+                <EmptyState
+                  icon={TrendingUp}
+                  title="No AI summary generated yet"
+                  description="Use the language buttons above (requires Ollama) to synthesize an executive summary from the transcript and participant notes."
+                  className="py-10"
+                />
+              )}
+            </TabsContent>
+
+            {/* ── Tab: Verbal Transcript (rename speakers, translate, polish, jump target from Timeline) ── */}
+            <TabsContent value="transcript" className="mt-6">
+              <div className="flex flex-wrap items-center gap-2 border-b pb-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-foreground" aria-label={`${segmentCount} transcript segments`}>
+                    Transcript ({segmentCount} segments)
+                  </span>
+                  {currentMeeting.translationLanguage && (
+                    <Badge variant="secondary">Translated: {getLanguageName(currentMeeting.translationLanguage)}</Badge>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5 sm:ml-auto" role="group" aria-label="Transcript actions">
+                  <div className="flex items-center gap-1.5">
+                    <Languages className="size-4 text-muted-foreground" aria-hidden="true" />
+                    <NativeSelect
+                      disabled={isTranslating || !isConnected}
+                      onChange={(e) => {
+                        const target = e.target.value;
+                        if (target) handleTranslateTranscript(target);
+                      }}
+                      defaultValue=""
+                      aria-label="Translate transcript to another language"
+                      title={!isConnected ? 'Ollama must be running to translate' : 'Translate transcript to another language'}
+                      containerClassName="w-auto"
+                      className="h-7 w-48"
+                    >
+                      <option value="" disabled>
+                        {isTranslating ? 'Translating...' : 'Translate Transcript...'}
+                      </option>
+                      {TRANSLATION_TARGETS.filter((t) => t.code !== 'none').map((t) => (
+                        <option key={t.code} value={t.code}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  </div>
+
+                  {/* Dual/Translated/Original view toggle (only when a translation exists) */}
+                  {hasTranslation && (
+                    <ToggleGroup
+                      type="single"
+                      variant="outline"
+                      size="sm"
+                      value={transcriptViewMode}
+                      onValueChange={(mode) => mode && setTranscriptViewMode(mode as typeof transcriptViewMode)}
+                      aria-label="Transcript view mode"
+                    >
+                      {(['dual', 'translated', 'original'] as const).map((mode) => (
+                        <ToggleGroupItem key={mode} value={mode}>
+                          {mode === 'dual' ? 'Dual' : mode === 'translated' ? 'Translation' : 'Original'}
+                        </ToggleGroupItem>
+                      ))}
+                    </ToggleGroup>
+                  )}
+
+                  {/* AI Polish: grammar correction + speaker diarization */}
+                  {currentMeeting.transcript.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handlePolishTranscript}
+                      disabled={isPolishingAI || !isConnected}
+                      title={
+                        !isConnected
+                          ? 'Ollama must be running to use AI polish'
+                          : 'Use local AI to correct grammar and identify speaker turns (diarization)'
+                      }
+                    >
+                      <Wand2 className={cn('text-muted-foreground', isPolishingAI && 'animate-spin')} aria-hidden="true" />
+                      <span>{isPolishingAI ? 'Diarizing...' : 'AI Polish & Diarize'}</span>
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {currentMeeting.transcript.length === 0 ? (
+                <p className="py-12 text-center text-sm text-muted-foreground">
+                  No verbal transcript was recorded for this session.
+                </p>
+              ) : (
+                <ol className="mt-2 space-y-px" aria-label="Transcript segments">
+                  {currentMeeting.transcript.map((seg, idx) => {
+                    const isTarget =
+                      highlightTimestamp !== null &&
+                      Math.abs(seg.timestampSeconds - highlightTimestamp) < 3;
+                    const showDual = transcriptViewMode === 'dual' && seg.translation;
+                    const showTranslatedOnly = transcriptViewMode === 'translated' && seg.translation;
+                    const time = formatSecondsToTime(seg.timestampSeconds);
+
+                    return (
+                      <li
+                        key={seg.id || `sum-seg-${idx}`}
+                        aria-label={`${seg.speaker} at ${time}`}
+                        className={cn(
+                          'grid grid-cols-[auto_1fr] gap-x-3 rounded-md px-2 py-2',
+                          isTarget && 'bg-accent ring-1 ring-border'
+                        )}
+                      >
+                        <span className="pt-0.5 font-mono text-xs tabular-nums text-muted-foreground" aria-label={`Timestamp: ${time}`}>
+                          {time}
+                        </span>
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex items-center gap-2">
+                            {/* Speaker name: click to rename every segment for this speaker */}
+                            <button
+                              type="button"
+                              onClick={() => handleRenameSpeaker(seg.speaker)}
+                              className="inline-flex items-center gap-1.5 rounded-sm text-xs font-medium text-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              title={`Click to rename all segments for "${seg.speaker}"`}
+                              aria-label={`Speaker: ${seg.speaker}. Click to rename.`}
+                            >
+                              <span aria-hidden="true" className={cn('size-2 shrink-0 rounded-full', speakerDotClass(speakerColors, seg.speaker))} />
+                              <span>{seg.speaker}</span>
+                            </button>
+                            {seg.sourceLanguage && (
+                              <Badge variant="outline" className="px-1 py-0 font-mono font-normal text-muted-foreground" aria-label={`Source language: ${seg.sourceLanguage}`}>
+                                {seg.sourceLanguage}
+                              </Badge>
+                            )}
+                          </div>
+
+                          {showDual ? (
+                            <div className="space-y-1.5">
+                              <p className="border-l-2 pl-3 text-sm italic leading-6 text-muted-foreground">
+                                <span className="mr-1.5 text-xs not-italic">Original:</span>
+                                {seg.originalText || seg.text}
+                              </p>
+                              <p className="border-l-2 border-foreground/40 pl-3 text-sm leading-6 text-foreground">
+                                <span className="mr-1.5 text-xs text-muted-foreground">Translated:</span>
+                                {seg.translation}
+                              </p>
+                            </div>
+                          ) : showTranslatedOnly ? (
+                            <p className="text-sm leading-6 text-foreground">{seg.translation}</p>
+                          ) : (
+                            <p className="text-sm leading-6 text-foreground">{seg.originalText || seg.text}</p>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </TabsContent>
+
+            {/* ── Tab: Milestone Timeline (each item jumps to the transcript) ── */}
+            <TabsContent value="timeline" className="mt-6">
+              {currentMeeting.timeline.length === 0 ? (
+                <p className="py-12 text-center text-sm text-muted-foreground">
+                  No timeline milestones recorded for this session.
+                </p>
+              ) : (
+                <ol aria-label="Meeting timeline milestones" className="relative space-y-px">
+                  <span aria-hidden="true" className="absolute bottom-5 left-[calc(5rem-0.5px)] top-5 w-px bg-border" />
+                  {currentMeeting.timeline.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        onClick={() => jumpToTimestamp(item.timestampSeconds)}
+                        className="group relative flex w-full items-start gap-3 rounded-md px-2 py-2.5 text-left transition-colors duration-100 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        aria-label={`Jump to ${item.timeFormatted} — ${item.label}`}
+                        title="Click to jump to this moment in the transcript"
+                      >
+                        <span className="w-14 shrink-0 pt-0.5 text-right font-mono text-xs tabular-nums text-muted-foreground">
+                          {item.timeFormatted}
+                        </span>
+                        <span aria-hidden="true" className="relative mt-1.5 size-2 shrink-0 rounded-full bg-muted-foreground ring-4 ring-background group-hover:ring-accent" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-medium text-foreground">{item.label}</span>
+                          <span className="block text-xs text-muted-foreground">{item.type} · click to jump to transcript</span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </TabsContent>
+
+            {/* ── Tab: Screenshots (click to open the preview) ── */}
+            {screenshotCount > 0 && (
+              <TabsContent value="screenshots" className="mt-6">
+                <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {currentMeeting.screenshots.map((ss, idx) => (
+                    <li key={ss.id}>
+                      <button
+                        type="button"
+                        onClick={() => setLightboxScreenshot(ss.dataUrl)}
+                        aria-label={`${ss.caption || `Screenshot ${idx + 1}`} at ${formatSecondsToTime(ss.timestampSeconds)}`}
+                        className="block h-full w-full overflow-hidden rounded-md border bg-card text-left transition-colors duration-100 hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <img
+                          src={ss.dataUrl}
+                          alt={ss.caption || `Screenshot ${idx + 1}`}
+                          className="h-40 w-full border-b bg-muted object-cover"
+                          loading="lazy"
+                        />
+                        <div className="space-y-0.5 px-2.5 py-2">
+                          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <span className="font-mono tabular-nums">{formatSecondsToTime(ss.timestampSeconds)}</span>
+                            <span aria-hidden="true">·</span>
+                            {ss.type === 'portion' ? (
+                              <>
+                                <Crop className="size-3" aria-hidden="true" />
+                                <span>Portion</span>
+                              </>
+                            ) : (
+                              <>
+                                <Camera className="size-3" aria-hidden="true" />
+                                <span>Full</span>
+                              </>
+                            )}
+                          </p>
+                          {ss.caption && <p className="line-clamp-1 text-xs font-medium text-foreground">{ss.caption}</p>}
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </TabsContent>
+            )}
+          </Tabs>
         </div>
-      )}
+      </div>
+
+      {/* ── Screenshot preview ── */}
+      <ScreenshotLightbox
+        src={lightboxScreenshot}
+        title="Screenshot preview"
+        alt="Screenshot full preview"
+        onClose={() => setLightboxScreenshot(null)}
+      />
     </div>
   );
 };

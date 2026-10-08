@@ -88,6 +88,25 @@
     }
   }
 
+  // ─── Teams transcripts collected by the extension ──────────────────────────
+  // Only HuskyNote itself (a local page titled HuskyNote) receives them.
+  const isHuskyNoteApp = () => ['127.0.0.1', 'localhost'].includes(location.hostname) && document.title.includes('HuskyNote');
+  if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+    const sendTranscript = (payload) => {
+      if (payload && isHuskyNoteApp()) {
+        window.postMessage({ type: 'HUSKYNOTE_TEAMS_TRANSCRIPT', source: 'huskynote-extension', payload }, window.location.origin);
+      }
+    };
+    const sendStored = () => chrome.storage.local.get(['husky_teams_transcript'], (res) => sendTranscript(res.husky_teams_transcript));
+    sendStored();
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === 'local' && changes.husky_teams_transcript?.newValue) sendTranscript(changes.husky_teams_transcript.newValue);
+    });
+    window.addEventListener('message', (event) => {
+      if (event.source === window && event.data?.type === 'HUSKYNOTE_REQUEST_TEAMS_TRANSCRIPT') sendStored();
+    });
+  }
+
   // ─── Multi-App Participant & Active Speaker Hook ───────────────────────────
   function detectCurrentMeetingApp() {
     const host = window.location.hostname.toLowerCase();

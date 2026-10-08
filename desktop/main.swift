@@ -50,7 +50,7 @@ import WebKit
 // AppDelegate — NSApplication lifecycle and window management
 // ─────────────────────────────────────────────────────────────────────────────
 
-class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelegate, WKNavigationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelegate, WKNavigationDelegate, WKDownloadDelegate {
 
     // MARK: - Properties
 
@@ -58,6 +58,68 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDelega
     var webView: WKWebView!
     var localServerProcess: Process?
     var statusItem: NSStatusItem!
+    var downloadDestinations: [ObjectIdentifier: URL] = [:]
+
+    // Native file controls for the same portable archives used by the web/Windows apps.
+    func webView(_ webView: WKWebView, runOpenPanelWith parameters: WKOpenPanelParameters,
+                 initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping ([URL]?) -> Void) {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = parameters.allowsMultipleSelection
+        panel.beginSheetModal(for: window) { result in
+            completionHandler(result == .OK ? panel.urls : nil)
+        }
+    }
+
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
+                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        decisionHandler(navigationAction.shouldPerformDownload ? .download : .allow)
+    }
+
+    func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
+        download.delegate = self
+    }
+
+    func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
+        download.delegate = self
+    }
+
+    func download(_ download: WKDownload, decideDestinationUsing response: URLResponse,
+                  suggestedFilename: String, completionHandler: @escaping (URL?) -> Void) {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = (suggestedFilename as NSString).lastPathComponent
+        panel.title = "Save HuskyNote file"
+        panel.message = "Choose a new filename. Keep backups outside the app's data folder."
+        panel.beginSheetModal(for: window) { result in
+            guard result == .OK, let url = panel.url else { completionHandler(nil); return }
+            // WKDownload requires a destination that does not already exist. Never remove an old backup.
+            guard !FileManager.default.fileExists(atPath: url.path) else {
+                completionHandler(nil)
+                let alert = NSAlert()
+                alert.messageText = "That file already exists"
+                alert.informativeText = "Save again with a new filename to preserve your previous backup."
+                alert.beginSheetModal(for: self.window, completionHandler: nil)
+                return
+            }
+            self.downloadDestinations[ObjectIdentifier(download)] = url
+            completionHandler(url)
+        }
+    }
+
+    func downloadDidFinish(_ download: WKDownload) {
+        if let url = downloadDestinations.removeValue(forKey: ObjectIdentifier(download)) {
+            NSWorkspace.shared.activateFileViewerSelecting([url])
+        }
+    }
+
+    func download(_ download: WKDownload, didFailWithError error: Error, resumeData: Data?) {
+        downloadDestinations.removeValue(forKey: ObjectIdentifier(download))
+        let alert = NSAlert()
+        alert.messageText = "File was not saved successfully"
+        alert.informativeText = error.localizedDescription + " Retry the download; do not use a partial file as a backup."
+        alert.beginSheetModal(for: window, completionHandler: nil)
+    }
 
     /// True when Ollama is reachable at localhost:11434
     var isOllamaOnline: Bool = false

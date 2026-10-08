@@ -1,37 +1,23 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react';
 import { db } from '../db';
 import type { Note } from '../types';
 import { useWorkspace } from '../context/workspace-context';
-import { useSound } from '../context/sound-context';
 import { HuskyMascot } from '../components/ui/husky-mascot';
 import { MicrophonePicker } from '../components/ui/microphone-picker';
-import { Button } from '../components/ui/button';
-import {
-  Feather,
-  Clock,
-  Eye,
-  EyeOff,
-  Minimize2,
-  Save,
-  CheckCircle,
-  Sparkles,
-  Volume2,
-  VolumeX,
-  Mic,
-  MicOff,
-} from 'lucide-react';
+import { Button, buttonVariants } from '../components/ui/button';
+import { Kbd } from '../components/ui/kbd';
+import { Markdown } from '../components/ui/markdown';
+import { StatusDot } from '../components/ui/status-dot';
+import { autoGrowTextarea } from '../components/notes/auto-grow-textarea';
+import { cn } from '@/lib/utils';
+import { Feather, Clock, Eye, EyeOff, Minimize2, Save, CheckCircle, Mic } from 'lucide-react';
 import { LiveSpeechTranscriber } from '../services/audio/transcriber';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 
 export const ZenFocusView: React.FC = () => {
   const { setActiveView, addToast, activeNoteId, setActiveNoteId } = useWorkspace();
-  const { playThock, playChime } = useSound();
 
-  const [title, setTitle] = useState('Deep Focus Notes');
-  const [content, setContent] = useState(
-    '# Deep Focus\n\nQuiet the noise. Capture your thoughts directly to local IndexedDB storage.\n\n- No tracking or ads\n- Pure markdown formatting\n- Real-time offline autosave\n\nStart typing below...'
-  );
+  const [title, setTitle] = useState('Focus Note');
+  const [content, setContent] = useState('');
   const [currentNoteId, setCurrentNoteId] = useState<string>(activeNoteId || `zen-${Date.now()}`);
   const [showPreview, setShowPreview] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -44,6 +30,17 @@ export const ZenFocusView: React.FC = () => {
   const [isTimerRunning, setIsTimerRunning] = useState(true);
 
   const typingTimeoutRef = useRef<any>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // The text area grows with the writing so the page scrolls as one document
+  useLayoutEffect(() => {
+    autoGrowTextarea(textareaRef.current);
+  }, [content, showPreview]);
+  useEffect(() => {
+    const onResize = () => autoGrowTextarea(textareaRef.current);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   // Load existing note if activeNoteId was provided
   useEffect(() => {
@@ -57,6 +54,15 @@ export const ZenFocusView: React.FC = () => {
       });
     }
   }, [activeNoteId]);
+
+  // Esc leaves focus mode
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActiveView('notes');
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [setActiveView]);
 
   // Focus Timer interval
   useEffect(() => {
@@ -74,11 +80,13 @@ export const ZenFocusView: React.FC = () => {
     const timer = setTimeout(async () => {
       try {
         const existing = await db.notes.get(currentNoteId);
+        // Opening Focus mode alone should not leave an empty note behind; create it once there is text
+        if (!existing && !content.trim()) return;
         const noteEntity: Note = {
           id: currentNoteId,
           title: title || 'Untitled Focus Note',
           content,
-          tags: ['zen-focus'],
+          tags: existing?.tags?.length ? existing.tags : ['zen-focus'],
           createdAt: existing?.createdAt || Date.now(),
           updatedAt: Date.now(),
           versions: existing?.versions || [],
@@ -93,11 +101,9 @@ export const ZenFocusView: React.FC = () => {
     return () => clearTimeout(timer);
   }, [title, content, currentNoteId]);
 
-  // Handle typing keystroke with tactile sound feedback
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value);
     setIsTyping(true);
-    playThock(0.95 + Math.random() * 0.1);
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
@@ -123,8 +129,7 @@ export const ZenFocusView: React.FC = () => {
   };
 
   const handleManualSave = async () => {
-    playChime();
-    addToast('Husky note saved to your device.', 'success');
+    addToast('Note saved.', 'success');
   };
 
   // Voice Dictation effect & listener for Husky Notes Focus
@@ -165,108 +170,125 @@ export const ZenFocusView: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full h-full min-h-screen bg-white dark:bg-canvas text-slate-900 dark:text-zinc-100 flex flex-col font-sans select-none overflow-hidden">
-      {/* Subtle Top Minimal Navigation Bar */}
-      <header className="h-12 border-b dark:border-zinc-850 px-6 flex items-center justify-between shrink-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-sm z-20">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-slate-600 dark:text-zinc-400 font-mono text-xs">
-            <Feather className="w-3.5 h-3.5 text-slate-800 dark:text-zinc-200" />
-            <span className="text-slate-950 dark:text-white font-semibold">HUSKY NOTES</span>
+    <div className="relative flex h-full w-full flex-col bg-background text-foreground">
+      {/* Minimal top bar: muted ghost controls only */}
+      <div className="flex h-11 shrink-0 items-center justify-between gap-2 px-3 sm:px-4">
+        <div className="flex min-w-0 items-center gap-1">
+          <div className="flex items-center gap-1.5 px-1.5 text-sm text-muted-foreground">
+            <Feather className="size-4" />
+            <span className="hidden font-medium sm:inline">Focus mode</span>
           </div>
 
-          <span className="text-slate-400 dark:text-zinc-600">•</span>
-
           {/* Focus Timer */}
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setIsTimerRunning(!isTimerRunning)}
-            className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 font-mono text-[11px] text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white transition-colors"
+            className={cn('font-mono tabular-nums', isTimerRunning ? 'text-muted-foreground' : 'text-muted-foreground/60')}
             title="Click to pause/resume focus timer"
           >
-            <Clock className="w-3 h-3 text-slate-600 dark:text-zinc-400" />
+            <Clock />
             <span>{formatTimer(timerSeconds)}</span>
-          </button>
+          </Button>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex shrink-0 items-center gap-1">
           {/* Metrics */}
-          <div className="hidden sm:flex items-center gap-3 font-mono text-[11px] text-slate-500 dark:text-zinc-500">
+          <div className="mr-2 hidden items-center gap-2 text-xs tabular-nums text-muted-foreground md:flex">
             <span>{wordsCount} words</span>
-            <span>•</span>
+            <span aria-hidden="true">·</span>
             <span>~{readTimeMin} min read</span>
-            <span>•</span>
-            <span className="text-emerald-400">Autosaved</span>
+            <span aria-hidden="true">·</span>
+            <span className="inline-flex items-center gap-1">
+              <CheckCircle className="size-3.5" />
+              Autosaved
+            </span>
           </div>
 
           {/* Toggle Split Preview */}
-          <button
+          <Button
+            variant="ghost"
+            size="icon-sm"
             onClick={() => setShowPreview(!showPreview)}
-            className="p-1.5 rounded text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors"
+            aria-pressed={showPreview}
+            className={cn('text-muted-foreground', showPreview && 'bg-accent text-accent-foreground')}
             title={showPreview ? 'Hide preview' : 'Show markdown preview'}
           >
-            {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          </button>
+            {showPreview ? <EyeOff /> : <Eye />}
+          </Button>
 
           {/* Voice Typing Button, with the microphone picker attached */}
-          <div className="inline-flex items-stretch">
-          <button
-            onClick={toggleDictation}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-l text-xs font-mono border transition-all ${
-              isDictating
-                ? 'bg-red-950/80 border-red-700 text-white animate-pulse'
-                : 'bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white'
-            }`}
-            title={isDictating ? 'Pause Voice Typing' : 'Start Voice Typing'}
-          >
-            {isDictating ? <Mic className="w-3.5 h-3.5 text-red-400" /> : <Mic className="w-3.5 h-3.5" />}
-            <span>{isDictating ? 'LISTENING' : 'VOICE TYPE'}</span>
-          </button>
-          <MicrophonePicker
-            align="right"
-            disabled={isDictating}
-            triggerClassName="px-1.5 rounded-r border border-l-0 bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white"
-          />
+          <div className="inline-flex items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleDictation}
+              aria-pressed={isDictating}
+              className={cn(
+                'rounded-r-none',
+                isDictating
+                  ? 'bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive'
+                  : 'text-muted-foreground'
+              )}
+              title={isDictating ? 'Pause Voice Typing' : 'Start Voice Typing'}
+            >
+              {isDictating ? <StatusDot tone="destructive" pulse /> : <Mic />}
+              <span className="hidden sm:inline">{isDictating ? 'Listening' : 'Voice type'}</span>
+            </Button>
+            <MicrophonePicker
+              align="right"
+              disabled={isDictating}
+              triggerClassName={cn(buttonVariants({ variant: 'ghost', size: 'icon-sm' }), 'w-5 rounded-l-none text-muted-foreground')}
+            />
           </div>
 
           {/* Manual Save */}
-          <Button variant="outline" size="sm" onClick={handleManualSave}>
-            <Save className="w-3.5 h-3.5" />
+          <Button variant="ghost" size="sm" onClick={handleManualSave} className="text-muted-foreground" title="Save">
+            <Save />
             <span className="hidden sm:inline">Save</span>
           </Button>
 
-          {/* Exit Husky Notes */}
-          <button
+          {/* Exit Focus mode */}
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setActiveView('notes')}
-            className="flex items-center gap-1 text-xs text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white px-2 py-1 rounded bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 transition-colors"
-            title="Return to standard workspace"
+            className="text-muted-foreground"
+            title="Back to Notes (Esc)"
           >
-            <Minimize2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Exit Husky Notes</span>
-          </button>
+            <Minimize2 />
+            <span className="hidden sm:inline">Exit focus</span>
+            <Kbd className="ml-0.5 hidden md:inline-flex">Esc</Kbd>
+          </Button>
         </div>
-      </header>
+      </div>
 
-      {/* Main Focus Writing Area */}
-      <main className="flex-1 flex overflow-hidden relative">
+      {/* Writing area */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <div
-          className={`flex-1 flex flex-col max-w-4xl mx-auto w-full px-8 py-10 overflow-y-auto select-text ${
-            showPreview ? 'grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl' : ''
-          }`}
+          className={cn(
+            'mx-auto w-full px-6 pb-32 pt-10 sm:pt-16',
+            showPreview ? 'grid max-w-6xl grid-cols-1 gap-12 md:grid-cols-2' : 'max-w-2xl'
+          )}
         >
           {/* Editor Column */}
-          <div className="flex flex-col flex-1 min-h-[500px]">
+          <div className="flex min-w-0 flex-col">
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Note Title..."
-              className="w-full bg-transparent text-2xl sm:text-4xl font-black text-slate-950 dark:text-white placeholder-slate-400 dark:placeholder-zinc-700 tracking-tight outline-none border-b border-transparent focus:border-slate-200 dark:focus:border-zinc-800 pb-3 mb-6 transition-colors"
+              aria-label="Note title"
+              className="mb-6 w-full bg-transparent text-3xl font-bold leading-tight tracking-tight text-foreground outline-none placeholder:text-muted-foreground/50 focus-visible:outline-none sm:text-4xl"
             />
 
             <textarea
+              ref={textareaRef}
               value={content}
               onChange={handleContentChange}
               placeholder="Begin typing freely..."
-              className="w-full flex-1 bg-transparent text-slate-800 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-700 font-sans text-sm sm:text-base leading-relaxed outline-none resize-none scrollbar-none selection:bg-slate-100 dark:selection:bg-zinc-800 selection:text-slate-950 dark:selection:text-white"
+              aria-label="Note content"
+              className="block min-h-[60vh] w-full resize-none overflow-hidden bg-transparent text-lg leading-8 text-foreground outline-none placeholder:text-muted-foreground/60 focus-visible:outline-none"
               autoFocus
               spellCheck={false}
             />
@@ -274,24 +296,19 @@ export const ZenFocusView: React.FC = () => {
 
           {/* Split Markdown Preview (Optional) */}
           {showPreview && (
-            <div className="border-l dark:border-zinc-850 pl-8 overflow-y-auto text-slate-800 dark:text-zinc-200 font-sans prose prose-invert max-w-none text-sm leading-relaxed select-text">
-              <div className="text-[10px] font-mono text-slate-500 dark:text-zinc-500 uppercase tracking-widest mb-4">
-                Preview
-              </div>
-              <h1 className="text-2xl font-bold text-slate-950 dark:text-white tracking-tight">{title}</h1>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+            <div className="min-w-0 border-t pt-8 md:border-l md:border-t-0 md:pl-12 md:pt-0">
+              <div className="mb-4 text-xs font-medium text-muted-foreground">Preview</div>
+              <h1 className="mb-6 text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl">{title}</h1>
+              <Markdown>{content}</Markdown>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Animated Husky Mascot Companion in Bottom Right Corner */}
-        <div className="fixed bottom-6 right-6 z-30 pointer-events-auto">
-          <HuskyMascot
-            size="md"
-            isWriting={isTyping}
-          />
-        </div>
-      </main>
+      {/* Husky companion in the bottom-right corner */}
+      <div className="pointer-events-auto fixed bottom-6 right-6 z-30">
+        <HuskyMascot size="md" isWriting={isTyping} />
+      </div>
     </div>
   );
 };

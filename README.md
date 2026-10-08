@@ -6,6 +6,8 @@ HuskyNote is a production-quality, local AI secretary for note-taking, meetings,
 
 Repository: https://github.com/ChristianJayCuevas/HuskyNote
 
+Project planning: [Roadmap](ROADMAP.md) covers priorities, milestones, and acceptance criteria.
+
 ---
 
 ## Overview
@@ -13,6 +15,7 @@ Repository: https://github.com/ChristianJayCuevas/HuskyNote
 Modern knowledge work is fragmented across meetings, documents, screen procedures, and ad-hoc notes. HuskyNote unifies these workflows into a cohesive, privacy-centric workspace:
 
 - Meeting Secretary: Real browser audio recording, live transcripts, clickable milestone timelines, and local AI synthesis of decisions and action items.
+- Portable backups: **Settings → Storage** prepares a binary-inclusive `.huskybackup` archive and validates recovery into a separate profile. One format for Windows, macOS, and web; see [backup/recovery instructions and platform verification limits](BACKUP_FORMAT.md).
 - Document Intelligence: Built-in PDF reader powered by PDF.js, coordinate-anchored annotations, text selection contextual AI actions, and automated "Turn into Steps" conversion.
 - Operation Capture & Manual Generator: Capture screen states and operations, detect meaningful steps, annotate screenshots with click coordinates, and generate production-grade standard operating procedure (SOP) manuals exportable to PDF, Markdown, JSON, and HTML.
 - AI Workspace: Local Ollama models (e.g., Llama 3.2, Gemma 2, Qwen 2.5) or Claude with your own Anthropic API key, chosen in Settings, with multi-entity context attachment and streaming responses.
@@ -56,9 +59,12 @@ Modern knowledge work is fragmented across meetings, documents, screen procedure
 - Tagging and folder organization.
 
 ### 2. Meeting Assistant and Live Audio
+- Open **Meetings > Recordings & storage** to search saved audio by meeting title or date, see storage usage, play/download files, or permanently delete audio while keeping meeting notes and transcripts. The library is scoped to the current profile and includes unlinked audio from interrupted saves.
+- On-device transcription applies a 70 Hz high-pass filter and bounded phrase normalization, in addition to anti-alias resampling. Processing affects recognition input only; saved audio is unchanged. Recognition accuracy still depends on the microphone, environment, language, and model.
 - High-fidelity microphone capture using browser MediaRecorder and Web Audio API.
 - Real-time live waveform visualizer and elapsed timer.
-- On-device speech-to-text for microphone and shared tab audio, with timestamped segments. Pick the engine in Settings: Parakeet TDT v3 (fastest; English and 24 other European languages), Moonshine Base (light, English), or Whisper Base (multilingual, used automatically for languages the others lack). Each model downloads once on first use.
+- Set up local speech-to-text in **Settings > Transcription**: choose English, Filipino / Taglish, or mixed languages, then set up the model and test your microphone. No account, Python, API key, or Ollama is required. Filipino/Taglish and unrestricted Auto use multilingual Whisper; Parakeet does not support Tagalog. Advanced settings include experimental Whisper Small and Turbo plus a reference-clip benchmark; improved accuracy/speed is not yet established.
+- Recording chunks and pending speech jobs are saved locally during meetings. Use **Meetings > Recordings & storage** to resume pending transcription or delete audio, including its queued PCM. Notes and existing transcripts are retained. Interrupted recordings are downloadable, but damaged media containers may require external repair. Model files need an initial download, and new pinned revisions can require another download; cached models alone do not guarantee offline web startup.
 - Post-meeting AI synthesis: automatic extraction of key decisions, structured action items, discussion topics, and timeline milestones.
 - Simultaneous manual note-taking during ongoing meetings.
 

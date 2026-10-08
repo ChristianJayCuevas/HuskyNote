@@ -21,6 +21,7 @@ export interface CachedModelVariant {
 export interface CachedModelInfo {
   bytes: number;
   variants: CachedModelVariant[];
+  completeDevices: ('webgpu' | 'wasm')[];
 }
 
 /**
@@ -53,11 +54,12 @@ function request<T>(req: IDBRequest<T>): Promise<T> {
 
 /** parakeet.js cache keys are `hf-${repoId}-${revision}-${subfolder}-${filename}` */
 function parakeetPrefix(engine: TranscriptionEngine & { runtime: 'parakeet' }): string {
-  return `hf-${engine.cacheRepo}-main--`;
+  return `hf-${engine.cacheRepo}-`;
 }
 
 /** Encoder and decoder files carry their quantization in the name; the vocab is shared. */
 function parakeetVariant(file: string): 'gpu' | 'cpu' | null {
+  if (!file.startsWith('encoder')) return null;
   if (/\.fp16\.onnx$/.test(file)) return 'gpu';
   if (/\.int8\.onnx$/.test(file)) return 'cpu';
   return null;
@@ -72,7 +74,7 @@ async function parakeetEntries(engine: TranscriptionEngine & { runtime: 'parakee
   const entries = await Promise.all(
     keys.map(async (key) => {
       const blob = (await request(store.get(key))) as Blob | undefined;
-      return { key, file: key.slice(prefix.length), bytes: blob?.size ?? 0 };
+      return { key, file: key.slice(key.indexOf('--', prefix.length) + 2), bytes: blob?.size ?? 0 };
     })
   );
   return { db, entries };
@@ -115,16 +117,38 @@ export async function getCachedModel(engine: TranscriptionEngine): Promise<Cache
       const variants = (['gpu', 'cpu'] as const)
         .filter((id) => byVariant[id] > 0)
         .map((id) => ({ id, bytes: byVariant[id] }));
-      if (variants.length === 0) return null;
-      return { bytes: byVariant.gpu + byVariant.cpu + shared, variants };
+      if (variants.length === 0 && !shared) return null;
+      const files = entries.filter((e) => e.key.startsWith(`hf-${engine.cacheRepo}-${engine.revision}--`) && e.bytes > 0).map((e) => e.file);
+      const completeDevices = completeModelDevices(engine, files);
+      return { bytes: byVariant.gpu + byVariant.cpu + shared, variants: variants.length ? variants : [{ id: 'all', bytes: shared }], completeDevices };
     }
     const { entries } = await transformersEntries(engine);
     const bytes = entries.reduce((sum, e) => sum + e.bytes, 0);
-    return bytes > 0 ? { bytes, variants: [{ id: 'all', bytes }] } : null;
+    const prefix = `${transformersPrefix(engine)}${engine.revision}/`;
+    const files = entries.filter((e) => e.request.url.startsWith(prefix) && e.bytes > 0).map((e) => e.request.url.slice(prefix.length));
+    return bytes > 0 ? { bytes, variants: [{ id: 'all', bytes }], completeDevices: completeModelDevices(engine, files) } : null;
   } catch (err) {
     console.warn(`[HuskyNote] Could not read the ${engine.name} download:`, err);
     return null;
   }
+}
+
+/** Required files for the exact revision/precision, not a heuristic based on bytes. */
+export function completeModelDevices(engine: TranscriptionEngine, files: string[]): ('webgpu' | 'wasm')[] {
+  const has = (names: string[]) => names.every((n) => files.includes(n));
+  return (['webgpu', 'wasm'] as const).filter((device) => {
+    if (engine.runtime === 'parakeet') {
+      const q = engine.quant[device];
+      return has([`encoder-model.${q.encoderQuant}.onnx`, `decoder_joint-model.${q.decoderQuant}.onnx`, 'vocab.txt', 'nemo128.onnx']);
+    }
+    const dtype = engine.dtype[device];
+    const suffix = (part: string) => {
+      const d = typeof dtype === 'string' ? dtype : dtype[part];
+      return d === 'fp32' ? '' : d === 'q8' ? '_quantized' : `_${d}`;
+    };
+    return has(['config.json', 'tokenizer.json', 'tokenizer_config.json', 'preprocessor_config.json',
+      `onnx/encoder_model${suffix('encoder_model')}.onnx`, `onnx/decoder_model_merged${suffix('decoder_model_merged')}.onnx`]);
+  });
 }
 
 /**

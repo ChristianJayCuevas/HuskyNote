@@ -8,18 +8,9 @@ import { parseDocumentFile } from '../services/documents/universal-parser';
 import { EmptyState } from '../components/ui/empty-state';
 import { Button } from '../components/ui/button';
 import { Modal } from '../components/ui/modal';
-import {
-  FileUp,
-  File,
-  Plus,
-  UploadCloud,
-  AlertCircle,
-  FileText,
-  Presentation,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Trash2,
-} from 'lucide-react';
+import { ListPane, ListPaneBody, ListPaneEmpty, ListPaneHeader, ListItem } from '../components/ui/list-pane';
+import { cn } from '../lib/utils';
+import { FileUp, File, Plus, UploadCloud, FileText, Presentation, PanelLeftClose, Trash2 } from 'lucide-react';
 
 export const DocumentsView: React.FC = () => {
   const { activeDocumentId, setActiveDocumentId, addToast } = useWorkspace();
@@ -144,7 +135,18 @@ export const DocumentsView: React.FC = () => {
 
   // Listen to Topbar trigger
   useEffect(() => {
-    const handleUploadTrigger = () => fileInputRef.current?.click();
+    const handleUploadTrigger = () => {
+      const current = new URL(window.location.href);
+      current.searchParams.delete('action');
+      window.history.replaceState(window.history.state, '', current.toString());
+      fileInputRef.current?.click();
+    };
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('action') === 'upload') {
+      url.searchParams.delete('action');
+      window.history.replaceState(window.history.state, '', url.toString());
+      fileInputRef.current?.click();
+    }
     window.addEventListener('huskynote:upload-pdf', handleUploadTrigger);
     return () => window.removeEventListener('huskynote:upload-pdf', handleUploadTrigger);
   }, []);
@@ -154,16 +156,16 @@ export const DocumentsView: React.FC = () => {
   const getDocIcon = (fileName: string) => {
     const lower = fileName.toLowerCase();
     if (lower.endsWith('.pptx') || lower.endsWith('.ppt')) {
-      return <Presentation className="w-4 h-4 text-slate-700 dark:text-zinc-300 shrink-0" />;
+      return <Presentation className="size-4 shrink-0 text-muted-foreground" />;
     }
     if (lower.endsWith('.docx') || lower.endsWith('.doc') || lower.endsWith('.txt') || lower.endsWith('.md')) {
-      return <FileText className="w-4 h-4 text-slate-700 dark:text-zinc-300 shrink-0" />;
+      return <FileText className="size-4 shrink-0 text-muted-foreground" />;
     }
-    return <File className="w-4 h-4 text-slate-600 dark:text-zinc-400 shrink-0" />;
+    return <File className="size-4 shrink-0 text-muted-foreground" />;
   };
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-slate-50 dark:bg-canvas transition-colors duration-500 font-sans">
+    <div className="flex h-full min-h-0 w-full overflow-hidden bg-background">
       <input
         type="file"
         ref={fileInputRef}
@@ -175,93 +177,88 @@ export const DocumentsView: React.FC = () => {
         className="hidden"
       />
 
-      {/* Left Sidebar: Document List */}
+      {/* Left column: document list (full width on phones, where it replaces the viewer while open) */}
       {isListOpen && (
-        <div className="w-72 lg:w-80 border-r border-slate-200 dark:border-zinc-850 flex flex-col h-full bg-white dark:bg-zinc-950 shrink-0 select-none animate-fade-in z-10 transition-colors duration-500">
-          <div className="p-3.5 border-b border-slate-200 dark:border-zinc-850 flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-800 dark:text-zinc-300 uppercase tracking-wider">
-              Documents ({documents.length})
-            </span>
-            <div className="flex items-center gap-1.5">
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Upload</span>
-              </Button>
-              <button
-                onClick={() => setIsListOpen(false)}
-                className="p-1 rounded text-slate-500 dark:text-zinc-500 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors"
-                title="Collapse document list"
-                aria-label="Collapse document list"
-              >
-                <PanelLeftClose className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-850">
-            {documents.length === 0 ? (
-              <div className="p-8 text-center text-xs text-slate-500 dark:text-zinc-500">
-                No documents uploaded yet. Upload a PDF, Word (DOCX), PowerPoint (PPTX), or text file to analyze with local AI.
-              </div>
-            ) : (
-              documents.map((d) => {
-                const isSelected = activeDocumentId === d.id;
-                const isPresentation = d.fileName.toLowerCase().endsWith('.pptx') || d.fileName.toLowerCase().endsWith('.ppt');
-                return (
-                  <div
-                    key={d.id}
-                    onClick={() => {
-                      setActiveDocumentId(d.id);
-                      if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                        setIsListOpen(false);
-                      }
-                    }}
-                    className={`p-3.5 cursor-pointer transition-colors group relative ${
-                      isSelected
-                        ? 'bg-slate-100 dark:bg-zinc-900/90 text-slate-950 dark:text-white border-l-2 border-slate-900 dark:border-white'
-                        : 'hover:bg-slate-50 dark:hover:bg-zinc-900/40 text-slate-700 dark:text-zinc-300'
-                    }`}
+        <div className="z-10 h-full w-full shrink-0 animate-fade-in md:w-72">
+          <ListPane>
+            <ListPaneHeader
+              title="Documents"
+              count={documents.length}
+              actions={
+                <>
+                  <Button size="sm" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                    <Plus />
+                    <span>Upload</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setIsListOpen(false)}
+                    // On md+ the viewer toolbar's list toggle does this; phones need it to get back to the viewer
+                    className="text-muted-foreground md:hidden"
+                    title="Collapse document list"
+                    aria-label="Collapse document list"
                   >
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        {getDocIcon(d.fileName)}
-                        <h4 className="text-xs font-bold text-slate-950 dark:text-zinc-100 truncate">{d.title}</h4>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDocToDelete(d);
-                        }}
-                        className="p-1 rounded text-slate-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors opacity-70 group-hover:opacity-100 shrink-0"
-                        title={`Delete "${d.title}"`}
-                        aria-label={`Delete "${d.title}"`}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500 dark:text-zinc-500 pl-6 font-medium">
-                      <span>
-                        {d.pageCount} {isPresentation ? 'slides' : 'pages'}
-                      </span>
-                      <span>•</span>
-                      <span>{(d.fileSize / 1024 / 1024).toFixed(2)} MB</span>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+                    <PanelLeftClose />
+                  </Button>
+                </>
+              }
+            />
+
+            <ListPaneBody>
+              {documents.length === 0 ? (
+                <ListPaneEmpty
+                  icon={<FileText />}
+                  title="No documents uploaded yet."
+                  description="Upload a PDF, Word (DOCX), PowerPoint (PPTX), or text file to analyze with local AI."
+                />
+              ) : (
+                documents.map((d) => {
+                  const isSelected = activeDocumentId === d.id;
+                  const isPresentation = d.fileName.toLowerCase().endsWith('.pptx') || d.fileName.toLowerCase().endsWith('.ppt');
+                  return (
+                    <ListItem
+                      key={d.id}
+                      selected={isSelected}
+                      leading={getDocIcon(d.fileName)}
+                      title={d.title}
+                      meta={
+                        <span className="tabular-nums">
+                          {d.pageCount} {isPresentation ? 'slides' : 'pages'} · {(d.fileSize / 1024 / 1024).toFixed(2)} MB
+                        </span>
+                      }
+                      onClick={() => {
+                        setActiveDocumentId(d.id);
+                        if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                          setIsListOpen(false);
+                        }
+                      }}
+                      actions={
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDocToDelete(d);
+                          }}
+                          className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          title={`Delete "${d.title}"`}
+                          aria-label={`Delete "${d.title}"`}
+                        >
+                          <Trash2 />
+                        </Button>
+                      }
+                    />
+                  );
+                })
+              )}
+            </ListPaneBody>
+          </ListPane>
         </div>
       )}
 
-      {/* Right Area: Document Viewer or Upload Dropzone */}
-      <div className="flex-1 h-full min-w-0 flex flex-col">
+      {/* Right area: document viewer or upload dropzone */}
+      <div className={cn('h-full min-w-0 flex-1 flex-col', isListOpen ? 'hidden md:flex' : 'flex')}>
         {selectedDocument ? (
           <PDFViewer
             document={selectedDocument}
@@ -280,26 +277,20 @@ export const DocumentsView: React.FC = () => {
               const file = e.dataTransfer.files?.[0];
               if (file) processUploadedFile(file);
             }}
-            className="flex-1 flex items-center justify-center p-8"
+            className="flex flex-1 items-center justify-center p-4 sm:p-8"
           >
-            <div className="max-w-md w-full border-2 border-dashed dark:border-zinc-850 rounded-2xl p-12 text-center bg-white/40 dark:bg-zinc-950/40 flex flex-col items-center shadow-2xl">
-              <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-400 mb-4">
-                <UploadCloud className="w-6 h-6" />
-              </div>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 mb-1">Upload Any Document</h3>
-              <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed mb-6">
-                Drag and drop your PDF, Word (.docx), PowerPoint (.pptx), Markdown (.md), or plain text (.txt) file here.
-                Parsed 100% locally with instant AI analysis.
-              </p>
-              <Button
-                variant="primary"
-                size="md"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
+            <div className="w-full max-w-lg rounded-xl border-2 border-dashed border-border bg-muted/30 transition-colors duration-100 hover:bg-muted/50">
+              <EmptyState
+                icon={UploadCloud}
+                title="Upload Any Document"
+                description="Drag and drop your PDF, Word (.docx), PowerPoint (.pptx), Markdown (.md), or plain text (.txt) file here. Parsed 100% locally with instant AI analysis."
+                className="py-12"
               >
-                <FileUp className="w-4 h-4" />
-                <span>{isUploading ? 'Extracting Text...' : 'Select Document'}</span>
-              </Button>
+                <Button className="mt-6" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                  <FileUp />
+                  <span>{isUploading ? 'Extracting Text...' : 'Select Document'}</span>
+                </Button>
+              </EmptyState>
             </div>
           </div>
         )}
@@ -312,38 +303,29 @@ export const DocumentsView: React.FC = () => {
           onClose={() => setDocToDelete(null)}
           title="Delete Document"
           description="Are you sure you want to delete this document? This action cannot be undone."
-          maxWidth="sm"
+          maxWidth="md"
         >
-          <div className="p-6 space-y-4">
-            <div className="p-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg flex items-center gap-3">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 rounded-lg border bg-muted/40 px-3 py-2.5">
               {getDocIcon(docToDelete.fileName)}
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-slate-900 dark:text-zinc-100 truncate">{docToDelete.title}</p>
-                <p className="text-[10px] font-mono text-slate-600 dark:text-zinc-400">
+                <p className="truncate text-sm font-medium text-foreground">{docToDelete.title}</p>
+                <p className="truncate text-xs text-muted-foreground">
                   {docToDelete.fileName} • {(docToDelete.fileSize / 1024 / 1024).toFixed(2)} MB
                 </p>
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
+            <p className="text-sm text-muted-foreground">
               This will permanently remove the file, extracted pages, and all associated AI annotations and compiled notes from your browser's local database.
             </p>
 
             <div className="flex items-center justify-end gap-2 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setDocToDelete(null)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setDocToDelete(null)}>
                 Cancel
               </Button>
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={handleConfirmDeleteDoc}
-                className="bg-red-600 hover:bg-red-700 text-white"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
+              <Button variant="destructive" size="sm" onClick={handleConfirmDeleteDoc}>
+                <Trash2 />
                 <span>Delete Permanently</span>
               </Button>
             </div>

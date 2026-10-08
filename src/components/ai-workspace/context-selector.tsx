@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import type { AIContextChip } from '../../types';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db';
-import { Modal } from '../ui/modal';
 import { Button } from '../ui/button';
-import { FileText, Mic, FileUp, Plus, X, Search, Check } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
+import { FileText, Mic, FileUp, Plus, X } from 'lucide-react';
 
 interface ContextSelectorProps {
   selectedChips: AIContextChip[];
@@ -12,16 +13,32 @@ interface ContextSelectorProps {
   onRemoveChip: (chipId: string) => void;
 }
 
+const icons = {
+  note: FileText,
+  meeting: Mic,
+  document: FileUp,
+};
+
+const groups: Array<{ type: AIContextChip['type']; heading: string }> = [
+  { type: 'note', heading: 'Notes' },
+  { type: 'meeting', heading: 'Meetings' },
+  { type: 'document', heading: 'Documents' },
+];
+
+/**
+ * Context chips for the AI Workspace composer plus an "Add context" picker
+ * (a popover with a searchable list of notes, meetings and documents).
+ */
 export const ContextSelector: React.FC<ContextSelectorProps> = ({
   selectedChips,
   onAddChip,
   onRemoveChip,
 }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [search, setSearch] = useState('');
 
   const notes = useLiveQuery(() => db.notes.toArray(), []) || [];
-  const meetings = useLiveQuery(() => db.meetings.toArray(), []) || [];
+  const meetings = useLiveQuery(() => db.meetings.filter((m) => !m.mergedInto).toArray(), []) || [];
   const documents = useLiveQuery(() => db.documents.toArray(), []) || [];
 
   const availableItems: AIContextChip[] = [
@@ -52,114 +69,86 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
   );
 
   return (
-    <div className="flex items-center gap-2 flex-wrap py-2 border-b dark:border-zinc-850 bg-white dark:bg-zinc-950 px-6">
-      <span className="text-[11px] font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
-        Context:
-      </span>
-
-      {selectedChips.length === 0 ? (
-        <span className="text-xs text-slate-500 dark:text-zinc-500 italic">No context attached.</span>
-      ) : (
-        selectedChips.map((chip) => {
-          const icons = {
-            note: FileText,
-            meeting: Mic,
-            document: FileUp,
-          };
-          const Icon = icons[chip.type];
-
-          return (
-            <span
-              key={chip.id}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 dark:bg-zinc-900 border dark:border-zinc-750 text-xs text-slate-800 dark:text-zinc-200 font-medium"
-            >
-              <Icon className="w-3.5 h-3.5 text-slate-600 dark:text-zinc-400" />
-              <span className="truncate max-w-[150px]">{chip.title}</span>
-              <button
-                onClick={() => onRemoveChip(chip.id)}
-                className="text-slate-500 dark:text-zinc-500 hover:text-slate-950 dark:hover:text-white p-0.5 rounded"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          );
-        })
-      )}
-
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => setIsModalOpen(true)}
-        className="h-7 text-xs ml-auto"
+    <div className="flex flex-wrap items-center gap-1 px-2 pt-2">
+      <Popover
+        open={isPickerOpen}
+        onOpenChange={(open) => {
+          setIsPickerOpen(open);
+          if (!open) setSearch('');
+        }}
       >
-        <Plus className="w-3.5 h-3.5" />
-        <span>Attach Context</span>
-      </Button>
-
-      {/* Attach Modal */}
-      {isModalOpen && (
-        <Modal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title="Attach Workspace Context"
-          description="Select real notes, meeting transcripts, or documents to ground your AI queries."
-          maxWidth="lg"
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="xs" className="text-muted-foreground" title="Attach Workspace Context">
+            <Plus />
+            <span>Add context</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          side="top"
+          align="start"
+          className="w-80 p-0"
+          aria-label="Attach Workspace Context"
         >
-          <div className="space-y-4">
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-500 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                placeholder="Search workspace entities..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-md pl-8 pr-3 py-1.5 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-500 dark:placeholder-zinc-500 focus:outline-none"
-              />
-            </div>
+          <Command shouldFilter={false} className="rounded-lg">
+            <CommandInput
+              placeholder="Search workspace entities..."
+              value={search}
+              onValueChange={setSearch}
+            />
+            <CommandList>
+              <CommandEmpty>
+                {availableItems.length === 0
+                  ? 'No notes, meetings, or documents in workspace yet.'
+                  : 'No additional items match your query.'}
+              </CommandEmpty>
+              {groups.map(({ type, heading }) => {
+                const items = filtered.filter((item) => item.type === type);
+                if (items.length === 0) return null;
+                const Icon = icons[type];
+                return (
+                  <CommandGroup key={type} heading={heading}>
+                    {items.map((item) => (
+                      <CommandItem
+                        key={item.id}
+                        value={item.id}
+                        onSelect={() => {
+                          onAddChip(item);
+                          setIsPickerOpen(false);
+                          setSearch('');
+                        }}
+                      >
+                        <Icon />
+                        <span className="min-w-0 flex-1 truncate">{item.title}</span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                );
+              })}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
 
-            <div className="max-h-72 overflow-y-auto space-y-2">
-              {filtered.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-500 dark:text-zinc-500">
-                  {availableItems.length === 0
-                    ? 'No notes, meetings, or documents in workspace yet.'
-                    : 'No additional items match your query.'}
-                </div>
-              ) : (
-                filtered.map((item) => {
-                  const icons = {
-                    note: FileText,
-                    meeting: Mic,
-                    document: FileUp,
-                  };
-                  const Icon = icons[item.type];
-
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => {
-                        onAddChip(item);
-                        setIsModalOpen(false);
-                      }}
-                      className="flex items-center justify-between p-3 rounded-lg bg-slate-50/60 dark:bg-zinc-900/60 border dark:border-zinc-850 dark:hover:bg-zinc-850 hover:border-slate-300 dark:hover:border-zinc-700 cursor-pointer transition-colors text-xs"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Icon className="w-4 h-4 text-slate-600 dark:text-zinc-400" />
-                        <div>
-                          <div className="font-semibold text-slate-800 dark:text-zinc-200">{item.title}</div>
-                          <span className="text-[10px] text-slate-600 dark:text-zinc-400 uppercase tracking-wider">
-                            {item.type}
-                          </span>
-                        </div>
-                      </div>
-                      <Plus className="w-4 h-4 text-slate-600 dark:text-zinc-400" />
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </Modal>
-      )}
+      {selectedChips.map((chip) => {
+        const Icon = icons[chip.type];
+        return (
+          <span
+            key={chip.id}
+            className="inline-flex h-6 max-w-[14rem] items-center gap-1 rounded-md bg-secondary pl-1.5 pr-0.5 text-xs font-medium text-secondary-foreground"
+          >
+            <Icon className="size-3.5 shrink-0 text-muted-foreground" />
+            <span className="truncate">{chip.title}</span>
+            <button
+              type="button"
+              onClick={() => onRemoveChip(chip.id)}
+              aria-label={`Remove ${chip.title} from context`}
+              className="inline-flex size-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors duration-100 hover:bg-foreground/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <X className="size-3" />
+            </button>
+          </span>
+        );
+      })}
     </div>
   );
 };

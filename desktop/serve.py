@@ -24,6 +24,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         ".json": "application/json",
         ".svg": "image/svg+xml",
         ".webp": "image/webp",
+        ".woff2": "font/woff2",
+        ".woff": "font/woff",
     }
 
     def log_message(self, format, *args):

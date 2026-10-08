@@ -1,31 +1,41 @@
 import React from 'react';
-import { Search, Plus, Mic, FileUp, Menu, Layers } from 'lucide-react';
+import { Command, Menu, Monitor, Moon, Search, Sun, SunMoon, Globe } from 'lucide-react';
 import { useWorkspace } from '../../context/workspace-context';
-import { useLanguage } from '../../context/language-context';
+import { useLanguage, type LanguageCode } from '../../context/language-context';
+import { useTheme, type ThemePreference } from '../../context/theme-context';
+import { getActiveProfile } from '../../services/profiles';
 import { Button } from '../ui/button';
-import { ModeSwitcher } from './mode-switcher';
-import { ThemeToggle } from '../ui/theme-toggle';
-import { PhysicsRopeToggle } from '../ui/physics-rope-toggle';
-import { LanguageSwitcher } from '../ui/language-switcher';
+import { Kbd } from '../ui/kbd';
+import { Separator } from '../ui/separator';
+import { SimpleTooltip } from '../ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
 import { GlobalMicRecorder } from './global-mic-recorder';
 import { ScreenHudLauncher } from '../hud/screen-hud-launcher';
-import { ChromeIcon } from '../ui/chrome-icon';
-import logoImg from '../../assets/official_huskynote.png';
+
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
+const modifier = isMac ? 'Cmd' : 'Ctrl';
 
 export const Topbar: React.FC = () => {
-  const {
-    activeView,
-    setActiveView,
-    setIsCommandPaletteOpen,
-    setIsMobileSidebarOpen,
-    setIsExtensionModalOpen,
-  } = useWorkspace();
-  const { t } = useLanguage();
+  const { activeView, setIsCommandPaletteOpen, setIsSearchOpen, setIsMobileSidebarOpen } = useWorkspace();
+  const { t, language, setLanguage, languages } = useLanguage();
+  const { preference, setPreference } = useTheme();
+  const profileName = getActiveProfile().name;
 
   const getTitle = () => {
     switch (activeView) {
       case 'dashboard':
-        return t('nav.overview');
+        return t('nav.home');
       case 'notes':
         return t('nav.notes');
       case 'zen':
@@ -57,132 +67,124 @@ export const Topbar: React.FC = () => {
     }
   };
 
+  const themeOptions: Array<{ value: ThemePreference; label: string; icon: typeof Sun }> = [
+    { value: 'light', label: t('theme.light'), icon: Sun },
+    { value: 'dark', label: t('theme.dark'), icon: Moon },
+    { value: 'system', label: t('theme.system', 'System'), icon: Monitor },
+  ];
+
   return (
-    <header className="h-14 border-b border-slate-200 dark:border-zinc-800 px-3 sm:px-4 lg:px-6 flex items-center justify-between bg-white/85 dark:bg-canvas-inset/90 backdrop-blur-md shrink-0 gap-2 z-30 transition-colors duration-200 relative [app-region:drag] [-webkit-app-region:drag]">
-      {/* Left: Mobile Menu Trigger + App Icon / View Title */}
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0 [app-region:no-drag] [-webkit-app-region:no-drag]">
-        <button
+    <header className="relative z-30 flex h-11 shrink-0 items-center gap-2 bg-background px-3 [-webkit-app-region:drag] [app-region:drag]">
+      {/* Left: mobile menu + breadcrumb (pages own their h1) */}
+      <div className="flex min-w-0 items-center gap-1 [-webkit-app-region:no-drag] [app-region:no-drag]">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
           onClick={() => setIsMobileSidebarOpen(true)}
-          className="md:hidden p-1.5 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors"
+          className="text-muted-foreground md:hidden"
           title="Open navigation menu"
           aria-label="Open navigation menu"
         >
-          <Menu className="w-4 h-4" />
-        </button>
+          <Menu />
+        </Button>
 
-        <button
-          type="button"
-          onClick={() => setActiveView('landing')}
-          className="md:hidden p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-850 transition-colors flex items-center shrink-0"
-          title="HuskyNote — Return to Landing Page"
-          aria-label="Return to Landing Page"
-        >
-          <img src={logoImg} alt="HuskyNote" className="w-6 h-6 rounded-md object-contain" />
-        </button>
-
-        {/* Fixed width on desktop keeps the mode switcher in the same spot on every view */}
-        <h1
-          className="text-sm font-bold text-slate-950 dark:text-white tracking-tight truncate max-w-[120px] sm:max-w-[160px] md:max-w-none md:w-36"
-          title={getTitle()}
-        >
-          {getTitle()}
-        </h1>
-
-        {/* Mode Switcher Dropdown */}
-        <div className="flex items-center shrink-0 z-30">
-          <ModeSwitcher />
-        </div>
+        <nav aria-label="Breadcrumb" className="min-w-0">
+          <ol className="flex min-w-0 items-center gap-1.5 text-sm">
+            <li className="hidden min-w-0 max-w-[12rem] truncate text-muted-foreground sm:block">{profileName}</li>
+            <li aria-hidden="true" className="hidden text-muted-foreground/60 sm:block">
+              /
+            </li>
+            <li className="min-w-0">
+              <span aria-current="page" className="block truncate font-medium text-foreground" title={getTitle()}>
+                {getTitle()}
+              </span>
+            </li>
+          </ol>
+        </nav>
       </div>
 
-      {/* Right Actions */}
-      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 h-full [app-region:no-drag] [-webkit-app-region:no-drag]">
-        {/* Language Switcher */}
-        <LanguageSwitcher />
-
-        {/* Global Audio & Microphone Recording / Voice Dictation */}
+      {/* Right: capture tools, search, commands, appearance */}
+      <div className="ml-auto flex shrink-0 items-center gap-1 [-webkit-app-region:no-drag] [app-region:no-drag]">
         <GlobalMicRecorder />
-
-        {/* Floating Desktop Screen HUD Toggle */}
         <ScreenHudLauncher />
 
-        {/* Tactile Theme Toggle (Light / Dark) for compact mobile */}
-        <div className="sm:hidden">
-          <ThemeToggle />
-        </div>
+        <Separator orientation="vertical" className="mx-1 h-5" />
 
-        {/* Chrome Extension 1-Click Integration */}
-        <button
-          onClick={() => setIsExtensionModalOpen(true)}
-          className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-canvas border border-slate-300 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 hover:text-black dark:hover:text-white hover:border-slate-400 dark:hover:border-zinc-700 transition-all text-xs font-semibold shadow-xs group"
-          title="HuskyNote Chrome Extension (1-Click Automated Setup)"
-          aria-label="Open Chrome Extension setup"
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setIsSearchOpen(true)}
+          className="text-muted-foreground"
+          title={`${t('common.search')} (${modifier}+Shift+F)`}
+          aria-label="Search workspace"
         >
-          <ChromeIcon className="w-3.5 h-3.5 shrink-0 transition-transform group-hover:scale-110" />
-          <span className="hidden xl:inline">Chrome Extension</span>
-        </button>
+          <Search />
+          <span className="hidden md:inline">{t('nav.search', 'Search')}</span>
+          <Kbd aria-hidden="true" className="ml-1 hidden lg:inline-flex">{isMac ? '⌘⇧F' : 'Ctrl Shift F'}</Kbd>
+        </Button>
 
-        {/* Search / Command Palette Trigger */}
-        <button
-          onClick={() => setIsCommandPaletteOpen(true)}
-          className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-zinc-900/90 border border-slate-300 dark:border-zinc-800 text-slate-800 dark:text-zinc-300 hover:text-black dark:hover:text-white hover:border-slate-400 dark:hover:border-zinc-600 transition-colors text-xs shadow-sm"
-          title={`${t('common.search')} (Cmd+K)`}
-        >
-          <Search className="w-3.5 h-3.5 shrink-0 text-slate-600 dark:text-zinc-400" />
-          <span className="hidden 2xl:inline text-slate-700 dark:text-zinc-400 font-medium">{t('common.search')}</span>
-          <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono text-slate-700 dark:text-zinc-400 bg-white dark:bg-canvas border border-slate-300 dark:border-zinc-800 rounded font-semibold">
-            Cmd+K
-          </kbd>
-        </button>
-
-        {/* Quick Contextual Actions */}
-        {activeView === 'notes' && (
+        <SimpleTooltip content={`Commands (${modifier}+K)`} side="bottom">
           <Button
-            size="sm"
-            variant="primary"
-            onClick={() => {
-              window.dispatchEvent(new CustomEvent('huskynote:new-note'));
-            }}
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="hidden text-muted-foreground sm:inline-flex"
+            aria-label="Open commands"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">New Note</span>
+            <Command />
           </Button>
-        )}
+        </SimpleTooltip>
 
-        {activeView === 'meetings' && (
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={() => {
-              window.dispatchEvent(new CustomEvent('huskynote:start-meeting'));
-            }}
-          >
-            <Mic className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">New Session</span>
-          </Button>
-        )}
-
-        {activeView === 'documents' && (
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={() => {
-              window.dispatchEvent(new CustomEvent('huskynote:upload-pdf'));
-            }}
-          >
-            <FileUp className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Upload</span>
-          </Button>
-        )}
-
-        {/* Subtle Divider */}
-        <div className="h-4 w-px bg-slate-200 dark:bg-zinc-800 mx-0.5 hidden sm:block" />
-
-        {/* Physics Lampcord Toggle Hanging Seamlessly Under Topbar */}
-        <div className="hidden sm:flex relative items-center justify-center w-8 h-full self-stretch">
-          <div className="absolute top-full -mt-[2px] left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-            <PhysicsRopeToggle />
-          </div>
-        </div>
+        <DropdownMenu>
+          <SimpleTooltip content={t('theme.appearance', 'Appearance')} side="bottom">
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground"
+                aria-label="Appearance and language"
+              >
+                <SunMoon />
+              </Button>
+            </DropdownMenuTrigger>
+          </SimpleTooltip>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuLabel>{t('theme.appearance', 'Appearance')}</DropdownMenuLabel>
+            <DropdownMenuRadioGroup value={preference} onValueChange={(value) => setPreference(value as ThemePreference)}>
+              {themeOptions.map((option) => {
+                const Icon = option.icon;
+                return (
+                  <DropdownMenuRadioItem key={option.value} value={option.value}>
+                    <Icon />
+                    {option.label}
+                  </DropdownMenuRadioItem>
+                );
+              })}
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <Globe />
+                <span className="flex-1">{t('language.select')}</span>
+                <span className="text-xs uppercase text-muted-foreground">{language}</span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-44">
+                <DropdownMenuRadioGroup value={language} onValueChange={(value) => setLanguage(value as LanguageCode)}>
+                  {languages.map((item) => (
+                    <DropdownMenuRadioItem key={item.code} value={item.code}>
+                      <span className="flex-1">{item.nativeLabel}</span>
+                      <span className="text-xs uppercase text-muted-foreground">{item.code}</span>
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

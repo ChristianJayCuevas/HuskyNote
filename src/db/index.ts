@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie';
+import type { AudioChunkRecord, SpeechJob } from '../services/audio/job-types';
 import type {
   Note,
   Meeting,
@@ -24,6 +25,8 @@ export class HuskyNoteDatabase extends Dexie {
   settings!: Table<AppSettings, string>;
   blobs!: Table<StoredBlob, string>;
   schedule!: Table<ScheduleEvent, string>;
+  audioChunks!: Table<AudioChunkRecord, string>;
+  speechJobs!: Table<SpeechJob, string>;
 
   /** Each profile has its own database; the default profile keeps the original name */
   constructor(name: string = profileDatabaseName(DEFAULT_PROFILE_ID)) {
@@ -41,6 +44,10 @@ export class HuskyNoteDatabase extends Dexie {
     });
     this.version(2).stores({
       schedule: 'id, date, time, category, completed, createdAt',
+    });
+    this.version(3).stores({
+      audioChunks: 'id, recordingId, [recordingId+sequence]',
+      speechJobs: 'id, meetingId, [meetingId+sequence]',
     });
   }
 }
@@ -117,7 +124,7 @@ export async function initializeDatabase(): Promise<void> {
   const existingSettings = await db.settings.get('current');
   if (!existingSettings) {
     await db.settings.put(DEFAULT_SETTINGS);
-  } else if (!existingSettings.speechLanguage || existingSettings.speechLanguage === 'en-US') {
+  } else if (!existingSettings.speechLanguage) {
     // Default spoken language is auto detect
     await db.settings.update('current', { speechLanguage: 'auto' });
   }
@@ -156,7 +163,8 @@ export async function deleteProfileAndData(profileId: string): Promise<void> {
   removeProfile(profileId);
 }
 
-// Full Workspace Backup & Restore
+// Legacy record-only JSON exchange. NOT a complete backup: excludes binary assets.
+// New backup/recovery UI uses services/backup/archive.ts instead.
 export async function exportWorkspaceToJson(): Promise<string> {
   const [notes, meetings, documents, annotations, operationSessions, manuals, templates, settings, schedule] =
     await Promise.all([

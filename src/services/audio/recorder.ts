@@ -17,6 +17,8 @@
  * ```
  */
 import { openMicrophone } from './microphone';
+import { db } from '../../db';
+export const activeRecordingIds = new Set<string>();
 export class AudioRecorder {
   private mediaRecorder: MediaRecorder | null = null;
   private audioContext: AudioContext | null = null;
@@ -26,6 +28,32 @@ export class AudioRecorder {
   private ownsStream = true;
   private chunks: Blob[] = [];
   private animFrameId: number | null = null;
+  private recordingId: string | null = null;
+  private writeQueue: Promise<void> = Promise.resolve();
+  private sequence = 0;
+  private writeError: Error | null = null;
+  private stopping: Promise<Blob> | null = null;
+  private onStorageError?: (error: Error) => void;
+  private queuedWrites = 0;
+  private meetingId: string | null = null;
+
+  /**
+   * Save each 1-second chunk to IndexedDB as it is recorded.
+   * Pass the meeting id so the "was this recording deleted?" check is a cheap
+   * primary-key read; scanning every meeting on each chunk got slower as
+   * transcripts grew until the write queue backed up and recording stopped.
+   */
+  setPersistence(recordingId: string, onError: (error: Error) => void, meetingId?: string): void {
+    this.recordingId = recordingId;
+    this.onStorageError = onError;
+    this.meetingId = meetingId ?? null;
+  }
+
+  /** True while the meeting that owns this recording still points at its audio */
+  private async recordingStillLinked(recordingId: string): Promise<boolean> {
+    if (this.meetingId) return (await db.meetings.get(this.meetingId))?.audioBlobId === recordingId;
+    return (await db.meetings.filter((m) => m.audioBlobId === recordingId).count()) > 0;
+  }
 
   /**
    * Start recording audio from the user's microphone.
@@ -40,6 +68,9 @@ export class AudioRecorder {
    */
   async start(onAudioLevel?: (level: number) => void, inputStream?: MediaStream): Promise<void> {
     this.chunks = [];
+    this.sequence = 0; this.writeError = null; this.stopping = null;
+    this.queuedWrites = 0;
+    this.writeQueue = Promise.resolve();
 
     if (inputStream) {
       this.stream = inputStream;
@@ -50,6 +81,7 @@ export class AudioRecorder {
       this.ownsStream = true;
     }
 
+    try {
     // Setup Web Audio Analyser for visualizer
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     if (AudioCtx) {
@@ -79,14 +111,53 @@ export class AudioRecorder {
     // Determine supported mime type with cross-browser fallback chain
     const mimeType = this.getSupportedMimeType();
 
-    this.mediaRecorder = new MediaRecorder(this.stream, { mimeType });
+    this.mediaRecorder = new MediaRecorder(this.stream, mimeType ? { mimeType } : undefined);
     this.mediaRecorder.ondataavailable = (e) => {
       if (e.data && e.data.size > 0) {
-        this.chunks.push(e.data);
+        if (this.recordingId) {
+          // About a minute of audio (~1 MB) may wait for storage before we give up
+          if (this.queuedWrites >= 60) {
+            this.writeError = new Error('Audio storage cannot keep up. Recording stopped to limit memory use.');
+            this.onStorageError?.(this.writeError);
+            void this.stop().catch(() => {});
+            return;
+          }
+          const recordingId = this.recordingId;
+          const sequence = this.sequence++;
+          this.queuedWrites++;
+          this.writeQueue = this.writeQueue.then(async () => {
+            if (this.writeError) return;
+            // Checking every chunk is unnecessary; every 15 s still stops promptly after a delete
+            if (sequence % 15 === 0 && !(await this.recordingStillLinked(recordingId))) throw new Error('Recording was deleted in another window.');
+            await db.audioChunks.put({ id: `${recordingId}-${sequence}`, recordingId, sequence, data: e.data, createdAt: Date.now() });
+          }).catch((error) => {
+            this.writeError = error instanceof Error ? error : new Error(String(error));
+            this.onStorageError?.(this.writeError);
+            if (this.mediaRecorder?.state === 'recording') void this.stop().catch(() => {});
+          }).finally(() => { this.queuedWrites--; });
+        } else this.chunks.push(e.data);
       }
     };
 
+    // Device loss can stop MediaRecorder without a UI Stop click.
+    this.mediaRecorder.onstop = () => { void this.stop().catch(() => {}); };
+    this.mediaRecorder.onerror = () => {
+      this.onStorageError?.(new Error('Audio capture failed. Previously saved chunks remain in Recordings & storage.'));
+      void this.stop().catch(() => {});
+    };
     this.mediaRecorder.start(1000); // 1-second chunks
+    if (this.recordingId) activeRecordingIds.add(this.recordingId);
+    } catch (error) {
+      if (this.animFrameId !== null) cancelAnimationFrame(this.animFrameId);
+      this.animFrameId = null;
+      if (this.ownsStream) this.stream?.getTracks().forEach((track) => track.stop());
+      this.stream = null;
+      this.source?.disconnect();
+      this.analyser = null;
+      if (this.audioContext?.state !== 'closed') await this.audioContext?.close().catch(() => {});
+      this.audioContext = null;
+      throw error;
+    }
   }
 
   /**
@@ -96,22 +167,19 @@ export class AudioRecorder {
    * @returns A Blob containing the recorded audio data.
    */
   async stop(): Promise<Blob> {
+    if (this.stopping) return this.stopping;
     if (this.animFrameId) {
       cancelAnimationFrame(this.animFrameId);
       this.animFrameId = null;
     }
 
-    return new Promise((resolve) => {
+    this.stopping = new Promise((resolve, reject) => {
       if (!this.mediaRecorder) {
         resolve(new Blob([], { type: 'audio/webm' }));
         return;
       }
 
-      this.mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(this.chunks, {
-          type: this.mediaRecorder?.mimeType || 'audio/webm',
-        });
-
+      const finish = async () => {
         // Clean up tracks
         if (this.stream) {
           if (this.ownsStream) this.stream.getTracks().forEach((track) => track.stop());
@@ -123,11 +191,33 @@ export class AudioRecorder {
           this.audioContext = null;
         }
 
-        resolve(audioBlob);
+        try {
+          await this.writeQueue;
+          const chunks = this.recordingId
+            ? (await db.audioChunks.where('recordingId').equals(this.recordingId).sortBy('sequence')).map((c) => c.data)
+            : this.chunks;
+          // A storage hiccup mid-recording must not lose what was already saved:
+          // finish with the saved chunks and only fail when nothing was kept.
+          if (this.writeError && chunks.length === 0) throw this.writeError;
+          const audioBlob = new Blob(chunks, { type: this.mediaRecorder?.mimeType || 'audio/webm' });
+          if (this.recordingId) {
+            const id = this.recordingId;
+            if (!(await this.recordingStillLinked(id))) throw new Error('Recording was deleted before it finished.');
+            await db.transaction('rw', db.blobs, db.audioChunks, async () => {
+              await db.blobs.put({ id, data: audioBlob, mimeType: audioBlob.type, createdAt: Date.now() });
+              await db.audioChunks.where('recordingId').equals(id).delete();
+            });
+          }
+          this.chunks = [];
+          resolve(audioBlob);
+        } catch (error) { reject(error); }
+        finally { if (this.recordingId) activeRecordingIds.delete(this.recordingId); }
       };
-
-      this.mediaRecorder.stop();
+      this.mediaRecorder.onstop = () => { void finish(); };
+      if (this.mediaRecorder.state !== 'inactive') this.mediaRecorder.stop();
+      else void finish();
     });
+    return this.stopping;
   }
 
   /**
@@ -175,6 +265,6 @@ export class AudioRecorder {
     }
 
     // Final fallback — let the browser decide
-    return 'audio/webm';
+    return '';
   }
 }

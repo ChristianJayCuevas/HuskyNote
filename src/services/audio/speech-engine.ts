@@ -3,7 +3,8 @@
  * store that the UI subscribes to (model download progress, readiness, errors).
  */
 import type { TimedText, WorkerRequest, WorkerResponse } from './asr-protocol';
-import type { TranscriptionEngine } from './transcription-engines';
+import { normalizeSpeechLanguage, type TranscriptionEngine } from './transcription-engines';
+import { recordTranscriptionMetric } from './transcription-metrics';
 import { requestPersistentStorage } from './model-cache';
 
 export type { TimedText };
@@ -49,7 +50,7 @@ export const speechStatus = new SpeechStatusStore();
 /** Engines expect ISO 639-1 codes; the app uses BCP 47 tags such as 'fr-FR' or 'auto' */
 export function toWhisperLanguage(lang: string): string | undefined {
   if (!lang || lang === 'auto') return undefined;
-  return lang.split('-')[0].toLowerCase();
+  return normalizeSpeechLanguage(lang);
 }
 
 /** Models emit these on silence or noise; they should never become transcript text */
@@ -65,7 +66,7 @@ function createWorker(engine: TranscriptionEngine): Worker {
     : new Worker(new URL('./transformers-asr.worker.ts', import.meta.url), { type: 'module' });
 }
 
-class SpeechEngine {
+export class SpeechEngine {
   private worker: Worker | null = null;
   private engine: TranscriptionEngine | null = null;
   private nextId = 1;
@@ -75,6 +76,13 @@ class SpeechEngine {
   private device: 'webgpu' | 'wasm' | undefined;
   private gpuError: string | undefined;
   private storageRequested = false;
+  private loadResolve: (() => void) | null = null;
+  private loadReject: ((error: Error) => void) | null = null;
+  private loadTimer: ReturnType<typeof setTimeout> | undefined;
+  private requestTimers = new Map<number, ReturnType<typeof setTimeout>>();
+  private generation = 0;
+  private serial: Promise<unknown> = Promise.resolve();
+  private loadStarted = 0;
 
   isSupported(): boolean {
     return typeof Worker !== 'undefined' && typeof WebAssembly !== 'undefined';
@@ -95,6 +103,12 @@ class SpeechEngine {
   }
 
   private reset(reason: string): void {
+    this.generation++;
+    clearTimeout(this.loadTimer);
+    this.loadReject?.(new Error(reason));
+    this.loadReject = this.loadResolve = null;
+    this.requestTimers.forEach(clearTimeout);
+    this.requestTimers.clear();
     this.worker?.terminate();
     this.worker = null;
     this.loadPromise = null;
@@ -105,15 +119,24 @@ class SpeechEngine {
     this.pending.clear();
   }
 
+  cancel(): void {
+    this.reset('Transcription cancelled. Saved work can be retried.');
+    this.setStatus({ state: 'idle', message: 'Setup cancelled. Completed downloads are kept for retry.' });
+  }
+
+  isBusy(): boolean { return this.pending.size > 0; }
+
   private getWorker(): Worker {
     if (!this.worker) {
       const worker = createWorker(this.engine!);
-      worker.onmessage = (event: MessageEvent<WorkerResponse>) => this.handleMessage(event.data);
+      worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
+        if (this.worker === worker) this.handleMessage(event.data);
+      };
       worker.onerror = (event) => {
         const message = event.message || 'Speech model worker failed to start.';
+        if (this.worker !== worker) return;
+        this.reset(message);
         this.setStatus({ state: 'error', message });
-        this.pending.forEach((p) => p.reject(new Error(message)));
-        this.pending.clear();
       };
       this.worker = worker;
     }
@@ -139,13 +162,19 @@ class SpeechEngine {
         break;
       }
       case 'ready':
+        clearTimeout(this.loadTimer);
         this.device = msg.device;
         this.gpuError = msg.gpuError;
         if (msg.gpuError) console.warn(`[HuskyNote] ${this.engine?.name} is running on the CPU: ${msg.gpuError}`);
         this.setStatus({ state: 'ready', device: msg.device, gpuError: msg.gpuError });
+        if (this.engine) recordTranscriptionMetric({ kind: 'load', engineId: this.engine.id, revision: this.engine.revision, device: msg.device, elapsedMs: performance.now() - this.loadStarted, at: Date.now() });
+        this.loadResolve?.();
+        this.loadResolve = this.loadReject = null;
         break;
       case 'result': {
         const p = this.pending.get(msg.id);
+        clearTimeout(this.requestTimers.get(msg.id));
+        this.requestTimers.delete(msg.id);
         this.pending.delete(msg.id);
         p?.resolve(msg.chunks);
         if (this.pending.size === 0 && speechStatus.get().state === 'transcribing') {
@@ -154,12 +183,8 @@ class SpeechEngine {
         break;
       }
       case 'error': {
+        this.reset(msg.message);
         this.setStatus({ state: 'error', message: msg.message });
-        if (msg.id !== undefined) {
-          const p = this.pending.get(msg.id);
-          this.pending.delete(msg.id);
-          p?.reject(new Error(msg.message));
-        }
         break;
       }
     }
@@ -170,7 +195,7 @@ class SpeechEngine {
    * engine replaces the worker and frees the previous model.
    */
   load(engine: TranscriptionEngine): Promise<void> {
-    if (this.engine?.id !== engine.id) {
+    if (this.engine?.id !== engine.id || this.engine?.revision !== engine.revision) {
       this.reset('Speech engine changed.');
       this.engine = engine;
     }
@@ -181,20 +206,23 @@ class SpeechEngine {
         requestPersistentStorage();
       }
       if (speechStatus.get().state !== 'ready' || !this.device) this.setStatus({ state: 'loading' });
+      this.loadStarted = performance.now();
       this.loadPromise = new Promise<void>((resolve, reject) => {
-        const worker = this.getWorker();
-        const unsubscribe = speechStatus.subscribe((s) => {
-          if (s.state === 'ready') {
-            unsubscribe();
-            resolve();
-          } else if (s.state === 'error') {
-            unsubscribe();
-            this.loadPromise = null;
-            reject(new Error(s.message));
-          }
-        });
-        worker.postMessage({ type: 'load', engine } satisfies WorkerRequest);
+        this.loadResolve = resolve;
+        this.loadReject = reject;
+        this.loadTimer = setTimeout(() => {
+          const message = 'Model setup timed out. Check your connection and retry.';
+          this.reset(message);
+          this.setStatus({ state: 'error', message });
+        }, 15 * 60_000);
       });
+      try { this.getWorker().postMessage({ type: 'load', engine } satisfies WorkerRequest); }
+      catch (err) {
+        const failed = this.loadPromise;
+        this.reset(String(err));
+        this.setStatus({ state: 'error', message: String(err) });
+        return failed;
+      }
     }
     return this.loadPromise;
   }
@@ -203,11 +231,33 @@ class SpeechEngine {
   async transcribe(audio: Float32Array, language?: string): Promise<TimedText[]> {
     if (!this.engine) throw new Error('No speech engine selected.');
     await this.load(this.engine);
+    const generation = this.generation;
+    const run = this.serial.catch(() => {}).then(async () => {
+      if (generation !== this.generation) throw new Error('Speech engine changed or cancelled. Retry saved audio.');
+      const started = performance.now();
+      const seconds = audio.length / 16000;
+      const result = await this.runInference(audio, language);
+      recordTranscriptionMetric({ kind: 'inference', engineId: this.engine!.id, revision: this.engine!.revision, device: this.device, elapsedMs: performance.now() - started, audioSeconds: seconds, at: Date.now() });
+      return result;
+    });
+    this.serial = run;
+    return run;
+  }
+
+  private runInference(audio: Float32Array, language?: string): Promise<TimedText[]> {
     const id = this.nextId++;
     this.setStatus({ state: 'transcribing' });
     return new Promise<TimedText[]>((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
-      this.getWorker().postMessage({ type: 'transcribe', id, audio, language } satisfies WorkerRequest, [audio.buffer]);
+      this.requestTimers.set(id, setTimeout(() => {
+        const message = 'Transcription timed out. Saved audio can be retried.';
+        this.reset(message);
+        this.setStatus({ state: 'error', message });
+      }, 120_000));
+      // Keep the caller's samples available for retry after worker failure.
+      const copy = audio.slice();
+      try { this.getWorker().postMessage({ type: 'transcribe', id, audio: copy, language } satisfies WorkerRequest, [copy.buffer]); }
+      catch (err) { this.reset(String(err)); this.setStatus({ state: 'error', message: String(err) }); }
     });
   }
 }

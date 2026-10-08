@@ -8,7 +8,9 @@ import {
 } from '../../services/screen/pip-hud';
 import { FloatingScreenHud } from './floating-screen-hud';
 import { useWorkspace } from '../../context/workspace-context';
-import { useSound } from '../../context/sound-context';
+import { useTheme } from '../../context/theme-context';
+import { Button } from '../ui/button';
+import { cn } from '@/lib/utils';
 import { Monitor } from 'lucide-react';
 
 interface DraggableOverlayProps {
@@ -78,11 +80,10 @@ const DraggableOverlay: React.FC<DraggableOverlayProps> = ({ onClose }) => {
         left: `${position.x}px`,
         top: `${position.y}px`,
       }}
-      className={`fixed z-[9999] w-[400px] h-[220px] rounded-2xl shadow-2xl overflow-hidden border border-white/20 bg-zinc-950/95 backdrop-blur-2xl transition-shadow ${
-        isDragging
-          ? 'cursor-grabbing shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] scale-[1.01]'
-          : 'cursor-grab'
-      } animate-in fade-in zoom-in-95 duration-150`}
+      className={cn(
+        'fixed z-[9999] h-[220px] w-[400px] overflow-hidden rounded-xl border bg-popover shadow-xl animate-in fade-in-0 zoom-in-95 duration-150',
+        isDragging ? 'cursor-grabbing' : 'cursor-grab'
+      )}
     >
       <FloatingScreenHud onClose={onClose} />
     </div>
@@ -91,13 +92,12 @@ const DraggableOverlay: React.FC<DraggableOverlayProps> = ({ onClose }) => {
 
 export const ScreenHudLauncher: React.FC = () => {
   const { addToast } = useWorkspace();
-  const { playThock, playPop } = useSound();
+  const { theme } = useTheme();
   const [pipContainer, setPipContainer] = useState<HTMLElement | null>(null);
   const [isActive, setIsActive] = useState<boolean>(false);
   const [isOverlayFallback, setIsOverlayFallback] = useState<boolean>(false);
 
   const handleToggleScreenHud = async () => {
-    playThock();
 
     if (isActive) {
       closePipHudWindow();
@@ -122,8 +122,7 @@ export const ScreenHudLauncher: React.FC = () => {
         if (container) {
           setPipContainer(container);
           setIsActive(true);
-          playPop();
-          addToast('🖥️ Quick Bar activated.', 'success');
+          addToast('Quick Bar activated.', 'success');
         } else {
           throw new Error('Could not obtain PiP container.');
         }
@@ -131,13 +130,13 @@ export const ScreenHudLauncher: React.FC = () => {
         console.warn('[HuskyNote] PiP error, falling back to overlay:', err);
         setIsOverlayFallback(true);
         setIsActive(true);
-        addToast('🖥️ Quick Bar activated.', 'success');
+        addToast('Quick Bar activated.', 'success');
       }
     } else {
       // In-browser floating overlay fallback for WKWebView / Safari
       setIsOverlayFallback(true);
       setIsActive(true);
-      addToast('🖥️ Quick Bar activated.', 'success');
+      addToast('Quick Bar activated.', 'success');
     }
   };
 
@@ -151,31 +150,32 @@ export const ScreenHudLauncher: React.FC = () => {
 
   return (
     <>
-      <button
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
         onClick={handleToggleScreenHud}
-        className={`px-2 sm:px-2.5 py-1.5 rounded-lg border text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-          isActive
-            ? 'bg-slate-900 text-white dark:bg-white dark:text-black border-slate-900 dark:border-white shadow-sm'
-            : 'bg-white dark:bg-zinc-900 border-slate-300 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:border-slate-400 dark:hover:border-zinc-700'
-        }`}
-        title="Toggle floating Quick Bar"
+        aria-pressed={isActive}
+        className={cn('relative', isActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground')}
+        title="Quick Bar: floating recording controls"
         aria-label="Toggle Desktop Quick Bar"
       >
-        <Monitor className="w-3.5 h-3.5" />
-        <span className="hidden xl:inline">Quick Bar</span>
-        {isActive && <span className="w-1.5 h-1.5 rounded-full bg-white dark:bg-canvas animate-pulse" />}
-      </button>
+        <Monitor />
+        {isActive && <span aria-hidden="true" className="absolute right-1 top-1 size-1.5 rounded-full bg-foreground" />}
+      </Button>
 
       {/* Render into Document PiP window via Portal */}
       {isActive && pipContainer && createPortal(
-        <FloatingScreenHud
-          onClose={() => {
-            closePipHudWindow();
-            setPipContainer(null);
-            setIsActive(false);
-            addToast('Quick Bar closed.', 'info');
-          }}
-        />,
+        <div className={cn('h-full w-full', theme === 'dark' && 'dark')}>
+          <FloatingScreenHud
+            onClose={() => {
+              closePipHudWindow();
+              setPipContainer(null);
+              setIsActive(false);
+              addToast('Quick Bar closed.', 'info');
+            }}
+          />
+        </div>,
         pipContainer
       )}
 

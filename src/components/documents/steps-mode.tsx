@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import type { DocumentStep, Manual } from '../../types';
 import { Modal } from '../ui/modal';
 import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Spinner } from '../ui/spinner';
 import { useAI } from '../../context/ai-context';
 import { useWorkspace } from '../../context/workspace-context';
 import { db } from '../../db';
 import { ai } from '../../services/ai/active-provider';
-import { ListOrdered, Sparkles, Save, BookOpen } from 'lucide-react';
+import { Sparkles, BookOpen } from 'lucide-react';
 
 interface StepsModeProps {
   isOpen: boolean;
@@ -137,58 +139,50 @@ Respond ONLY with valid JSON in this exact structure, with no additional text:
     >
       <div className="space-y-4">
         {/* Source Text Preview */}
-        <div className="p-3.5 rounded-lg bg-slate-50/60 dark:bg-zinc-900/60 border dark:border-zinc-850 text-xs">
-          <div className="text-[10px] font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-1">
-            Source Excerpt (Page {sourcePage})
-          </div>
-          <p className="text-slate-700 dark:text-zinc-300 leading-relaxed max-h-28 overflow-y-auto italic">
-            "{sourceText.slice(0, 300)}..."
-          </p>
+        <div className="rounded-lg bg-muted px-4 py-3">
+          <div className="mb-1 text-xs font-medium text-muted-foreground">Source Excerpt (Page {sourcePage})</div>
+          <p className="max-h-28 overflow-y-auto text-sm italic leading-6 text-foreground">"{sourceText.slice(0, 300)}..."</p>
         </div>
 
         {!hasGenerated ? (
-          <div className="py-8 text-center">
-            <Button
-              size="md"
-              variant="primary"
-              onClick={generateSteps}
-              disabled={isLoading}
-            >
-              <Sparkles className="w-4 h-4" />
+          <div className="flex justify-center py-8">
+            <Button onClick={generateSteps} disabled={isLoading}>
+              {isLoading ? <Spinner className="text-current" aria-hidden="true" /> : <Sparkles />}
               <span>{isLoading ? 'Analyzing Procedure...' : 'Generate Step-by-Step Sequence'}</span>
             </Button>
           </div>
         ) : (
-          <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+          <ol className="max-h-[50vh] space-y-1 overflow-y-auto">
             {steps.map((step) => (
-              <div
-                key={step.stepNumber}
-                className="p-4 rounded-lg bg-white dark:bg-zinc-950 border dark:border-zinc-850 text-xs space-y-1.5"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-950 dark:text-white tracking-wide">
-                    STEP {step.stepNumber}: {step.title}
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-600 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-900 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-800">
-                    Source: Page {step.sourcePage}
-                  </span>
+              <li key={step.stepNumber} className="flex gap-3 rounded-lg px-1 py-3">
+                <span aria-hidden="true" className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium tabular-nums text-foreground">
+                  {step.stepNumber}
+                </span>
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+                    <span className="text-sm font-semibold text-foreground">
+                      <span className="sr-only">Step {step.stepNumber}: </span>
+                      {step.title}
+                    </span>
+                    <Badge variant="outline" className="tabular-nums text-muted-foreground">
+                      Source: Page {step.sourcePage}
+                    </Badge>
+                  </div>
+                  <p className="text-sm leading-6 text-foreground">{step.explanation}</p>
+                  <p className="text-xs italic text-muted-foreground">Excerpt: "{step.sourceText}"</p>
                 </div>
-                <p className="text-slate-700 dark:text-zinc-300 leading-relaxed">{step.explanation}</p>
-                <div className="text-[11px] text-slate-600 dark:text-zinc-400 italic">
-                  Excerpt: "{step.sourceText}"
-                </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ol>
         )}
 
         {hasGenerated && (
-          <div className="pt-4 border-t dark:border-zinc-850 flex items-center justify-between">
+          <div className="flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
             <Button size="sm" variant="ghost" onClick={onClose}>
               Close
             </Button>
-            <Button size="sm" variant="primary" onClick={handleSaveAsManual}>
-              <BookOpen className="w-3.5 h-3.5" />
+            <Button size="sm" onClick={handleSaveAsManual}>
+              <BookOpen />
               <span>Create Operation Manual from Steps</span>
             </Button>
           </div>
