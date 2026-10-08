@@ -5,6 +5,7 @@ import { exec } from 'child_process';
 import fs from 'fs';
 import { createRequire } from 'module';
 import { handleCodexRequest } from './server/codex-bridge';
+import { handleClaudeRequest } from './server/claude-bridge';
 
 // parakeet.js pins its own onnxruntime-web (it may be nested under parakeet.js
 // rather than hoisted), and its runtime files must match that exact version
@@ -190,14 +191,14 @@ function chromeExtensionInstallerPlugin() {
   };
 }
 
-/** /api/codex/*: ChatGPT through the Codex CLI on this computer (see server/codex-bridge.ts) */
-function codexBridgePlugin() {
+/** Subscription providers through their official CLIs on this computer. */
+function subscriptionBridgePlugin() {
   const use = (server: any) => {
     server.middlewares.use((req: any, res: any, next: any) => {
-      if (!handleCodexRequest(req, res)) next();
+      if (!handleCodexRequest(req, res) && !handleClaudeRequest(req, res)) next();
     });
   };
-  return { name: 'huskynote-codex-bridge', configureServer: use, configurePreviewServer: use };
+  return { name: 'huskynote-subscription-bridges', configureServer: use, configurePreviewServer: use };
 }
 
 // https://vitejs.dev/config/
@@ -207,7 +208,7 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(appVersion),
   },
-  plugins: [react(), chromeExtensionInstallerPlugin(), codexBridgePlugin()],
+  plugins: [react(), chromeExtensionInstallerPlugin(), subscriptionBridgePlugin()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

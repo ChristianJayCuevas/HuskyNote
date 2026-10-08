@@ -228,13 +228,15 @@ export interface AppSettings {
   theme: 'dark';
   autoSaveIntervalSeconds: number;
   speechLanguage: string;
-  /** Which AI answers requests: local Ollama (default), Claude via the Anthropic API, or ChatGPT through Codex */
-  aiProvider?: 'ollama' | 'claude' | 'codex';
+  /** Which AI answers requests: local Ollama, Claude API, Claude subscription, or ChatGPT through Codex */
+  aiProvider?: 'ollama' | 'claude' | 'codex' | 'claude-subscription';
   /** User's own Anthropic API key; stays on this device and is excluded from workspace exports */
   claudeApiKey?: string;
   claudeModel?: string;
   /** Codex model id; empty lets Codex pick its default */
   codexModel?: string;
+  /** Claude Code model alias; independent of the Claude API model selection */
+  claudeSubscriptionModel?: string;
   /** Speech-to-text engine id (see services/audio/transcription-engines) */
   transcriptionEngine?: string;
 }
