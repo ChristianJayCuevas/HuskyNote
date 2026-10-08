@@ -71,8 +71,9 @@ namespace HuskyNote
                 try
                 {
                     var context = await _listener.GetContextAsync();
-                    // ChatGPT through Codex, answered before the static files' open CORS headers
+                    // Subscription bridges, answered before the static files' open CORS headers
                     if (CodexBridge.Handles(context.Request)) _ = Task.Run(() => CodexBridge.HandleAsync(context, _port));
+                    else if (ClaudeBridge.Handles(context.Request)) _ = Task.Run(() => ClaudeBridge.HandleAsync(context, _port));
                     else _ = Task.Run(() => HandleRequest(context));
                 }
                 catch (HttpListenerException) when (ct.IsCancellationRequested || !_listener.IsListening)

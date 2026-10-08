@@ -12,6 +12,7 @@ import { PageSection } from '../ui/page';
 import { SettingsStatus, optionCardClass } from './settings-row';
 import { CLAUDE_MODELS } from '../../services/ai/claude';
 import { CodexSettings } from './codex-settings';
+import { ClaudeSubscriptionSettings } from './claude-subscription-settings';
 
 const PROVIDERS: { id: AIProviderId; name: string; description: string; icon: React.ReactNode }[] = [
   {
@@ -22,8 +23,14 @@ const PROVIDERS: { id: AIProviderId; name: string; description: string; icon: Re
   },
   {
     id: 'claude',
-    name: 'Claude',
+    name: 'Claude API',
     description: 'Anthropic API with your own key. Faster and more capable on most machines.',
+    icon: <Sparkles className="size-4" />,
+  },
+  {
+    id: 'claude-subscription',
+    name: 'Claude Subscription',
+    description: 'Your Claude plan through Claude Code on this computer. Sign in once, no API key.',
     icon: <Sparkles className="size-4" />,
   },
   {
@@ -66,7 +73,7 @@ export const AIProviderSettings: React.FC = () => {
       description="Which AI writes meeting summaries, answers questions, and runs document actions"
       actions={<SettingsStatus tone={isConnected ? 'success' : 'muted'}>{isConnected ? 'Ready' : 'Not connected'}</SettingsStatus>}
     >
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3" role="radiogroup" aria-label="AI provider">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label="AI provider">
         {PROVIDERS.map((p) => {
           const active = provider === p.id;
           return (
@@ -140,8 +147,8 @@ export const AIProviderSettings: React.FC = () => {
                 >
                   platform.claude.com <ExternalLink className="size-3" />
                 </a>
-                . API usage is billed to your Anthropic account and is separate from a Claude Pro or Max subscription, which
-                third-party apps cannot use. The key is stored only on this device and is left out of workspace backups.
+                . API usage is billed separately from a Claude subscription. To use your plan through Claude Code, choose
+                Claude Subscription above. The key is stored only on this device and is left out of workspace backups.
               </p>
             </div>
 
@@ -177,6 +184,7 @@ export const AIProviderSettings: React.FC = () => {
       )}
 
       {provider === 'codex' && <CodexSettings />}
+      {provider === 'claude-subscription' && <ClaudeSubscriptionSettings />}
 
       {provider === 'ollama' && <p className="text-xs text-muted-foreground">Configure the Ollama connection and models below.</p>}
     </PageSection>

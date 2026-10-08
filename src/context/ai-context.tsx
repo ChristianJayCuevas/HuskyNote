@@ -3,13 +3,14 @@ import type { OllamaModel, AppSettings } from '../types';
 import { ollama, type PullProgressUpdate } from '../services/ai/ollama';
 import { claude, DEFAULT_CLAUDE_MODEL } from '../services/ai/claude';
 import { codex, codexModelsAsOptions, type CodexStatus } from '../services/ai/codex';
+import { claudeSubscription, claudeSubscriptionModelsAsOptions, isClaudeSubscriptionReady, type ClaudeSubscriptionStatus } from '../services/ai/claude-subscription';
 import { setActiveProvider, type AIProviderId } from '../services/ai/active-provider';
 import { db, DEFAULT_SETTINGS } from '../db';
 
 export type { PullProgressUpdate, AIProviderId, CodexStatus };
 
 interface AIContextType {
-  /** The active provider can answer requests (Ollama reachable, Claude key verified, or Codex signed in) */
+  /** The active provider can answer requests (local service, verified API key, or subscription sign-in) */
   isConnected: boolean;
   isChecking: boolean;
   /** Models of the active provider */
@@ -28,6 +29,9 @@ interface AIContextType {
   refreshCodexStatus: () => Promise<CodexStatus>;
   /** Opens ChatGPT sign-in through Codex and waits until it finishes (true when signed in) */
   signInWithChatGPT: (onUrl?: (url: string) => void) => Promise<boolean>;
+  claudeSubscriptionStatus: ClaudeSubscriptionStatus | null;
+  refreshClaudeSubscriptionStatus: () => Promise<ClaudeSubscriptionStatus>;
+  signInWithClaude: (onUrl?: (url: string) => void) => Promise<boolean>;
   /** Local Ollama status, regardless of the active provider */
   isOllamaConnected: boolean;
   setSelectedModel: (model: string) => Promise<void>;
@@ -71,6 +75,8 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isClaudeReady, setIsClaudeReady] = useState<boolean>(false);
   const [codexStatus, setCodexStatus] = useState<CodexStatus | null>(null);
   const [codexModel, setCodexModelState] = useState<string>('');
+  const [claudeSubscriptionStatus, setClaudeSubscriptionStatus] = useState<ClaudeSubscriptionStatus | null>(null);
+  const [claudeSubscriptionModel, setClaudeSubscriptionModelState] = useState('default');
 
   useEffect(() => {
     claude.getModels().then(setClaudeModels);
@@ -114,6 +120,30 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
     return false;
   }, []);
 
+  const refreshClaudeSubscriptionStatus = useCallback(async (): Promise<ClaudeSubscriptionStatus> => {
+    setIsChecking(true);
+    try {
+      const status = await claudeSubscription.getStatus();
+      setClaudeSubscriptionStatus(status);
+      return status;
+    } finally { setIsChecking(false); }
+  }, []);
+
+  const signInWithClaude = useCallback(async (onUrl?: (url: string) => void): Promise<boolean> => {
+    const { url } = await claudeSubscription.startLogin();
+    if (url) onUrl?.(url);
+    const deadline = Date.now() + 10 * 60_000;
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 2500));
+      const status = await claudeSubscription.getStatus();
+      setClaudeSubscriptionStatus(status);
+      if (status.loginUrl) onUrl?.(status.loginUrl);
+      // An existing Console login must not be mistaken for a successful subscription sign-in.
+      if (!status.loginInProgress) return isClaudeSubscriptionReady(status);
+    }
+    return false;
+  }, []);
+
   // Load persisted settings on mount
   useEffect(() => {
     let isMounted = true;
@@ -137,12 +167,14 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
           ollama.setBaseUrl(settings.ollamaBaseUrl || 'http://localhost:11434');
 
           const savedProvider: AIProviderId =
-            settings.aiProvider === 'claude' || settings.aiProvider === 'codex' ? settings.aiProvider : 'ollama';
+            settings.aiProvider === 'claude' || settings.aiProvider === 'codex' || settings.aiProvider === 'claude-subscription' ? settings.aiProvider : 'ollama';
           setProviderState(savedProvider);
           setActiveProvider(savedProvider);
           if (settings.claudeModel) setClaudeModelState(settings.claudeModel);
           if (settings.codexModel) setCodexModelState(settings.codexModel);
           if (savedProvider === 'codex') refreshCodexStatus();
+          if (settings.claudeSubscriptionModel) setClaudeSubscriptionModelState(settings.claudeSubscriptionModel);
+          if (savedProvider === 'claude-subscription') refreshClaudeSubscriptionStatus();
           if (settings.claudeApiKey) {
             claude.setApiKey(settings.claudeApiKey);
             setHasClaudeApiKey(true);
@@ -158,7 +190,7 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
     return () => {
       isMounted = false;
     };
-  }, [checkClaude, refreshCodexStatus]);
+  }, [checkClaude, refreshCodexStatus, refreshClaudeSubscriptionStatus]);
 
   const checkOllama = useCallback(async (): Promise<boolean> => {
     setIsChecking(true);
@@ -208,13 +240,14 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   const checkConnection = useCallback(async (): Promise<boolean> => {
+    if (provider === 'claude-subscription') return isClaudeSubscriptionReady(await refreshClaudeSubscriptionStatus());
     if (provider === 'claude') return checkClaude();
     if (provider === 'codex') {
       const status = await refreshCodexStatus();
       return status.installed && status.loggedIn;
     }
     return checkOllama();
-  }, [provider, checkClaude, checkOllama, refreshCodexStatus]);
+  }, [provider, checkClaude, checkOllama, refreshCodexStatus, refreshClaudeSubscriptionStatus]);
 
   // Poll the local Ollama service every 12 seconds (Claude is verified only when its key changes)
   useEffect(() => {
@@ -233,6 +266,7 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
     }
     if (next === 'claude' && claude.hasApiKey()) checkClaude();
     if (next === 'codex') refreshCodexStatus();
+    if (next === 'claude-subscription') refreshClaudeSubscriptionStatus();
   };
 
   const setClaudeApiKey = async (apiKey: string): Promise<boolean> => {
@@ -254,6 +288,13 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
   const setSelectedModel = async (model: string) => {
     if (!model || !model.trim()) return;
     const cleanModel = model.trim();
+
+    if (provider === 'claude-subscription') {
+      setClaudeSubscriptionModelState(cleanModel);
+      try { await saveSettings({ claudeSubscriptionModel: cleanModel }); }
+      catch (err) { console.warn('[HuskyNote] Failed to persist Claude subscription model:', err); }
+      return;
+    }
 
     if (provider === 'codex') {
       setCodexModelState(cleanModel);
@@ -356,14 +397,17 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
   // A saved model Codex no longer lists falls back to its first (default) model
   const activeCodexModel = codexModels.some((m) => m.id === codexModel) ? codexModel : codexModels[0]?.id ?? '';
   const isCodexReady = Boolean(codexStatus?.installed && codexStatus.loggedIn);
+  const subscriptionModels = useMemo(() => claudeSubscriptionStatus?.models ?? [], [claudeSubscriptionStatus]);
+  const subscriptionModelOptions = useMemo(() => claudeSubscriptionModelsAsOptions(subscriptionModels), [subscriptionModels]);
+  const activeSubscriptionModel = subscriptionModels.some((m) => m.id === claudeSubscriptionModel) ? claudeSubscriptionModel : 'default';
 
   return (
     <AIContext.Provider
       value={{
-        isConnected: provider === 'claude' ? isClaudeReady : provider === 'codex' ? isCodexReady : isOllamaConnected,
+        isConnected: provider === 'claude-subscription' ? isClaudeSubscriptionReady(claudeSubscriptionStatus) : provider === 'claude' ? isClaudeReady : provider === 'codex' ? isCodexReady : isOllamaConnected,
         isChecking,
-        models: provider === 'claude' ? claudeModels : provider === 'codex' ? codexModelOptions : ollamaModels,
-        selectedModel: provider === 'claude' ? claudeModel : provider === 'codex' ? activeCodexModel : ollamaModel,
+        models: provider === 'claude-subscription' ? subscriptionModelOptions : provider === 'claude' ? claudeModels : provider === 'codex' ? codexModelOptions : ollamaModels,
+        selectedModel: provider === 'claude-subscription' ? activeSubscriptionModel : provider === 'claude' ? claudeModel : provider === 'codex' ? activeCodexModel : ollamaModel,
         baseUrl,
         provider,
         setProvider,
@@ -372,6 +416,9 @@ export const AIProviderContext: React.FC<{ children: React.ReactNode }> = ({ chi
         codexStatus,
         refreshCodexStatus,
         signInWithChatGPT,
+        claudeSubscriptionStatus,
+        refreshClaudeSubscriptionStatus,
+        signInWithClaude,
         isOllamaConnected,
         setSelectedModel,
         setBaseUrl,

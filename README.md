@@ -9,6 +9,7 @@ HuskyNote is a local-first AI secretary for meetings, notes, documents, and step
 - **Choose your AI:**
   - Ollama runs on this computer.
   - Claude uses your own Anthropic API key.
+  - Claude Subscription uses your Claude plan through Claude Code on this computer.
   - ChatGPT (Codex) uses your ChatGPT plan through the Codex app.
 
 Repository: https://github.com/ChristianJayCuevas/HuskyNote · [Latest release](https://github.com/ChristianJayCuevas/HuskyNote/releases/latest) · [Roadmap](ROADMAP.md)
@@ -101,7 +102,16 @@ Choose the AI in **Settings → AI**. Transcription always runs on this device, 
 | --- | --- | --- |
 | **Local AI (Ollama)** | [Ollama](https://ollama.com) running on this computer with a model such as Llama 3.2, Gemma, or Qwen | Stays on this computer (`http://localhost:11434`) |
 | **Claude** | An Anthropic API key from [platform.claude.com](https://platform.claude.com/settings/keys). Models: Claude Opus 5, Sonnet 5, or Haiku 4.5. Usage is billed to your API account | Anthropic |
+| **Claude Subscription** | A plan that includes [Claude Code](https://code.claude.com/docs/en/setup), installed and signed in on this computer. Works in the Windows app and with `npm run dev` | Anthropic, through Claude Code on this computer |
 | **ChatGPT (Codex)** | A ChatGPT plan and the [Codex app or CLI](https://developers.openai.com/codex) installed and signed in. Works in the Windows app and with `npm run dev` | OpenAI, through Codex on this computer |
+
+### Using your Claude subscription
+1. Install [Claude Code](https://code.claude.com/docs/en/setup).
+2. Open **Settings → AI** and choose **Claude Subscription**.
+3. Click **Sign in with Claude** and finish in the browser. If already signed in to Claude Code with a subscription, the app shows **Signed in with Claude**. You can also run `claude auth login` in a terminal, then click **Check again**.
+4. Use **Plan default**, or choose Sonnet, Opus, or Haiku. Model availability and usage limits depend on your Claude plan.
+
+The local server runs the official `claude --print` CLI. Credentials stay inside Claude Code. Tools, MCP servers, hooks, skills, and session persistence are disabled for these requests. Inherited API credentials and cloud-provider settings are removed from the child process, and an API-account login is rejected before generation. The Claude API option and its model selection remain separate. Like Codex, this requires the Windows desktop app or a local Vite dev/preview server; hosted pages and the macOS/Linux app servers do not provide the bridge yet.
 
 ### Using your ChatGPT plan with Codex
 1. Install Codex: the Codex app, or `npm install -g @openai/codex`.
@@ -218,6 +228,7 @@ uvicorn main:app --host 127.0.0.1 --port 8765 --reload
 - **AI requests:**
   - **Ollama:** text stays on this computer.
   - **Claude:** text is sent to Anthropic. Your key stays on this device and is left out of backups.
+  - **Claude Subscription:** text is sent to Anthropic through the local Claude Code CLI. Sign-in stays inside Claude Code.
   - **ChatGPT (Codex):** text is sent to OpenAI. Sign-in stays inside Codex.
 
 ---

@@ -335,6 +335,8 @@ export const AIWorkspaceView: React.FC = () => {
                       ? 'Add your Claude API key in Settings to start chatting.'
                       : provider === 'codex'
                         ? 'Sign in with ChatGPT in Settings to start chatting.'
+                        : provider === 'claude-subscription'
+                          ? 'Sign in with your Claude subscription in Settings to start chatting.'
                         : 'Start Ollama on this computer, or choose another provider in Settings.'}
                   </span>
                 </span>
