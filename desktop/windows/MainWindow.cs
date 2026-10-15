@@ -137,9 +137,14 @@ namespace HuskyNote
                 string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
                 string userDataFolder = Path.Combine(localAppData, "HuskyNote", "WebView2Data");
 
+                // Another data folder, for testing a build or a copy of someone's data without touching
+                // the real one (DomoNote data is then left where it is)
+                string? customDataFolder = Environment.GetEnvironmentVariable("HUSKYNOTE_USER_DATA_DIR");
+                if (!string.IsNullOrWhiteSpace(customDataFolder)) userDataFolder = customDataFolder;
+
                 // Carry over notes and settings stored by pre-rebrand DomoNote builds
                 string legacyUserDataFolder = Path.Combine(localAppData, "DomoNote", "WebView2Data");
-                if (!Directory.Exists(userDataFolder) && Directory.Exists(legacyUserDataFolder))
+                if (string.IsNullOrWhiteSpace(customDataFolder) && !Directory.Exists(userDataFolder) && Directory.Exists(legacyUserDataFolder))
                 {
                     try
                     {

@@ -27,6 +27,11 @@ namespace HuskyNote
             }
 
             ApplicationConfiguration.Initialize();
+            if (!WebView2Setup.EnsureRuntime())
+            {
+                _mutex.ReleaseMutex();
+                return;
+            }
             Application.Run(new MainWindow(args));
 
             _mutex.ReleaseMutex();

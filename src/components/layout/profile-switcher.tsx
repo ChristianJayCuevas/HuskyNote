@@ -15,6 +15,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { SimpleTooltip } from '../ui/tooltip';
+import { tourTarget } from '@/features/guided-tour/tours/targets';
 
 const initial = (name: string) => name.trim().charAt(0).toUpperCase() || '?';
 
@@ -86,6 +87,7 @@ export const ProfileSwitcher: React.FC<{ collapsed?: boolean }> = ({ collapsed =
   const trigger = (
     <button
       type="button"
+      {...tourTarget('profile-switcher')}
       title={`Profile: ${active.name}`}
       aria-label={collapsed ? `Profile: ${active.name}` : undefined}
       className={cn(

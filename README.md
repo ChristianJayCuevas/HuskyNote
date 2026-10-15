@@ -30,9 +30,50 @@ Get the latest version from [Releases](https://github.com/ChristianJayCuevas/Hus
 
 - **macOS:** the app is not notarized, so macOS warns on first launch. Run `Open HuskyNote.command` from the disk image once to clear the warning.
 - **Linux:** the AppImage needs FUSE 2 (`libfuse2`); without it, use the tarball.
-- **Checksums:** verify downloads with `SHA256SUMS.txt`.
+- **Checksums:** verify downloads with `SHA256SUMS.txt` (see [Check the download](#install-on-windows)).
 
 Each app and each browser keeps its own workspace. To move your work between them, use a backup (see [Profiles and backups](#profiles-and-backups)).
+
+### Install on Windows
+
+**Requirements**
+
+- Windows 10 (May 2019 Update or later) or Windows 11, 64-bit.
+- About 160 MB of disk space for the app. Speech models download later, when you set up transcription.
+- The Microsoft Edge WebView2 Runtime, which draws HuskyNote's window. Windows 11 and most Windows 10 computers already have it. If yours doesn't, HuskyNote offers to install it from Microsoft when it starts.
+- Nothing else to install: the app includes the .NET runtime it needs, and the installer runs on the .NET Framework 4.8 that is part of Windows. No administrator rights are required.
+
+**Install**
+
+1. Download `HuskyNote-Setup-x64.exe` from [Releases](https://github.com/ChristianJayCuevas/HuskyNote/releases/latest).
+2. Run it. HuskyNote isn't code-signed yet, so Windows SmartScreen may show "Windows protected your PC". Select **More info**, then **Run anyway**.
+3. Select **Install Now**. HuskyNote installs for your Windows account only, in `%LOCALAPPDATA%\Programs\HuskyNote`, with Desktop and Start menu shortcuts.
+
+To run HuskyNote without installing it, unzip `HuskyNote-Windows-Portable.zip` anywhere and open `HuskyNote.exe`.
+
+**Check the download (optional)**
+
+Each release lists a SHA-256 checksum for every file in `SHA256SUMS.txt`. In PowerShell, in the folder you downloaded to:
+
+```powershell
+Get-FileHash .\HuskyNote-Setup-x64.exe -Algorithm SHA256
+```
+
+The hash must match the `HuskyNote-Setup-x64.exe` line in `SHA256SUMS.txt` from the same release (letter case doesn't matter). If it doesn't, delete the file and download it again.
+
+**Update**
+
+Download the newer installer and run it; your notes, meetings and settings stay. Closing HuskyNote's window only hides it in the system tray, so it is often still running: the installer then offers to close it first. If you are recording a meeting, stop the recording before you update.
+
+**Uninstall**
+
+Open **Settings → Apps → Installed apps**, find HuskyNote, and choose **Uninstall** (or use **Control Panel → Programs and Features**). HuskyNote asks first, then closes and removes the program and its shortcuts.
+
+Your notes, meetings, recordings and settings stay in `%LOCALAPPDATA%\HuskyNote`, so reinstalling brings them back. To delete them too, tick **Also delete my notes, meetings, recordings and settings** in the uninstaller; it asks once more, because this can't be undone. Save a backup in **Settings → Storage** first if you might want them later.
+
+For scripts: `"%LOCALAPPDATA%\Programs\HuskyNote\uninstall.exe" /S` uninstalls without asking and keeps the data; add `--delete-data` to remove it as well.
+
+**Coming from DomoNote?** The installer removes the old DomoNote program. On first start, HuskyNote moves DomoNote's data folder (`%LOCALAPPDATA%\DomoNote\WebView2Data`) to its own and copies your notes and meetings into HuskyNote.
 
 ---
 

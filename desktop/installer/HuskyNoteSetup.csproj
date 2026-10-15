@@ -2,14 +2,18 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
+    <!-- .NET Framework 4.8 is part of Windows 10 (May 2019 Update and later) and Windows 11, so the
+         installer needs no runtime of its own and stays about the size of the app bundle it carries.
+         The app itself is self-contained (../windows/HuskyNote.csproj). -->
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
-    <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>favicon.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>HuskyNote-Setup-x64</AssemblyName>
     <RootNamespace>HuskyNote.Setup</RootNamespace>
-    <Version>1.0.0</Version>
     <Authors>ChristianJayCuevas</Authors>
     <Company>HuskyNote</Company>
     <Product>HuskyNote Desktop Installer</Product>
@@ -17,7 +21,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Framework assemblies the installer uses; all ship with Windows -->
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\shared\InstallLayout.cs" Link="InstallLayout.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="bundle.zip" Condition="Exists('bundle.zip')" />
+    <!-- The uninstaller (../uninstaller), copied here by scripts/build-windows.ps1 -->
+    <EmbeddedResource Include="uninstall.exe" Condition="Exists('uninstall.exe')" />
   </ItemGroup>
 
   <ItemGroup>

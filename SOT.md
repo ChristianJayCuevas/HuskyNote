@@ -66,11 +66,13 @@ HuskyNote integrates five primary knowledge and capture modalities into a unifie
   - Single-instance mutex guard (`Global\HuskyNote_Desktop_SingleInstance`)
   - Auto-start & live Ollama health monitoring
 - **Windows Standalone Installer (`desktop/installer/`)**:
-  - Self-contained executable: `HuskyNote-Setup-x64.exe`
+  - One executable, `HuskyNote-Setup-x64.exe`, with the app bundle embedded. The installer targets .NET Framework 4.8, which is part of Windows 10 (May 2019 Update and later) and Windows 11, so it carries no runtime; the app it installs is self-contained (.NET 9). The version comes from `package.json` (`desktop/Directory.Build.props`)
   - Installs to `%LOCALAPPDATA%\Programs\HuskyNote` (no UAC / admin required)
+  - Closes a running HuskyNote before updating it (asks first in the windowed installer)
+  - The app checks for the Microsoft Edge WebView2 Runtime at startup and offers Microsoft's Evergreen Bootstrapper when it is missing
   - Creates Desktop and Start Menu shortcuts with official icon
   - Registers in Windows Registry under `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\HuskyNote`
-  - Standalone uninstaller script (`uninstall.bat`)
+  - Uninstaller `uninstall.exe` (`desktop/uninstaller/`, .NET Framework 4.8, embedded in the installer): asks first, keeps the user's data unless they tick the option to delete it, `/S` for silent and `/S --delete-data` to also remove data; exits 0 when done and 1602 when cancelled
   - Supports silent installation (`/S`, `/silent`, `--quiet`)
 
 ### 3.3 Optional Companion & Extensions

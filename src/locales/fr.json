@@ -74,5 +74,74 @@
     "edit": "Modifier",
     "close": "Fermer",
     "back": "Retour"
+  },
+  "tour": {
+    "trigger": "Faire la visite guidée",
+    "controls": {
+      "skip": "Passer",
+      "back": "Retour",
+      "next": "Suivant",
+      "done": "Terminé",
+      "close": "Fermer la visite",
+      "welcome": "Bienvenue",
+      "finished": "Vous êtes prêt",
+      "stepOf": "Étape {n} sur {total}",
+      "counter": "{n} / {total}",
+      "announce": "Étape {n} sur {total} : {title}"
+    },
+    "steps": {
+      "welcome": {
+        "title": "Bienvenue dans HuskyNote",
+        "body": "Petit tour d'horizon : notes, réunions, saisie vocale et une IA qui travaille avec votre propre espace. Tout est enregistré sur cet appareil. Utilisez les flèches du clavier ou les boutons ci-dessous ; Échap met fin à la visite."
+      },
+      "navigation": {
+        "title": "Tout dans une seule barre latérale",
+        "body": "Passez du tableau de bord aux notes, réunions, documents, à l'Espace IA et plus encore. Ctrl+B masque la barre latérale quand vous avez besoin de place."
+      },
+      "profiles": {
+        "title": "Des profils pour séparer vos activités",
+        "body": "Chaque profil est un espace distinct avec ses propres notes, réunions et paramètres, par exemple Travail et Personnel. Changez de profil ou créez-en un ici."
+      },
+      "search": {
+        "title": "Retrouvez tout rapidement",
+        "body": "Recherchez dans vos notes, réunions et documents. Appuyez sur Ctrl+K pour les commandes, comme démarrer une réunion ou ouvrir un paramètre."
+      },
+      "voiceType": {
+        "title": "Saisie vocale",
+        "body": "Dictez depuis n'importe quel écran. Cliquez sur le micro et parlez : le texte s'insère directement dans la note en cours, et vous pouvez copier toute la dictée une fois terminée."
+      },
+      "notes": {
+        "title": "Notes",
+        "body": "Créez une nouvelle note ici. Vos notes s'affichent dans la liste à côté de l'éditeur."
+      },
+      "resizableLists": {
+        "title": "Redimensionnez ou masquez les listes",
+        "body": "Faites glisser le bord d'une liste pour l'élargir ou la réduire, ou repliez-la pour laisser tout l'écran à l'éditeur. HuskyNote mémorise votre choix."
+      },
+      "teamsImport": {
+        "title": "Importez vos réunions Teams",
+        "body": "Importez une transcription Teams (.vtt ou .docx) pour conserver le nom des intervenants, ou un enregistrement à transcrire sur cet ordinateur."
+      },
+      "recording": {
+        "title": "Enregistrez une réunion",
+        "body": "Choisissez votre micro ou un onglet de réunion comme source audio, puis lancez l'enregistrement. HuskyNote transcrit au fur et à mesure, sur cet appareil."
+      },
+      "aiWorkspace": {
+        "title": "Espace IA",
+        "body": "Posez des questions sur vos notes, réunions et documents. Joignez les éléments que l'IA doit utiliser comme contexte."
+      },
+      "aiProviders": {
+        "title": "Choisissez votre IA",
+        "body": "Utilisez une IA locale avec Ollama, une clé API Claude, ou connectez-vous avec votre abonnement Claude ou ChatGPT. Choisissez ici ; vous pourrez changer à tout moment."
+      },
+      "transcription": {
+        "title": "Configurez la transcription",
+        "body": "Choisissez votre langue de conversation habituelle et téléchargez une fois un modèle vocal. Ensuite, la parole est convertie en texte sur cet appareil."
+      },
+      "finish": {
+        "title": "Fin de la visite",
+        "body": "Pour la revoir, ouvrez Aide et à propos en bas de la barre latérale et choisissez Faire la visite guidée, ou appuyez sur Ctrl+K et cherchez « visite »."
+      }
+    }
   }
 }

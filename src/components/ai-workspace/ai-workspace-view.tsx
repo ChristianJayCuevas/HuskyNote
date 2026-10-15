@@ -38,6 +38,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { LiveSpeechTranscriber } from '../../services/audio/transcriber';
+import { tourTarget } from '@/features/guided-tour/tours/targets';
 
 /** One-click prompts that run against the attached context (same prompts as before the redesign) */
 const COMMANDS: Array<{ label: string; icon: LucideIcon; prompt: string }> = [
@@ -347,7 +348,10 @@ export const AIWorkspaceView: React.FC = () => {
             </Alert>
           )}
 
-          <div className="rounded-xl border border-input bg-background shadow-sm transition-[border-color,box-shadow] duration-100 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/20">
+          <div
+            className="rounded-xl border border-input bg-background shadow-sm transition-[border-color,box-shadow] duration-100 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/20"
+            {...tourTarget('ai-workspace-composer')}
+          >
             <ContextSelector selectedChips={selectedChips} onAddChip={addChip} onRemoveChip={removeChip} />
 
             <textarea

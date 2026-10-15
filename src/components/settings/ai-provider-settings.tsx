@@ -13,6 +13,7 @@ import { SettingsStatus, optionCardClass } from './settings-row';
 import { CLAUDE_MODELS } from '../../services/ai/claude';
 import { CodexSettings } from './codex-settings';
 import { ClaudeSubscriptionSettings } from './claude-subscription-settings';
+import { tourTarget } from '@/features/guided-tour/tours/targets';
 
 const PROVIDERS: { id: AIProviderId; name: string; description: string; icon: React.ReactNode }[] = [
   {
@@ -73,7 +74,7 @@ export const AIProviderSettings: React.FC = () => {
       description="Which AI writes meeting summaries, answers questions, and runs document actions"
       actions={<SettingsStatus tone={isConnected ? 'success' : 'muted'}>{isConnected ? 'Ready' : 'Not connected'}</SettingsStatus>}
     >
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label="AI provider">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label="AI provider" {...tourTarget('ai-providers')}>
         {PROVIDERS.map((p) => {
           const active = provider === p.id;
           return (

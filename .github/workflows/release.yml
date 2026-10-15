@@ -17,8 +17,34 @@ permissions:
   contents: write
 
 jobs:
+  # A release can also be published by hand with files built locally (v0.7.0 was). Then the tag
+  # that release creates must not rebuild and replace those files, so everything below is skipped
+  # when the release for this tag already has assets.
+  existing:
+    name: Check for an already published release
+    runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.check.outputs.published }}
+    steps:
+      - name: Look for the release and its assets
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.tag_name || github.ref_name }}
+        run: |
+          count=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets | length' 2>/dev/null || echo 0)
+          echo "Release $TAG has $count asset(s)"
+          if [ "$count" -gt 0 ]; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Release $TAG is already published with its files; skipping the build so they are not replaced."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
   windows:
     name: Build Windows App & Installer
+    needs: existing
+    if: needs.existing.outputs.published != 'true'
     runs-on: windows-latest
 
     steps:
@@ -54,15 +80,20 @@ jobs:
 
   macos:
     name: Build macOS App
+    needs: existing
+    if: needs.existing.outputs.published != 'true'
     uses: ./.github/workflows/build-macos.yml
 
   linux:
     name: Build Linux App
+    needs: existing
+    if: needs.existing.outputs.published != 'true'
     uses: ./.github/workflows/build-linux.yml
 
   publish:
     name: Publish GitHub Release
-    needs: [windows, macos, linux]
+    needs: [existing, windows, macos, linux]
+    if: needs.existing.outputs.published != 'true'
     runs-on: ubuntu-latest
 
     steps:

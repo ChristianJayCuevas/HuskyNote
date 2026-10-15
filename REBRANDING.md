@@ -41,6 +41,8 @@ Renaming storage keys would otherwise make existing data disappear, so each surf
 
 Limits: browser storage is per origin, so data only carries over when HuskyNote is served from the same origin as the old DomoNote install (the desktop apps' `127.0.0.1:5892`, or the same local dev URL). Users moving to a new web domain should use Settings to export the workspace from DomoNote and import it into HuskyNote. An old DomoNote extension will not talk to HuskyNote because message names changed; reload the extension from this repo.
 
+**Follow-up, not done yet: pin the extension's ID.** The manifest has no `key`, so Chrome derives an unpacked extension's ID from its folder path, and moving the folder gives it a new ID. The extension keeps up to 50 meetings, notes and the live meeting roster in `chrome.storage.local`, which belongs to that ID. Adding a `key` fixes the ID from then on but changes it once, cutting off what the extension already stored. The side panel can export a backup but cannot import one, so pin the ID in the same release as an **Import backup** button, with release notes that say to export before updating.
+
 ---
 
 ## 2. Brand System and Artwork
@@ -91,7 +93,19 @@ The old raster media (the landing page's `public/mascot-reading.gif` reading ani
 ### Other
 
 - The repository is private, so the app does not query the GitHub API for a star count (the sidebar's Help menu and About only link to the repository). The opt-in update check (`src/services/updates/update-checker.ts`) is the only GitHub API call.
-- The local working directory is still named `DomoNote`. Renaming it is optional; the `upstream` remote still points to `https://github.com/darknecrocities/DomoNote.git` for pulling upstream fixes.
+- The local working directory may still be named `DomoNote`. Renaming it is optional (steps below); keep the `upstream` remote, which points to `https://github.com/darknecrocities/DomoNote.git` for pulling upstream fixes.
+
+### Renaming the local working folder
+
+Nothing in the app depends on the folder's name: browser data is tied to the address the app runs at (`127.0.0.1:5173` for the dev server), not to the folder. Do this at a stopping point:
+
+1. **Extension first, if you load it from this folder.** Chrome derives an unpacked extension's ID from its folder path, and its saved meetings and notes belong to that ID. Before moving the folder, open the extension's side panel and use **Export backup**; the extension has no import yet, so treat the export as the record of what it held.
+2. **Close everything using the folder:** the dev server (`npm run dev`), editors, terminals, Claude Code or other agent sessions started in it, and Orca's view of it.
+3. **Move the folder**, for example `DomoNote` → `HuskyNote` next to it (File Explorer, or `Move-Item` in PowerShell).
+4. **Repair worktrees.** In the moved folder run `git worktree repair`; if a linked worktree still reports the old path, run `git worktree repair <path-to-that-worktree>` too. Check with `git worktree list`.
+5. **Reinstall dependencies only if something fails:** `npm install` (`node_modules` holds absolute paths in a few tools' caches).
+6. **Re-point tools that remember the path:** add the folder again in Orca or your editor. Claude Code keeps per-project memory under a name built from the folder path (`~/.claude/projects/<path with separators replaced by ->`); copy the old project's `memory` folder to the new name to keep it.
+7. **Reload the extension** from its new location (Chrome → Extensions → Load unpacked) if you use it from this folder.
 
 Find any remaining references with:
 

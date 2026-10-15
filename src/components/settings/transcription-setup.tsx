@@ -13,6 +13,7 @@ import { LiveSpeechTranscriber } from '../../services/audio/transcriber';
 import { openMicrophone } from '../../services/audio/microphone';
 import { resolveTranscriptionEngine } from '../../services/audio/transcription-engines';
 import { diagnosticsEnabled, setDiagnosticsEnabled, getTranscriptionMetrics } from '../../services/audio/transcription-metrics';
+import { tourTarget } from '@/features/guided-tour/tours/targets';
 
 export function TranscriptionSetup({ language, onLanguageChange }: {
   language: string; onLanguageChange: (language: string) => void;
@@ -87,7 +88,7 @@ export function TranscriptionSetup({ language, onLanguageChange }: {
   };
 
   return (
-    <Card>
+    <Card {...tourTarget('transcription-setup')}>
       <CardHeader>
         <h3 className="text-base font-semibold leading-snug">Set up local transcription</h3>
         <CardDescription>Choose your usual conversation language. No account, API key, Python, or Ollama is needed.</CardDescription>

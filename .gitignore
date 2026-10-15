@@ -50,6 +50,7 @@ AppIcon.iconset/
 **/obj/
 *.user
 **/bundle.zip
+desktop/installer/uninstall.exe
 desktop/bundle/
 public/downloads/*.exe
 public/downloads/*.zip

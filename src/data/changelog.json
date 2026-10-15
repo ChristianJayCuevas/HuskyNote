@@ -1,5 +1,17 @@
 [
   {
+    "version": "v0.7.0",
+    "date": "2026-10-15",
+    "title": "Guided Tour & an Easier Windows Install",
+    "highlights": [
+      "Take me for a tour: a short guided tour of notes, meetings, Voice Type, Teams import, profiles, the AI Workspace, and your AI and transcription choices. Start it any time from Help & about at the bottom of the sidebar, the command palette (Ctrl+K), or Settings → About. It opens by itself once on a new, empty workspace, and is available in English, French, Japanese, and Chinese.",
+      "The Windows app no longer needs the .NET Desktop Runtime installed: it carries its own, and the installer runs on the .NET Framework that is part of Windows 10 and 11. Windows shows HuskyNote's real version in Apps & features and in the file properties.",
+      "If the Microsoft Edge WebView2 Runtime is missing, HuskyNote offers to install it from Microsoft when it starts, instead of opening a blank window.",
+      "Updating while HuskyNote is running in the system tray no longer fails partway: the installer offers to close it first. Finish no longer runs the installation a second time.",
+      "Uninstalling asks first and keeps your notes, meetings and settings unless you tick the option to delete them, and it no longer opens a console window or ends with an error."
+    ]
+  },
+  {
     "version": "v0.6.0",
     "date": "2026-10-08",
     "title": "ChatGPT Sign-In, Teams Transcripts, Meeting Merge & a New Look",

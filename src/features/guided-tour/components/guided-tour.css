@@ -1,0 +1,91 @@
+/* Guided tour layer (TourOverlay). Viewport-scoped: a fixed layer above dialogs, popovers and
+ * menus (z-50) and below toasts (z-[60]).
+ *
+ * The root covers the screen but lets pointer events through (`pointer-events: none`); only the
+ * catch layer and the card take them back. That is what makes an interactive step's clip-path
+ * hole actually click through to the target. Motion is transform/opacity only; reduced motion
+ * drops it. The card itself is styled with Tailwind in tour-card.tsx. */
+
+.guided-tour {
+  /* The same scrim as dialogs: translucent black in both themes */
+  --guided-tour-scrim: rgb(0 0 0 / 0.4);
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+  outline: none;
+}
+
+.dark .guided-tour {
+  --guided-tour-scrim: rgb(0 0 0 / 0.6);
+}
+
+/* Click-catch layer. Transparent when the ring supplies the dim, dimmed itself when there is no
+ * ring (centered step, off-screen or missing target). */
+.guided-tour-catch {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+}
+
+.guided-tour-catch[data-dim] {
+  background: var(--guided-tour-scrim);
+}
+
+/* Spotlight ring: its 9999px shadow is the dim. Position moves with transform (animated); size snaps. */
+.guided-tour-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  border: 2px solid hsl(var(--ring));
+  border-radius: calc(var(--radius) + 2px);
+  box-shadow: 0 0 0 9999px var(--guided-tour-scrim);
+  pointer-events: none;
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Arrow: a 12px rotated square on the card edge facing the target, with the border drawn only on
+ * its two outer sides. `--tour-arrow-offset` is the arrow's center measured along that edge. */
+.guided-tour-arrow {
+  position: absolute;
+  z-index: -1;
+  width: 12px;
+  height: 12px;
+  background: hsl(var(--popover));
+  rotate: 45deg;
+}
+
+.guided-tour-arrow[data-side='top'] {
+  top: -6px;
+  left: calc(var(--tour-arrow-offset) - 6px);
+  border-top: 1px solid hsl(var(--border));
+  border-left: 1px solid hsl(var(--border));
+}
+
+.guided-tour-arrow[data-side='bottom'] {
+  bottom: -6px;
+  left: calc(var(--tour-arrow-offset) - 6px);
+  border-right: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.guided-tour-arrow[data-side='left'] {
+  left: -6px;
+  top: calc(var(--tour-arrow-offset) - 6px);
+  border-bottom: 1px solid hsl(var(--border));
+  border-left: 1px solid hsl(var(--border));
+}
+
+.guided-tour-arrow[data-side='right'] {
+  right: -6px;
+  top: calc(var(--tour-arrow-offset) - 6px);
+  border-top: 1px solid hsl(var(--border));
+  border-right: 1px solid hsl(var(--border));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guided-tour-ring {
+    transition: none;
+  }
+}

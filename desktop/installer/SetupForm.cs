@@ -21,12 +21,13 @@ namespace HuskyNote.Setup
         private readonly Button _installButton;
         private readonly Button _closeButton;
         private readonly string _installDir;
+        private bool _installed;
 
         public SetupForm()
         {
             _installDir = InstallerEngine.DefaultInstallDir;
 
-            Text = "HuskyNote Setup — Personal AI Secretary";
+            Text = $"HuskyNote {InstallerEngine.AppVersion} Setup — Personal AI Secretary";
             BackColor = Color.FromArgb(20, 20, 24);
             ForeColor = Color.White;
             StartPosition = FormStartPosition.CenterScreen;
@@ -131,7 +132,12 @@ namespace HuskyNote.Setup
                 FlatStyle = FlatStyle.Flat
             };
             _installButton.FlatAppearance.BorderSize = 0;
-            _installButton.Click += async (s, e) => await StartInstallationAsync();
+            // One handler for both jobs: Install Now, then Finish once installed
+            _installButton.Click += async (s, e) =>
+            {
+                if (_installed) FinishAndClose();
+                else await StartInstallationAsync();
+            };
             Controls.Add(_installButton);
 
             _closeButton = new Button
@@ -159,6 +165,25 @@ namespace HuskyNote.Setup
 
         private async Task StartInstallationAsync()
         {
+            if (InstallerEngine.IsAppRunning())
+            {
+                var answer = MessageBox.Show(
+                    this,
+                    string.Join(
+                        Environment.NewLine + Environment.NewLine,
+                        "HuskyNote is open. It keeps running in the system tray (notification area) when you close its window.",
+                        "Setup needs to close it to update it. Your notes are saved as you type, but if you are recording a meeting, stop the recording first.",
+                        "Close HuskyNote and continue?"),
+                    "HuskyNote is running",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+                if (answer != DialogResult.Yes)
+                {
+                    Log("Waiting: HuskyNote is still running.");
+                    return;
+                }
+            }
+
             _installButton.Enabled = false;
             _closeButton.Enabled = false;
 
@@ -168,22 +193,21 @@ namespace HuskyNote.Setup
                 {
                     InstallerEngine.ExecuteInstall(_installDir, (msg, pct) =>
                     {
-                        Invoke(() =>
+                        Invoke(new Action(() =>
                         {
                             _progressBar.Value = Math.Min(100, Math.Max(0, pct));
                             _statusLabel.Text = msg;
                             Log(msg);
-                        });
+                        }));
                     });
                 });
 
                 _statusLabel.Text = "Installation Completed Successfully!";
                 _statusLabel.ForeColor = Color.LightGreen;
 
+                _installed = true;
                 _installButton.Text = "Finish";
                 _installButton.Enabled = true;
-                _installButton.Click -= async (s, e) => await StartInstallationAsync();
-                _installButton.Click += (s, e) => FinishAndClose();
 
                 _closeButton.Text = "Close";
                 _closeButton.Enabled = true;

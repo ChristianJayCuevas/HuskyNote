@@ -69,8 +69,10 @@ import { TranscriptionSettings } from '../components/settings/transcription-sett
 import { UpdateSettings } from '../components/settings/update-settings';
 import { APP_VERSION } from '../services/updates/update-checker';
 import { HuskyMark } from '@/brand';
+import { SETTINGS_TAB_STORAGE_KEY, type SettingsTab } from './settings-tabs';
+import { TourTrigger } from '@/features/guided-tour';
 
-type SettingsTab = 'ai' | 'transcription' | 'integrations' | 'storage' | 'about';
+export { SETTINGS_TAB_STORAGE_KEY };
 
 const SETTINGS_TABS: { id: SettingsTab; label: string; icon: LucideIcon }[] = [
   { id: 'ai', label: 'AI', icon: Sparkles },
@@ -105,8 +107,6 @@ const CopyField: React.FC<{ value: string; copied: boolean; onCopy: () => void }
     </Button>
   </div>
 );
-
-export const SETTINGS_TAB_STORAGE_KEY = 'huskynote-settings-tab';
 
 const isSettingsTab = (v: unknown): v is SettingsTab => SETTINGS_TABS.some((t) => t.id === v);
 
@@ -1199,7 +1199,8 @@ export const SettingsView: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-1">
-                  <Button size="sm" variant="outline" onClick={() => setActiveView('about')}>
+                  <TourTrigger tourId="huskynote" size="sm" variant="outline" />
+                  <Button size="sm" variant="ghost" onClick={() => setActiveView('about')}>
                     About HuskyNote
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => setActiveView('changelog')}>

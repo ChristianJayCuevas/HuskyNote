@@ -41,6 +41,8 @@ interface ResizableListPanelProps {
   label: string;
   /** On phones the list takes the full width and hides while an item is open */
   hiddenOnMobile?: boolean;
+  /** Marks the panel (or its collapsed rail) as a guided tour target */
+  'data-tour'?: string;
   children: React.ReactNode;
 }
 
@@ -49,7 +51,7 @@ interface ResizableListPanelProps {
  * be dragged to resize it (double-click resets), and it can be collapsed to
  * a thin rail. On phones it keeps the full-width stacked layout.
  */
-export const ResizableListPanel: React.FC<ResizableListPanelProps> = ({ storageKey, label, hiddenOnMobile = false, children }) => {
+export const ResizableListPanel: React.FC<ResizableListPanelProps> = ({ storageKey, label, hiddenOnMobile = false, children, 'data-tour': dataTour }) => {
   const widthKey = `huskynote_panel_${storageKey}_width`;
   const collapsedKey = `huskynote_panel_${storageKey}_collapsed`;
   const [width, setWidth] = useState(() => readNumber(widthKey, DEFAULT_WIDTH));
@@ -114,7 +116,7 @@ export const ResizableListPanel: React.FC<ResizableListPanelProps> = ({ storageK
       <>
         {/* Phones ignore the desktop collapse and keep the full list */}
         <div className={`${hiddenOnMobile ? 'hidden' : 'flex'} md:hidden w-full shrink-0 h-full`}>{children}</div>
-        <div className="hidden h-full w-10 shrink-0 flex-col items-center gap-3 border-r bg-background py-2 md:flex">
+        <div className="hidden h-full w-10 shrink-0 flex-col items-center gap-3 border-r bg-background py-2 md:flex" data-tour={dataTour}>
           <Button
             type="button"
             variant="ghost"
@@ -138,6 +140,7 @@ export const ResizableListPanel: React.FC<ResizableListPanelProps> = ({ storageK
     <div
       className={cn(mobile, 'group/panel relative h-full w-full shrink-0 md:w-[var(--list-panel-width)]', dragging && 'select-none')}
       style={{ '--list-panel-width': `${width}px` } as React.CSSProperties}
+      data-tour={dataTour}
     >
       {children}
 

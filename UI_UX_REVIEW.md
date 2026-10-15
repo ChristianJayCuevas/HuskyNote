@@ -3,7 +3,7 @@
 Follow-up: [October 1 browser-based re-review and implementation results](UI_UX_REVIEW_2026-10-01.md).
 
 Date: September 30, 2026  
-Application: HuskyNote / DomoNote  
+Application: HuskyNote  
 Design perspective: minimalist, GitHub-inspired workspace with an emphasis on predictable interactions, clear hierarchy, and user trust.
 
 ## Scope and limitations

@@ -15,6 +15,7 @@ import { SimpleTooltip } from '../components/ui/tooltip';
 import { RecordingsLibrary } from '../components/meetings/recordings-library';
 import { ImportMeetingDialog } from '../components/meetings/import-meeting-dialog';
 import { ImportProgress } from '../components/meetings/import-progress';
+import { tourTarget } from '@/features/guided-tour/tours/targets';
 
 export const MeetingsView: React.FC = () => {
   const { activeMeetingId, setActiveMeetingId, addToast } = useWorkspace();
@@ -84,6 +85,7 @@ export const MeetingsView: React.FC = () => {
                     variant="ghost"
                     size="icon-sm"
                     aria-label="Import a meeting"
+                    {...tourTarget('meetings-import')}
                     disabled={isRecordingMode}
                     onClick={() => setShowImport(true)}
                     className="text-muted-foreground"

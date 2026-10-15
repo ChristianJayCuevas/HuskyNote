@@ -5,7 +5,7 @@
  * useWorkspace().isCommandPaletteOpen. Groups: Create, Go to, Actions. Enter runs the selected
  * (first matching) command.
  */
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   BookOpen,
   Bot,
@@ -25,9 +25,12 @@ import {
   Sparkles,
   Video,
   BookMarked,
+  Compass,
   type LucideIcon,
 } from 'lucide-react';
 import { useWorkspace } from '../../context/workspace-context';
+import { useLanguage } from '../../context/language-context';
+import { startTourAfterDialogs } from '@/features/guided-tour';
 import { useTheme } from '../../context/theme-context';
 import { SETTINGS_TAB_STORAGE_KEY } from '../../views/settings-view';
 import { createEmptyNote } from '../../services/notes/actions';
@@ -40,6 +43,7 @@ import {
   CommandItem,
   CommandList,
 } from './command';
+import { defaultFilter } from 'cmdk';
 
 interface PaletteAction {
   id: string;
@@ -65,6 +69,7 @@ export const CommandPalette: React.FC = () => {
     setIsExtensionModalOpen,
     setActiveNoteId,
   } = useWorkspace();
+  const { t } = useLanguage();
   const { toggleTheme } = useTheme();
 
   const actions = useMemo<PaletteAction[]>(
@@ -291,6 +296,14 @@ export const CommandPalette: React.FC = () => {
         },
       },
       {
+        id: 'guided-tour',
+        title: t('tour.trigger', 'Take me for a tour'),
+        description: 'A short walk through notes, meetings, Voice Type and AI',
+        icon: Compass,
+        group: 'actions',
+        run: () => startTourAfterDialogs('huskynote'),
+      },
+      {
         id: 'toggle-theme',
         title: 'Toggle theme',
         description: 'Switch between light and dark',
@@ -299,12 +312,40 @@ export const CommandPalette: React.FC = () => {
         run: () => toggleTheme(),
       },
     ],
-    [setActiveView, setActiveNoteId, addToast, setIsExtensionModalOpen, toggleTheme]
+    [setActiveView, setActiveNoteId, addToast, setIsExtensionModalOpen, toggleTheme, t]
   );
 
   const runAction = (action: PaletteAction) => {
     setIsCommandPaletteOpen(false);
     void action.run();
+  };
+
+  // cmdk ranks matches within a group but never reorders the groups themselves, so Enter ran the
+  // first group's match ("notes" opened the guide recorder). While searching, show one list ranked
+  // by cmdk's own scoring instead. The query clears when the palette closes; start grouped again then.
+  const [search, setSearch] = useState('');
+  useEffect(() => {
+    if (!isCommandPaletteOpen) setSearch('');
+  }, [isCommandPaletteOpen]);
+  const ranked = useMemo(() => {
+    const query = search.trim();
+    if (!query) return null;
+    return actions
+      .map((action) => ({ action, score: defaultFilter(action.title, query, [action.description]) }))
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map(({ action }) => action);
+  }, [actions, search]);
+
+  const renderItem = (action: PaletteAction) => {
+    const Icon = action.icon;
+    return (
+      <CommandItem key={action.id} value={action.title} keywords={[action.description]} onSelect={() => runAction(action)}>
+        <Icon />
+        <span className="shrink-0">{action.title}</span>
+        <span className="min-w-0 truncate text-xs text-muted-foreground">{action.description}</span>
+      </CommandItem>
+    );
   };
 
   return (
@@ -316,30 +357,22 @@ export const CommandPalette: React.FC = () => {
     >
       {/* Uncontrolled on purpose: cmdk filters and selects synchronously, so Enter right after typing runs the
           first match. The palette remounts on every open, which clears the query. */}
-      <CommandInput placeholder="Type a command..." aria-label="Search commands" />
+      <CommandInput
+        placeholder="Type a command..."
+        aria-label="Search commands"
+        onValueChange={setSearch}
+      />
       <CommandList>
         <CommandEmpty>No matching commands.</CommandEmpty>
-        {GROUPS.map((group) => (
-          <CommandGroup key={group.id} heading={group.heading}>
-            {actions
-              .filter((action) => action.group === group.id)
-              .map((action) => {
-                const Icon = action.icon;
-                return (
-                  <CommandItem
-                    key={action.id}
-                    value={action.title}
-                    keywords={[action.description]}
-                    onSelect={() => runAction(action)}
-                  >
-                    <Icon />
-                    <span className="shrink-0">{action.title}</span>
-                    <span className="min-w-0 truncate text-xs text-muted-foreground">{action.description}</span>
-                  </CommandItem>
-                );
-              })}
-          </CommandGroup>
-        ))}
+        {ranked ? (
+          <CommandGroup key="results">{ranked.map(renderItem)}</CommandGroup>
+        ) : (
+          GROUPS.map((group) => (
+            <CommandGroup key={group.id} heading={group.heading}>
+              {actions.filter((action) => action.group === group.id).map(renderItem)}
+            </CommandGroup>
+          ))
+        )}
       </CommandList>
       <CommandFooter aria-hidden="true">
         <span>↑↓ navigate</span>

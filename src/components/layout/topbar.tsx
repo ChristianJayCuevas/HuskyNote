@@ -22,6 +22,7 @@ import {
 } from '../ui/dropdown-menu';
 import { GlobalMicRecorder } from './global-mic-recorder';
 import { ScreenHudLauncher } from '../hud/screen-hud-launcher';
+import { tourTarget } from '@/features/guided-tour/tours/targets';
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 const modifier = isMac ? 'Cmd' : 'Ctrl';
@@ -115,6 +116,7 @@ export const Topbar: React.FC = () => {
           type="button"
           variant="outline"
           size="sm"
+          {...tourTarget('search')}
           onClick={() => setIsSearchOpen(true)}
           className="text-muted-foreground"
           title={`${t('common.search')} (${modifier}+Shift+F)`}

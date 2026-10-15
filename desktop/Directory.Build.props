@@ -1,0 +1,15 @@
+<Project>
+  <!-- Shared by the Windows app and its installer -->
+  <PropertyGroup>
+    <!-- One version for everything: the "version" in package.json, so the installer, Apps & features and
+         the .exe file properties match the app (a release only bumps package.json) -->
+    <HuskyNotePackageJson>$(MSBuildThisFileDirectory)..\package.json</HuskyNotePackageJson>
+    <Version>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(HuskyNotePackageJson)')), '"version"\s*:\s*"([0-9][^"]*)"').Groups[1].Value)</Version>
+    <!-- Keep the plain version (no "+commit") in Apps & features -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+  <Target Name="HuskyNoteRequireVersion" BeforeTargets="Build">
+    <Error Condition="'$(Version)' == ''" Text="Could not read the version from $(HuskyNotePackageJson)." />
+  </Target>
+</Project>

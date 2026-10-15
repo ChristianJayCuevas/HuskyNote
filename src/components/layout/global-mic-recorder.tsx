@@ -8,6 +8,7 @@ import { AudioRecorder } from '../../services/audio/recorder';
 import { LiveSpeechTranscriber, type TranscriptSegment, formatSecondsToTime } from '../../services/audio/transcriber';
 import { useWorkspace } from '../../context/workspace-context';
 import { db } from '../../db';
+import { tourTarget } from '@/features/guided-tour/tours/targets';
 
 export const GlobalMicRecorder: React.FC = () => {
   const { addToast, setActiveView, setActiveNoteId } = useWorkspace();
@@ -123,6 +124,7 @@ export const GlobalMicRecorder: React.FC = () => {
           type="button"
           variant="ghost"
           size={isListening ? 'sm' : 'icon-sm'}
+          {...tourTarget('voice-type')}
           onClick={() => {
             if (isListening) {
               handleStopListening();
