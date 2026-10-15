@@ -69,8 +69,9 @@ import { TranscriptionSettings } from '../components/settings/transcription-sett
 import { UpdateSettings } from '../components/settings/update-settings';
 import { APP_VERSION } from '../services/updates/update-checker';
 import { HuskyMark } from '@/brand';
+import { SETTINGS_TAB_STORAGE_KEY, type SettingsTab } from './settings-tabs';
 
-type SettingsTab = 'ai' | 'transcription' | 'integrations' | 'storage' | 'about';
+export { SETTINGS_TAB_STORAGE_KEY };
 
 const SETTINGS_TABS: { id: SettingsTab; label: string; icon: LucideIcon }[] = [
   { id: 'ai', label: 'AI', icon: Sparkles },
@@ -105,8 +106,6 @@ const CopyField: React.FC<{ value: string; copied: boolean; onCopy: () => void }
     </Button>
   </div>
 );
-
-export const SETTINGS_TAB_STORAGE_KEY = 'huskynote-settings-tab';
 
 const isSettingsTab = (v: unknown): v is SettingsTab => SETTINGS_TABS.some((t) => t.id === v);
 

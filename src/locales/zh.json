@@ -74,5 +74,74 @@
     "edit": "编辑",
     "close": "关闭",
     "back": "返回"
+  },
+  "tour": {
+    "trigger": "带我参观一下",
+    "controls": {
+      "skip": "跳过",
+      "back": "上一步",
+      "next": "下一步",
+      "done": "完成",
+      "close": "关闭导览",
+      "welcome": "欢迎",
+      "finished": "一切就绪",
+      "stepOf": "第 {n} 步，共 {total} 步",
+      "counter": "{n} / {total}",
+      "announce": "第 {n} 步，共 {total} 步：{title}"
+    },
+    "steps": {
+      "welcome": {
+        "title": "欢迎使用 HuskyNote",
+        "body": "快速了解一下：笔记、会议、语音输入，以及基于你自己工作区的 AI。所有内容都保存在这台设备上。使用方向键或下方按钮继续，按 Esc 结束导览。"
+      },
+      "navigation": {
+        "title": "一切尽在侧边栏",
+        "body": "在仪表盘、笔记、会议、文档、AI 工作区等之间切换。需要更大空间时，按 Ctrl+B 隐藏侧边栏。"
+      },
+      "profiles": {
+        "title": "用配置文件区分工作与生活",
+        "body": "每个配置文件都是独立的工作区，拥有各自的笔记、会议和设置，例如“工作”和“个人”。在这里切换或新建配置文件。"
+      },
+      "search": {
+        "title": "快速查找",
+        "body": "搜索你的笔记、会议和文档。按 Ctrl+K 打开命令，例如开始会议或打开某项设置。"
+      },
+      "voiceType": {
+        "title": "语音输入",
+        "body": "在任何界面都能口述。点击麦克风开始说话：文字会直接写入正在编辑的笔记，结束后还可以复制全部内容。"
+      },
+      "notes": {
+        "title": "笔记",
+        "body": "在这里新建笔记。你的笔记会列在编辑器旁边。"
+      },
+      "resizableLists": {
+        "title": "调整或隐藏列表",
+        "body": "拖动列表边缘可调整宽度，也可以收起列表，让编辑器占满整个屏幕。HuskyNote 会记住你的设置。"
+      },
+      "teamsImport": {
+        "title": "导入 Teams 会议",
+        "body": "导入 Teams 转录文件（.vtt 或 .docx）可保留发言人姓名；也可以导入录音或录像，在这台电脑上转写。"
+      },
+      "recording": {
+        "title": "录制会议",
+        "body": "选择麦克风或会议标签页作为音频来源，然后开始录制。HuskyNote 会在这台设备上边录边转写。"
+      },
+      "aiWorkspace": {
+        "title": "AI 工作区",
+        "body": "就你的笔记、会议和文档提问。附上希望 AI 参考的内容作为上下文。"
+      },
+      "aiProviders": {
+        "title": "选择你的 AI",
+        "body": "可以用 Ollama 在本地运行，使用 Claude API 密钥，或用你的 Claude 或 ChatGPT 套餐登录。在这里选择，之后随时可以更改。"
+      },
+      "transcription": {
+        "title": "设置转写",
+        "body": "选择你平时交流使用的语言，并下载一次语音模型。之后，语音会在这台设备上转成文字。"
+      },
+      "finish": {
+        "title": "导览结束",
+        "body": "想再看一遍？打开侧边栏底部的“帮助与关于”，选择“带我参观一下”，或按 Ctrl+K 搜索“导览”。"
+      }
+    }
   }
 }

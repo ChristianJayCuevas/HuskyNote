@@ -74,5 +74,74 @@
     "edit": "Edit",
     "close": "Close",
     "back": "Back"
+  },
+  "tour": {
+    "trigger": "Take me for a tour",
+    "controls": {
+      "skip": "Skip",
+      "back": "Back",
+      "next": "Next",
+      "done": "Done",
+      "close": "Close tour",
+      "welcome": "Welcome",
+      "finished": "You're set",
+      "stepOf": "Step {n} of {total}",
+      "counter": "{n} / {total}",
+      "announce": "Step {n} of {total}: {title}"
+    },
+    "steps": {
+      "welcome": {
+        "title": "Welcome to HuskyNote",
+        "body": "A quick look around: notes, meetings, voice typing, and AI that works with your own workspace. Everything is saved on this device. Use the arrow keys or the buttons below; Esc ends the tour."
+      },
+      "navigation": {
+        "title": "Everything in one sidebar",
+        "body": "Move between your dashboard, notes, meetings, documents, the AI Workspace and more. Ctrl+B hides the sidebar when you want more room."
+      },
+      "profiles": {
+        "title": "Profiles keep work apart",
+        "body": "Each profile is its own workspace with separate notes, meetings and settings, such as Work and Personal. Switch profiles or create one here."
+      },
+      "search": {
+        "title": "Find anything fast",
+        "body": "Search your notes, meetings and documents. Press Ctrl+K for commands, like starting a meeting or opening a setting."
+      },
+      "voiceType": {
+        "title": "Voice Type",
+        "body": "Dictate from any screen. Click the mic and speak: the words go straight into the note you're editing, and you can copy the whole dictation when you stop."
+      },
+      "notes": {
+        "title": "Notes",
+        "body": "Start a new note here. Your notes are listed next to the editor."
+      },
+      "resizableLists": {
+        "title": "Resize or hide lists",
+        "body": "Drag the edge of a list to make it wider or narrower, or collapse it to give the editor the whole screen. HuskyNote remembers your choice."
+      },
+      "teamsImport": {
+        "title": "Bring in Teams meetings",
+        "body": "Import a Teams transcript (.vtt or .docx) to keep its speaker names, or a recording to transcribe on this computer."
+      },
+      "recording": {
+        "title": "Record a meeting",
+        "body": "Choose your microphone or a meeting tab as the audio source, then start recording. HuskyNote transcribes as you go, on this device."
+      },
+      "aiWorkspace": {
+        "title": "AI Workspace",
+        "body": "Ask questions about your notes, meetings and documents. Attach the items you want the AI to use as context."
+      },
+      "aiProviders": {
+        "title": "Choose your AI",
+        "body": "Run AI locally with Ollama, use a Claude API key, or sign in with your Claude or ChatGPT plan. Pick one here; you can change it any time."
+      },
+      "transcription": {
+        "title": "Set up transcription",
+        "body": "Pick your usual conversation language and download a speech model once. After that, speech is turned into text on this device."
+      },
+      "finish": {
+        "title": "That's the tour",
+        "body": "To see it again, open Help & about at the bottom of the sidebar and choose Take me for a tour, or press Ctrl+K and search for \"tour\"."
+      }
+    }
   }
 }
