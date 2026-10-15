@@ -66,7 +66,7 @@ HuskyNote integrates five primary knowledge and capture modalities into a unifie
   - Single-instance mutex guard (`Global\HuskyNote_Desktop_SingleInstance`)
   - Auto-start & live Ollama health monitoring
 - **Windows Standalone Installer (`desktop/installer/`)**:
-  - Self-contained single-file executable: `HuskyNote-Setup-x64.exe`. The installer and the app both carry the .NET 9 runtime, so nothing else needs installing; the version comes from `package.json` (`desktop/Directory.Build.props`)
+  - One executable, `HuskyNote-Setup-x64.exe`, with the app bundle embedded. The installer targets .NET Framework 4.8, which is part of Windows 10 (May 2019 Update and later) and Windows 11, so it carries no runtime; the app it installs is self-contained (.NET 9). The version comes from `package.json` (`desktop/Directory.Build.props`)
   - Installs to `%LOCALAPPDATA%\Programs\HuskyNote` (no UAC / admin required)
   - Closes a running HuskyNote before updating it (asks first in the windowed installer)
   - The app checks for the Microsoft Edge WebView2 Runtime at startup and offers Microsoft's Evergreen Bootstrapper when it is missing

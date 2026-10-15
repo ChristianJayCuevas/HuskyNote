@@ -46,7 +46,8 @@ namespace HuskyNote.Setup
 
         public static void ExecuteInstall(string? targetDir, Action<string, int>? progress = null)
         {
-            string installDir = string.IsNullOrWhiteSpace(targetDir) ? DefaultInstallDir : targetDir;
+            // (.NET Framework's IsNullOrWhiteSpace has no nullability annotation, hence the !)
+            string installDir = string.IsNullOrWhiteSpace(targetDir) ? DefaultInstallDir : targetDir!;
 
             progress?.Invoke("Removing previous DomoNote installation if present...", 5);
             RemoveLegacyDomoNoteInstall();
@@ -115,7 +116,7 @@ namespace HuskyNote.Setup
                 if (stream != null)
                 {
                     using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
-                    archive.ExtractToDirectory(destDir, overwriteFiles: true);
+                    ExtractOverwriting(archive, destDir);
                     return;
                 }
             }
@@ -124,11 +125,37 @@ namespace HuskyNote.Setup
             string adjacentBundle = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bundle.zip");
             if (File.Exists(adjacentBundle))
             {
-                ZipFile.ExtractToDirectory(adjacentBundle, destDir, overwriteFiles: true);
+                using var archive = ZipFile.OpenRead(adjacentBundle);
+                ExtractOverwriting(archive, destDir);
                 return;
             }
 
             throw new InvalidOperationException("Embedded resource 'bundle.zip' was not found in the installer binary.");
+        }
+
+        /// <summary>
+        /// Extracts every entry, replacing files from an earlier install (.NET Framework's
+        /// ExtractToDirectory has no overwrite option). Entries that would land outside
+        /// <paramref name="destDir"/> are refused.
+        /// </summary>
+        private static void ExtractOverwriting(ZipArchive archive, string destDir)
+        {
+            string root = Path.GetFullPath(destDir).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            foreach (var entry in archive.Entries)
+            {
+                string target = Path.GetFullPath(Path.Combine(root, entry.FullName));
+                if (!target.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException($"The app bundle has an entry outside the install folder: {entry.FullName}");
+                }
+                if (string.IsNullOrEmpty(entry.Name))
+                {
+                    Directory.CreateDirectory(target);
+                    continue;
+                }
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                entry.ExtractToFile(target, overwrite: true);
+            }
         }
 
         private static void CreateDesktopShortcut(string installDir)

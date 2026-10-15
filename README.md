@@ -38,10 +38,10 @@ Each app and each browser keeps its own workspace. To move your work between the
 
 **Requirements**
 
-- Windows 10 or 11, 64-bit.
+- Windows 10 (May 2019 Update or later) or Windows 11, 64-bit.
 - About 160 MB of disk space for the app. Speech models download later, when you set up transcription.
 - The Microsoft Edge WebView2 Runtime, which draws HuskyNote's window. Windows 11 and most Windows 10 computers already have it. If yours doesn't, HuskyNote offers to install it from Microsoft when it starts.
-- Nothing else: the installer and the app include the .NET runtime they need, and no administrator rights are required.
+- Nothing else to install: the app includes the .NET runtime it needs, and the installer runs on the .NET Framework 4.8 that is part of Windows. No administrator rights are required.
 
 **Install**
 

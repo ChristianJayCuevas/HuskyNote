@@ -2,23 +2,31 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
+    <!-- .NET Framework 4.8 is part of Windows 10 (May 2019 Update and later) and Windows 11, so the
+         installer needs no runtime of its own and stays about the size of the app bundle it carries.
+         The app itself is self-contained (../windows/HuskyNote.csproj). -->
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
-    <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>favicon.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>HuskyNote-Setup-x64</AssemblyName>
     <RootNamespace>HuskyNote.Setup</RootNamespace>
     <Authors>ChristianJayCuevas</Authors>
     <Company>HuskyNote</Company>
     <Product>HuskyNote Desktop Installer</Product>
     <Description>Automated Windows Installer for HuskyNote</Description>
-    <!-- One .exe to download, with the .NET runtime and the app bundle inside (version and
-         self-contained settings come from ../Directory.Build.props) -->
-    <PublishSingleFile>true</PublishSingleFile>
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Framework assemblies the installer uses; all ship with Windows -->
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="bundle.zip" Condition="Exists('bundle.zip')" />

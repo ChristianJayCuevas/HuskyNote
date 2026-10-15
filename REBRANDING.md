@@ -41,6 +41,8 @@ Renaming storage keys would otherwise make existing data disappear, so each surf
 
 Limits: browser storage is per origin, so data only carries over when HuskyNote is served from the same origin as the old DomoNote install (the desktop apps' `127.0.0.1:5892`, or the same local dev URL). Users moving to a new web domain should use Settings to export the workspace from DomoNote and import it into HuskyNote. An old DomoNote extension will not talk to HuskyNote because message names changed; reload the extension from this repo.
 
+**Follow-up, not done yet: pin the extension's ID.** The manifest has no `key`, so Chrome derives an unpacked extension's ID from its folder path, and moving the folder gives it a new ID. The extension keeps up to 50 meetings, notes and the live meeting roster in `chrome.storage.local`, which belongs to that ID. Adding a `key` fixes the ID from then on but changes it once, cutting off what the extension already stored. The side panel can export a backup but cannot import one, so pin the ID in the same release as an **Import backup** button, with release notes that say to export before updating.
+
 ---
 
 ## 2. Brand System and Artwork

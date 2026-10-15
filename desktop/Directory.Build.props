@@ -7,12 +7,6 @@
     <Version>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(HuskyNotePackageJson)')), '"version"\s*:\s*"([0-9][^"]*)"').Groups[1].Value)</Version>
     <!-- Keep the plain version (no "+commit") in Apps & features -->
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-
-    <!-- Self-contained for 64-bit Windows: the .NET runtime ships inside, so nothing else needs installing -->
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <SelfContained>true</SelfContained>
-    <!-- Only English framework messages; drops a dozen translated resource folders from the download -->
-    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <Target Name="HuskyNoteRequireVersion" BeforeTargets="Build">

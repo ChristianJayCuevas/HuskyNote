@@ -193,12 +193,12 @@ namespace HuskyNote.Setup
                 {
                     InstallerEngine.ExecuteInstall(_installDir, (msg, pct) =>
                     {
-                        Invoke(() =>
+                        Invoke(new Action(() =>
                         {
                             _progressBar.Value = Math.Min(100, Math.Max(0, pct));
                             _statusLabel.Text = msg;
                             Log(msg);
-                        });
+                        }));
                     });
                 });
 

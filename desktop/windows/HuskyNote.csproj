@@ -13,6 +13,11 @@
     <Company>HuskyNote</Company>
     <Product>HuskyNote — Your Personal AI Secretary</Product>
     <Description>HuskyNote Desktop for Windows</Description>
+    <!-- Self-contained for 64-bit Windows: the .NET runtime ships inside, so nothing else needs installing -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <!-- Only English framework messages; drops a dozen translated resource folders from the download -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>

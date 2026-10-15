@@ -25,7 +25,7 @@ if (-not (Test-Path "dist\index.html")) {
 Write-Host "`n[2/5] Publishing HuskyNote Desktop Executable..." -ForegroundColor Yellow
 $DesktopProj = "desktop\windows\HuskyNote.csproj"
 $DesktopPublishDir = "desktop\windows\bin\Release\net9.0-windows\win-x64\publish"
-# Version, win-x64 and self-contained come from desktop\Directory.Build.props
+# Self-contained win-x64 (HuskyNote.csproj); the version comes from desktop\Directory.Build.props
 dotnet publish $DesktopProj -c Release -o $DesktopPublishDir
 if ($LASTEXITCODE -ne 0) { throw "Publishing the desktop app failed" }
 # A self-contained app carries the .NET host; without it people would need the .NET 9 Desktop Runtime
@@ -64,12 +64,12 @@ Write-Host "Created portable archive: $PortableZip" -ForegroundColor Green
 # 4. Build HuskyNote Installer (.EXE)
 Write-Host "`n[4/5] Compiling HuskyNote Installer (.EXE)..." -ForegroundColor Yellow
 $InstallerProj = "desktop\installer\HuskyNoteSetup.csproj"
-$InstallerPublishDir = "desktop\installer\bin\Release\net9.0-windows\win-x64\publish"
-# Single file, self-contained and compressed (HuskyNoteSetup.csproj and desktop\Directory.Build.props)
+$InstallerPublishDir = "desktop\installer\bin\Release\publish"
+# A .NET Framework 4.8 executable (built into Windows) with the app bundle embedded
 dotnet publish $InstallerProj -c Release -o $InstallerPublishDir
 if ($LASTEXITCODE -ne 0) { throw "Publishing the installer failed" }
-$InstallerSelfContained = (dotnet msbuild $InstallerProj -getProperty:SelfContained).Trim()
-if ($InstallerSelfContained -ne "true") { throw "The installer is not self-contained" }
+$InstallerFramework = (dotnet msbuild $InstallerProj -getProperty:TargetFramework).Trim()
+if ($InstallerFramework -ne "net48") { throw "The installer must target .NET Framework 4.8 (found $InstallerFramework)" }
 
 # Copy compiled installer to public/downloads/HuskyNote-Setup-x64.exe
 $BuiltInstaller = "$InstallerPublishDir\HuskyNote-Setup-x64.exe"
@@ -88,7 +88,7 @@ Remove-Item -Recurse -Force $BundleDir -ErrorAction SilentlyContinue
 
 Write-Host "`n========================================================" -ForegroundColor Cyan
 Write-Host "  Windows Build Succeeded!" -ForegroundColor Green
-Write-Host "  Version:   $Version (self-contained; no .NET runtime needed)" -ForegroundColor White
+Write-Host "  Version:   $Version (app self-contained; installer runs on the .NET Framework 4.8 built into Windows)" -ForegroundColor White
 Write-Host ("  Installer: $DownloadsDir\HuskyNote-Setup-x64.exe ({0:N0} MB)" -f ((Get-Item "$DownloadsDir\HuskyNote-Setup-x64.exe").Length / 1MB)) -ForegroundColor White
 Write-Host ("  Portable:  $DownloadsDir\HuskyNote-Windows-Portable.zip ({0:N0} MB)" -f ((Get-Item $PortableZip).Length / 1MB)) -ForegroundColor White
 Write-Host "========================================================`n" -ForegroundColor Cyan
