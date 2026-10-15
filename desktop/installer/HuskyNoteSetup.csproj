@@ -9,11 +9,15 @@
     <ApplicationIcon>favicon.ico</ApplicationIcon>
     <AssemblyName>HuskyNote-Setup-x64</AssemblyName>
     <RootNamespace>HuskyNote.Setup</RootNamespace>
-    <Version>1.0.0</Version>
     <Authors>ChristianJayCuevas</Authors>
     <Company>HuskyNote</Company>
     <Product>HuskyNote Desktop Installer</Product>
     <Description>Automated Windows Installer for HuskyNote</Description>
+    <!-- One .exe to download, with the .NET runtime and the app bundle inside (version and
+         self-contained settings come from ../Directory.Build.props) -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
   </PropertyGroup>
 
   <ItemGroup>

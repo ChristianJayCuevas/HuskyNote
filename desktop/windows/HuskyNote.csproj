@@ -9,7 +9,6 @@
     <ApplicationIcon>favicon.ico</ApplicationIcon>
     <AssemblyName>HuskyNote</AssemblyName>
     <RootNamespace>HuskyNote</RootNamespace>
-    <Version>1.0.0</Version>
     <Authors>ChristianJayCuevas</Authors>
     <Company>HuskyNote</Company>
     <Product>HuskyNote — Your Personal AI Secretary</Product>

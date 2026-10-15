@@ -9,6 +9,8 @@ Write-Host "========================================================" -Foregroun
 
 $ROOT = Split-Path -Parent $PSScriptRoot
 Set-Location $ROOT
+$Version = (Get-Content "package.json" -Raw | ConvertFrom-Json).version
+Write-Host "Version $Version (from package.json)"
 
 # 1. Build Web App (Vite)
 Write-Host "`n[1/5] Building Web Production Assets (npm run build)..." -ForegroundColor Yellow
@@ -23,7 +25,11 @@ if (-not (Test-Path "dist\index.html")) {
 Write-Host "`n[2/5] Publishing HuskyNote Desktop Executable..." -ForegroundColor Yellow
 $DesktopProj = "desktop\windows\HuskyNote.csproj"
 $DesktopPublishDir = "desktop\windows\bin\Release\net9.0-windows\win-x64\publish"
-dotnet publish $DesktopProj -c Release -r win-x64 --no-self-contained -o $DesktopPublishDir
+# Version, win-x64 and self-contained come from desktop\Directory.Build.props
+dotnet publish $DesktopProj -c Release -o $DesktopPublishDir
+if ($LASTEXITCODE -ne 0) { throw "Publishing the desktop app failed" }
+# A self-contained app carries the .NET host; without it people would need the .NET 9 Desktop Runtime
+if (-not (Test-Path "$DesktopPublishDir\hostfxr.dll")) { throw "The desktop app was not published self-contained" }
 
 # 3. Assemble Bundle Directory
 Write-Host "`n[3/5] Assembling Application Bundle..." -ForegroundColor Yellow
@@ -59,7 +65,11 @@ Write-Host "Created portable archive: $PortableZip" -ForegroundColor Green
 Write-Host "`n[4/5] Compiling HuskyNote Installer (.EXE)..." -ForegroundColor Yellow
 $InstallerProj = "desktop\installer\HuskyNoteSetup.csproj"
 $InstallerPublishDir = "desktop\installer\bin\Release\net9.0-windows\win-x64\publish"
-dotnet publish $InstallerProj -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=true -o $InstallerPublishDir
+# Single file, self-contained and compressed (HuskyNoteSetup.csproj and desktop\Directory.Build.props)
+dotnet publish $InstallerProj -c Release -o $InstallerPublishDir
+if ($LASTEXITCODE -ne 0) { throw "Publishing the installer failed" }
+$InstallerSelfContained = (dotnet msbuild $InstallerProj -getProperty:SelfContained).Trim()
+if ($InstallerSelfContained -ne "true") { throw "The installer is not self-contained" }
 
 # Copy compiled installer to public/downloads/HuskyNote-Setup-x64.exe
 $BuiltInstaller = "$InstallerPublishDir\HuskyNote-Setup-x64.exe"
@@ -78,6 +88,7 @@ Remove-Item -Recurse -Force $BundleDir -ErrorAction SilentlyContinue
 
 Write-Host "`n========================================================" -ForegroundColor Cyan
 Write-Host "  Windows Build Succeeded!" -ForegroundColor Green
-Write-Host "  Installer: $DownloadsDir\HuskyNote-Setup-x64.exe" -ForegroundColor White
-Write-Host "  Portable:  $DownloadsDir\HuskyNote-Windows-Portable.zip" -ForegroundColor White
+Write-Host "  Version:   $Version (self-contained; no .NET runtime needed)" -ForegroundColor White
+Write-Host ("  Installer: $DownloadsDir\HuskyNote-Setup-x64.exe ({0:N0} MB)" -f ((Get-Item "$DownloadsDir\HuskyNote-Setup-x64.exe").Length / 1MB)) -ForegroundColor White
+Write-Host ("  Portable:  $DownloadsDir\HuskyNote-Windows-Portable.zip ({0:N0} MB)" -f ((Get-Item $PortableZip).Length / 1MB)) -ForegroundColor White
 Write-Host "========================================================`n" -ForegroundColor Cyan

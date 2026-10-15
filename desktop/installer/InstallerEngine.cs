@@ -16,12 +16,46 @@ namespace HuskyNote.Setup
             "Programs", "HuskyNote"
         );
 
+        /// <summary>The HuskyNote version this installer carries (package.json's version, set at build time).</summary>
+        public static string AppVersion =>
+            (typeof(InstallerEngine).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "0.0.0")
+                .Split('+')[0];
+
+        /// <summary>
+        /// Whether HuskyNote is running. Closing its window only hides it in the system tray, so it
+        /// often is, and its open program files would make an update fail partway.
+        /// </summary>
+        public static bool IsAppRunning() => Process.GetProcessesByName("HuskyNote").Length > 0;
+
+        /// <summary>Closes a running HuskyNote so its files can be replaced. Notes are saved as they are typed.</summary>
+        public static void CloseRunningApp()
+        {
+            foreach (var proc in Process.GetProcessesByName("HuskyNote"))
+            {
+                try
+                {
+                    proc.Kill();
+                    proc.WaitForExit(5000);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine($"[Close Warning] {ex.Message}");
+                }
+            }
+        }
+
         public static void ExecuteInstall(string? targetDir, Action<string, int>? progress = null)
         {
             string installDir = string.IsNullOrWhiteSpace(targetDir) ? DefaultInstallDir : targetDir;
 
             progress?.Invoke("Removing previous DomoNote installation if present...", 5);
             RemoveLegacyDomoNoteInstall();
+
+            if (IsAppRunning())
+            {
+                progress?.Invoke("Closing HuskyNote so it can be updated...", 8);
+                CloseRunningApp();
+            }
 
             progress?.Invoke($"Preparing installation directory: {installDir}", 10);
             Directory.CreateDirectory(installDir);
@@ -179,7 +213,7 @@ echo HuskyNote uninstallation complete.
             {
                 using var key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\HuskyNote");
                 key.SetValue("DisplayName", "HuskyNote");
-                key.SetValue("DisplayVersion", "1.0.0");
+                key.SetValue("DisplayVersion", AppVersion);
                 key.SetValue("Publisher", "ChristianJayCuevas");
                 key.SetValue("InstallLocation", installDir);
                 key.SetValue("DisplayIcon", Path.Combine(installDir, "favicon.ico"));
