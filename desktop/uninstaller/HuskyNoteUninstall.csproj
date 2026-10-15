@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- Like the installer, runs on the .NET Framework 4.8 that is part of Windows, so it stays tiny -->
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>..\installer\favicon.ico</ApplicationIcon>
+    <ApplicationManifest>..\installer\app.manifest</ApplicationManifest>
+    <AssemblyName>uninstall</AssemblyName>
+    <RootNamespace>HuskyNote.Uninstall</RootNamespace>
+    <Authors>ChristianJayCuevas</Authors>
+    <Company>HuskyNote</Company>
+    <Product>HuskyNote Uninstaller</Product>
+    <Description>Removes HuskyNote from this computer</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\shared\InstallLayout.cs" Link="InstallLayout.cs" />
+  </ItemGroup>
+
+</Project>

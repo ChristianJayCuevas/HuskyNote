@@ -65,6 +65,11 @@ Write-Host "Created portable archive: $PortableZip" -ForegroundColor Green
 Write-Host "`n[4/5] Compiling HuskyNote Installer (.EXE)..." -ForegroundColor Yellow
 $InstallerProj = "desktop\installer\HuskyNoteSetup.csproj"
 $InstallerPublishDir = "desktop\installer\bin\Release\publish"
+# The uninstaller first: the installer embeds it (desktop\installer\uninstall.exe) and writes it into the install folder
+$UninstallerPublishDir = "desktop\uninstaller\bin\Release\publish"
+dotnet publish "desktop\uninstaller\HuskyNoteUninstall.csproj" -c Release -o $UninstallerPublishDir
+if ($LASTEXITCODE -ne 0) { throw "Publishing the uninstaller failed" }
+Copy-Item "$UninstallerPublishDir\uninstall.exe" -Destination "desktop\installer\uninstall.exe" -Force
 # A .NET Framework 4.8 executable (built into Windows) with the app bundle embedded
 dotnet publish $InstallerProj -c Release -o $InstallerPublishDir
 if ($LASTEXITCODE -ne 0) { throw "Publishing the installer failed" }

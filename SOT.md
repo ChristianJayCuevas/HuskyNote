@@ -72,7 +72,7 @@ HuskyNote integrates five primary knowledge and capture modalities into a unifie
   - The app checks for the Microsoft Edge WebView2 Runtime at startup and offers Microsoft's Evergreen Bootstrapper when it is missing
   - Creates Desktop and Start Menu shortcuts with official icon
   - Registers in Windows Registry under `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\HuskyNote`
-  - Standalone uninstaller script (`uninstall.bat`)
+  - Uninstaller `uninstall.exe` (`desktop/uninstaller/`, .NET Framework 4.8, embedded in the installer): asks first, keeps the user's data unless they tick the option to delete it, `/S` for silent and `/S --delete-data` to also remove data; exits 0 when done and 1602 when cancelled
   - Supports silent installation (`/S`, `/silent`, `--quiet`)
 
 ### 3.3 Optional Companion & Extensions

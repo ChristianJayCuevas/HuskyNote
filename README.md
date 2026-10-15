@@ -67,9 +67,11 @@ Download the newer installer and run it; your notes, meetings and settings stay.
 
 **Uninstall**
 
-Open **Settings → Apps → Installed apps**, find HuskyNote, and choose **Uninstall** (or use **Control Panel → Programs and Features**). This closes HuskyNote and removes the program and its shortcuts right away.
+Open **Settings → Apps → Installed apps**, find HuskyNote, and choose **Uninstall** (or use **Control Panel → Programs and Features**). HuskyNote asks first, then closes and removes the program and its shortcuts.
 
-Your notes, meetings and settings stay in `%LOCALAPPDATA%\HuskyNote\WebView2Data`, so reinstalling brings them back. To delete them too, first save a backup in **Settings → Storage** if you might want them later, then delete that folder.
+Your notes, meetings, recordings and settings stay in `%LOCALAPPDATA%\HuskyNote`, so reinstalling brings them back. To delete them too, tick **Also delete my notes, meetings, recordings and settings** in the uninstaller; it asks once more, because this can't be undone. Save a backup in **Settings → Storage** first if you might want them later.
+
+For scripts: `"%LOCALAPPDATA%\Programs\HuskyNote\uninstall.exe" /S` uninstalls without asking and keeps the data; add `--delete-data` to remove it as well.
 
 **Coming from DomoNote?** The installer removes the old DomoNote program. On first start, HuskyNote moves DomoNote's data folder (`%LOCALAPPDATA%\DomoNote\WebView2Data`) to its own and copies your notes and meetings into HuskyNote.
 

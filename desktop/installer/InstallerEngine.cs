@@ -5,16 +5,14 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using HuskyNote.Install;
 using Microsoft.Win32;
 
 namespace HuskyNote.Setup
 {
     public static class InstallerEngine
     {
-        public static string DefaultInstallDir => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Programs", "HuskyNote"
-        );
+        public static string DefaultInstallDir => InstallLayout.DefaultInstallDir;
 
         /// <summary>The HuskyNote version this installer carries (package.json's version, set at build time).</summary>
         public static string AppVersion =>
@@ -25,12 +23,12 @@ namespace HuskyNote.Setup
         /// Whether HuskyNote is running. Closing its window only hides it in the system tray, so it
         /// often is, and its open program files would make an update fail partway.
         /// </summary>
-        public static bool IsAppRunning() => Process.GetProcessesByName("HuskyNote").Length > 0;
+        public static bool IsAppRunning() => Process.GetProcessesByName(InstallLayout.AppProcessName).Length > 0;
 
         /// <summary>Closes a running HuskyNote so its files can be replaced. Notes are saved as they are typed.</summary>
         public static void CloseRunningApp()
         {
-            foreach (var proc in Process.GetProcessesByName("HuskyNote"))
+            foreach (var proc in Process.GetProcessesByName(InstallLayout.AppProcessName))
             {
                 try
                 {
@@ -71,7 +69,7 @@ namespace HuskyNote.Setup
             CreateStartMenuShortcut(installDir);
 
             progress?.Invoke("Creating uninstaller and registering in Windows Settings...", 85);
-            CreateUninstaller(installDir);
+            WriteUninstaller(installDir);
             RegisterWindowsUninstall(installDir);
 
             progress?.Invoke("Checking local Ollama service...", 95);
@@ -160,24 +158,19 @@ namespace HuskyNote.Setup
 
         private static void CreateDesktopShortcut(string installDir)
         {
-            string desktopDir = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-            string shortcutPath = Path.Combine(desktopDir, "HuskyNote.lnk");
-            string targetExe = Path.Combine(installDir, "HuskyNote.exe");
+            string targetExe = Path.Combine(installDir, InstallLayout.AppExeName);
             string iconLocation = Path.Combine(installDir, "favicon.ico");
 
-            CreateShortcut(shortcutPath, targetExe, iconLocation, "HuskyNote — Your Personal AI Secretary");
+            CreateShortcut(InstallLayout.DesktopShortcut, targetExe, iconLocation, "HuskyNote — Your Personal AI Secretary");
         }
 
         private static void CreateStartMenuShortcut(string installDir)
         {
-            string startMenuDir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.StartMenu),
-                "Programs", "HuskyNote"
-            );
+            string startMenuDir = InstallLayout.StartMenuFolder;
             Directory.CreateDirectory(startMenuDir);
 
             string shortcutPath = Path.Combine(startMenuDir, "HuskyNote.lnk");
-            string targetExe = Path.Combine(installDir, "HuskyNote.exe");
+            string targetExe = Path.Combine(installDir, InstallLayout.AppExeName);
             string iconLocation = Path.Combine(installDir, "favicon.ico");
 
             CreateShortcut(shortcutPath, targetExe, iconLocation, "HuskyNote — Your Personal AI Secretary");
@@ -208,43 +201,45 @@ namespace HuskyNote.Setup
             }
         }
 
-        private static void CreateUninstaller(string installDir)
+        /// <summary>
+        /// Writes uninstall.exe (embedded in this installer) into the install folder, replacing the
+        /// uninstall.bat that earlier versions wrote.
+        /// </summary>
+        private static void WriteUninstaller(string installDir)
         {
-            string uninstallBat = Path.Combine(installDir, "uninstall.bat");
-            string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "HuskyNote.lnk");
-            string startMenuLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", "HuskyNote", "HuskyNote.lnk");
-            string startMenuFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", "HuskyNote");
+            var asm = Assembly.GetExecutingAssembly();
+            string? resourceName = asm.GetManifestResourceNames()
+                .FirstOrDefault(n => n.EndsWith(InstallLayout.UninstallerExeName, StringComparison.OrdinalIgnoreCase));
+            using var stream = resourceName == null ? null : asm.GetManifestResourceStream(resourceName);
+            if (stream == null)
+            {
+                throw new InvalidOperationException("The uninstaller is missing from this installer. Rebuild it with scripts/build-windows.ps1.");
+            }
+            using (var file = File.Create(Path.Combine(installDir, InstallLayout.UninstallerExeName)))
+            {
+                stream.CopyTo(file);
+            }
 
-            string uninstallContent = $@"@echo off
-title HuskyNote Uninstaller
-echo ========================================================
-echo   Uninstalling HuskyNote...
-echo ========================================================
-taskkill /f /im HuskyNote.exe >nul 2>nul
-del /f /q ""{desktopLnk}"" 2>nul
-del /f /q ""{startMenuLnk}"" 2>nul
-rmdir /s /q ""{startMenuFolder}"" 2>nul
-reg delete ""HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\HuskyNote"" /f >nul 2>nul
-echo HuskyNote shortcuts and registry entries removed.
-echo Removing installation directory...
-cd /d ""%USERPROFILE%""
-rmdir /s /q ""{installDir}"" 2>nul
-echo HuskyNote uninstallation complete.
-";
-            File.WriteAllText(uninstallBat, uninstallContent);
+            string legacyBat = Path.Combine(installDir, "uninstall.bat");
+            if (File.Exists(legacyBat)) File.Delete(legacyBat);
         }
 
         private static void RegisterWindowsUninstall(string installDir)
         {
             try
             {
-                using var key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\HuskyNote");
+                string uninstaller = Path.Combine(installDir, InstallLayout.UninstallerExeName);
+                using var key = Registry.CurrentUser.CreateSubKey(InstallLayout.UninstallKeyPath);
                 key.SetValue("DisplayName", "HuskyNote");
                 key.SetValue("DisplayVersion", AppVersion);
                 key.SetValue("Publisher", "ChristianJayCuevas");
                 key.SetValue("InstallLocation", installDir);
                 key.SetValue("DisplayIcon", Path.Combine(installDir, "favicon.ico"));
-                key.SetValue("UninstallString", $"\"{Path.Combine(installDir, "uninstall.bat")}\"");
+                key.SetValue("UninstallString", $"\"{uninstaller}\"");
+                key.SetValue("QuietUninstallString", $"\"{uninstaller}\" /S");
+                key.SetValue("NoModify", 1, RegistryValueKind.DWord);
+                key.SetValue("NoRepair", 1, RegistryValueKind.DWord);
+                key.SetValue("EstimatedSize", InstalledSizeKb(installDir), RegistryValueKind.DWord);
                 key.SetValue("URLInfoAbout", "https://github.com/ChristianJayCuevas/HuskyNote");
                 key.SetValue("HelpLink", "https://github.com/ChristianJayCuevas/HuskyNote");
             }
@@ -253,6 +248,10 @@ echo HuskyNote uninstallation complete.
                 Trace.WriteLine($"[Registry Warning] {ex.Message}");
             }
         }
+
+        /// <summary>Size shown in Apps &amp; features, in KB</summary>
+        private static int InstalledSizeKb(string installDir) =>
+            (int)(new DirectoryInfo(installDir).EnumerateFiles("*", SearchOption.AllDirectories).Sum(f => f.Length) / 1024);
 
         public static bool CheckOllamaStatus()
         {
