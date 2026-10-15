@@ -23,6 +23,7 @@ import { CloudEnvironmentModal } from './components/modals/cloud-environment-mod
 import { ChromeExtensionModal } from './components/modals/chrome-extension-modal';
 import { handleGoogleAuthCallback } from './services/calendar/google-calendar';
 import { isDesktopShell } from './services/environment';
+import { AppTour } from './features/guided-tour/components/app-tour';
 
 export const App: React.FC = () => {
   const {
@@ -124,6 +125,7 @@ export const App: React.FC = () => {
         isOpen={isExtensionModalOpen}
         onClose={() => setIsExtensionModalOpen(false)}
       />
+      <AppTour />
     </AppLayout>
   );
 };

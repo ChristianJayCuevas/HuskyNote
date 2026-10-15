@@ -25,9 +25,12 @@ import {
   Sparkles,
   Video,
   BookMarked,
+  Compass,
   type LucideIcon,
 } from 'lucide-react';
 import { useWorkspace } from '../../context/workspace-context';
+import { useLanguage } from '../../context/language-context';
+import { startTourAfterDialogs } from '@/features/guided-tour';
 import { useTheme } from '../../context/theme-context';
 import { SETTINGS_TAB_STORAGE_KEY } from '../../views/settings-view';
 import { createEmptyNote } from '../../services/notes/actions';
@@ -66,6 +69,7 @@ export const CommandPalette: React.FC = () => {
     setIsExtensionModalOpen,
     setActiveNoteId,
   } = useWorkspace();
+  const { t } = useLanguage();
   const { toggleTheme } = useTheme();
 
   const actions = useMemo<PaletteAction[]>(
@@ -292,6 +296,14 @@ export const CommandPalette: React.FC = () => {
         },
       },
       {
+        id: 'guided-tour',
+        title: t('tour.trigger', 'Take me for a tour'),
+        description: 'A short walk through notes, meetings, Voice Type and AI',
+        icon: Compass,
+        group: 'actions',
+        run: () => startTourAfterDialogs('huskynote'),
+      },
+      {
         id: 'toggle-theme',
         title: 'Toggle theme',
         description: 'Switch between light and dark',
@@ -300,7 +312,7 @@ export const CommandPalette: React.FC = () => {
         run: () => toggleTheme(),
       },
     ],
-    [setActiveView, setActiveNoteId, addToast, setIsExtensionModalOpen, toggleTheme]
+    [setActiveView, setActiveNoteId, addToast, setIsExtensionModalOpen, toggleTheme, t]
   );
 
   const runAction = (action: PaletteAction) => {

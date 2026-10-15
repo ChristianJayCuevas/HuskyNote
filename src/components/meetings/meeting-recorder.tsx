@@ -67,6 +67,7 @@ import {
   HardDrive,
   ChevronDown,
 } from 'lucide-react';
+import { tourTarget } from '@/features/guided-tour/tours/targets';
 
 interface MeetingRecorderProps {
   onMeetingSaved: (meeting: Meeting) => void;
@@ -1196,7 +1197,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
             <div className="p-4">
               {!isRecording ? (
                 <>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex w-fit max-w-full flex-wrap items-center gap-2" {...tourTarget('meeting-record')}>
                     {/* Source choice: microphone or Meet / tab audio */}
                     <ToggleGroup
                       type="single"

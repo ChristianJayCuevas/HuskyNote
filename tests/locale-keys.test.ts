@@ -43,6 +43,12 @@ describe('translations', () => {
     }
   });
 
+  it('French keeps its punctuation on the line: a non-breaking space before : ; ? ! » and after «', () => {
+    for (const [key, text] of leaves(fr)) {
+      expect([key, /[ ][:;?!»]|«[ ]/.test(text)]).toEqual([key, false]);
+    }
+  });
+
   it('has no empty strings', () => {
     for (const locale of [en, fr, ja, zh]) {
       for (const [key, text] of leaves(locale)) expect([key, text.trim().length > 0]).toEqual([key, true]);

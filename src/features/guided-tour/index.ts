@@ -4,6 +4,7 @@
  * (`dispatchTour`, `setShownTarget`, `useTourRunner`, ...) stay private.
  */
 export { startTour } from './state/active-tour-store';
+export { startTourAfterDialogs } from './lib/start-after-dialogs';
 export { useTour, type UseTourResult } from './hooks/use-tour';
 export { TourTrigger, type TourTriggerProps } from './components/tour-trigger';
 export { TourAutoStart, useTourAutoStart, type UseTourAutoStartOptions } from './hooks/use-tour-auto-start';

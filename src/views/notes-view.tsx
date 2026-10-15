@@ -7,6 +7,7 @@ import { NoteEditor } from '../components/notes/note-editor';
 import { EmptyState } from '../components/ui/empty-state';
 import { ResizableListPanel } from '../components/ui/resizable-list-panel';
 import { FileText } from 'lucide-react';
+import { tourTarget } from '@/features/guided-tour/tours/targets';
 
 export const NotesView: React.FC = () => {
   const { activeNoteId, setActiveNoteId } = useWorkspace();
@@ -43,7 +44,7 @@ export const NotesView: React.FC = () => {
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-background">
-      <ResizableListPanel storageKey="notes" label="Notes" hiddenOnMobile={!!activeNoteId}>
+      <ResizableListPanel storageKey="notes" label="Notes" hiddenOnMobile={!!activeNoteId} {...tourTarget('notes-list')}>
         <NoteList
           selectedNoteId={activeNoteId}
           onSelectNote={(id) => setActiveNoteId(id)}

@@ -179,6 +179,26 @@ describe('manual trigger', () => {
   });
 });
 
+describe('counting steps', () => {
+  it('leaves steps this screen skips out of "Step n of m" and the dots', async () => {
+    (TOURS as Record<string, TourDefinition>).demo = {
+      id: 'demo',
+      version: 2,
+      steps: [step('a'), step('b', { showIf: () => false }), step('c', { target: 'c-target' })],
+    };
+    renderApp(<div data-tour="c-target" ref={visibleRef} />);
+    fireEvent.click(trigger());
+    await screen.findByRole('dialog', { name: 'Title a' });
+    expect(screen.getByText('1 / 2')).toBeInTheDocument();
+    expect(document.querySelectorAll('[data-slot="guided-tour-dot"]')).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByRole('dialog', { name: 'Title c' });
+    expect(screen.getByText('Step 2 of 2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument();
+  });
+});
+
 describe('focus fallback (tours that end on another view)', () => {
   it('lands on the visible <main> when the trigger is no longer visible at the end', async () => {
     renderApp();
@@ -459,7 +479,15 @@ describe('auto-start', () => {
 describe('public API (index.ts)', () => {
   it('exports exactly the public values and no engine internals', () => {
     expect(Object.keys(publicApi).sort()).toEqual(
-      ['TourAutoStart', 'TourTrigger', 'resetTourProgress', 'startTour', 'useTour', 'useTourAutoStart'].sort()
+      [
+        'TourAutoStart',
+        'TourTrigger',
+        'resetTourProgress',
+        'startTour',
+        'startTourAfterDialogs',
+        'useTour',
+        'useTourAutoStart',
+      ].sort()
     );
     for (const internal of [
       'dispatchTour',

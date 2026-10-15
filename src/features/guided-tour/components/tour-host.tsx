@@ -56,6 +56,13 @@ function ActiveTourHost({ activeView, showView }: TourHostProps) {
   const { step, phase } = runner;
   const running = phase !== null && step !== null;
 
+  // Steps this screen skips (`showIf`, such as the sidebar on phones) are left out of
+  // "Step n of m" and the dots, so the count doesn't jump
+  const counted = runner.definition?.steps.filter((s) => !s.showIf || s.showIf()) ?? [];
+  const position = step ? counted.indexOf(step) : -1;
+  const index = position >= 0 ? position : runner.index;
+  const total = position >= 0 ? counted.length : runner.total;
+
   // Element focused when the tour began. A layout effect runs before the overlay's focus trap
   // (a passive effect) moves focus into the tour.
   const startFocusRef = useRef<Element | null>(null);
@@ -79,8 +86,8 @@ function ActiveTourHost({ activeView, showView }: TourHostProps) {
   return running ? (
     <TourOverlay
       step={step}
-      index={runner.index}
-      total={runner.total}
+      index={index}
+      total={total}
       target={runner.target}
       phase={phase}
       onNext={runner.next}

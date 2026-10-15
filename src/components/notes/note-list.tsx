@@ -4,6 +4,7 @@ import { db } from '../../db';
 import { Plus, FileText } from 'lucide-react';
 import { Button } from '../ui/button';
 import { ListItem, ListPane, ListPaneBody, ListPaneEmpty, ListPaneHeader, ListPaneSearch } from '../ui/list-pane';
+import { tourTarget } from '@/features/guided-tour/tours/targets';
 
 const tagChipClass =
   'inline-flex h-6 shrink-0 items-center whitespace-nowrap rounded-md px-2 text-xs font-medium text-muted-foreground transition-colors duration-100 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-pressed:bg-accent aria-pressed:text-accent-foreground';
@@ -44,7 +45,7 @@ export const NoteList: React.FC<NoteListProps> = ({
         title="Notes"
         count={notes.length}
         actions={
-          <Button size="sm" variant="default" onClick={onCreateNote}>
+          <Button size="sm" variant="default" onClick={onCreateNote} {...tourTarget('new-note')}>
             <Plus />
             <span>New Note</span>
           </Button>

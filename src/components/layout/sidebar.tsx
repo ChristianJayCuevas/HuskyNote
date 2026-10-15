@@ -4,6 +4,7 @@ import {
   BookOpen,
   Calendar,
   CircleHelp,
+  Compass,
   Download,
   Feather,
   FileText,
@@ -45,6 +46,8 @@ import { useAI } from '../../context/ai-context';
 import { PROVIDER_NAMES } from '../../services/ai/active-provider';
 import { isDesktopShell } from '../../services/environment';
 import { ProfileSwitcher } from './profile-switcher';
+import { startTourAfterDialogs } from '@/features/guided-tour';
+import { tourTarget } from '@/features/guided-tour/tours/targets';
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 const modifier = isMac ? 'Cmd' : 'Ctrl';
@@ -144,7 +147,7 @@ const SidebarBody: React.FC<SidebarBodyProps> = ({ collapsed, onNavigate, onTogg
         <ProfileSwitcher collapsed={collapsed} />
       </div>
 
-      <nav aria-label="Main" className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 py-1">
+      <nav aria-label="Main" className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 py-1" {...tourTarget('sidebar-nav')}>
         <div className="space-y-0.5">
           <NavItem
             icon={Search}
@@ -195,6 +198,17 @@ const SidebarBody: React.FC<SidebarBodyProps> = ({ collapsed, onNavigate, onTogg
             </DropdownMenuTrigger>
           </CollapsibleTooltip>
           <DropdownMenuContent side={collapsed ? 'right' : 'top'} align={collapsed ? 'end' : 'start'} className="w-56">
+            <DropdownMenuItem
+              onSelect={() => {
+                // On phones the sidebar is a sheet; close it so the tour can point at the page
+                setIsMobileSidebarOpen(false);
+                startTourAfterDialogs('huskynote');
+              }}
+            >
+              <Compass />
+              {t('tour.trigger', 'Take me for a tour')}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             {helpItems.map((item) => {
               const Icon = item.icon;
               return (

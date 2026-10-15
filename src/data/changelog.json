@@ -1,5 +1,13 @@
 [
   {
+    "version": "v0.7.0",
+    "date": "2026-10-15",
+    "title": "Guided Tour",
+    "highlights": [
+      "Take me for a tour: a short guided tour of notes, meetings, Voice Type, Teams import, profiles, the AI Workspace, and your AI and transcription choices. Start it any time from Help & about at the bottom of the sidebar, the command palette (Ctrl+K), or Settings → About. It opens by itself once on a new, empty workspace, and is available in English, French, Japanese, and Chinese."
+    ]
+  },
+  {
     "version": "v0.6.0",
     "date": "2026-10-08",
     "title": "ChatGPT Sign-In, Teams Transcripts, Meeting Merge & a New Look",

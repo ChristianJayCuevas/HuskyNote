@@ -70,6 +70,7 @@ import { UpdateSettings } from '../components/settings/update-settings';
 import { APP_VERSION } from '../services/updates/update-checker';
 import { HuskyMark } from '@/brand';
 import { SETTINGS_TAB_STORAGE_KEY, type SettingsTab } from './settings-tabs';
+import { TourTrigger } from '@/features/guided-tour';
 
 export { SETTINGS_TAB_STORAGE_KEY };
 
@@ -1198,7 +1199,8 @@ export const SettingsView: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-1">
-                  <Button size="sm" variant="outline" onClick={() => setActiveView('about')}>
+                  <TourTrigger tourId="huskynote" size="sm" variant="outline" />
+                  <Button size="sm" variant="ghost" onClick={() => setActiveView('about')}>
                     About HuskyNote
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => setActiveView('changelog')}>

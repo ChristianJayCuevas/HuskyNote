@@ -87,12 +87,12 @@
       "finished": "Vous êtes prêt",
       "stepOf": "Étape {n} sur {total}",
       "counter": "{n} / {total}",
-      "announce": "Étape {n} sur {total} : {title}"
+      "announce": "Étape {n} sur {total} : {title}"
     },
     "steps": {
       "welcome": {
         "title": "Bienvenue dans HuskyNote",
-        "body": "Petit tour d'horizon : notes, réunions, saisie vocale et une IA qui travaille avec votre propre espace. Tout est enregistré sur cet appareil. Utilisez les flèches du clavier ou les boutons ci-dessous ; Échap met fin à la visite."
+        "body": "Petit tour d'horizon : notes, réunions, saisie vocale et une IA qui travaille avec votre propre espace. Tout est enregistré sur cet appareil. Utilisez les flèches du clavier ou les boutons ci-dessous ; Échap met fin à la visite."
       },
       "navigation": {
         "title": "Tout dans une seule barre latérale",
@@ -108,7 +108,7 @@
       },
       "voiceType": {
         "title": "Saisie vocale",
-        "body": "Dictez depuis n'importe quel écran. Cliquez sur le micro et parlez : le texte s'insère directement dans la note en cours, et vous pouvez copier toute la dictée une fois terminée."
+        "body": "Dictez depuis n'importe quel écran. Cliquez sur le micro et parlez : le texte s'insère directement dans la note en cours, et vous pouvez copier toute la dictée une fois terminée."
       },
       "notes": {
         "title": "Notes",
@@ -132,7 +132,7 @@
       },
       "aiProviders": {
         "title": "Choisissez votre IA",
-        "body": "Utilisez une IA locale avec Ollama, une clé API Claude, ou connectez-vous avec votre abonnement Claude ou ChatGPT. Choisissez ici ; vous pourrez changer à tout moment."
+        "body": "Utilisez une IA locale avec Ollama, une clé API Claude, ou connectez-vous avec votre abonnement Claude ou ChatGPT. Choisissez ici ; vous pourrez changer à tout moment."
       },
       "transcription": {
         "title": "Configurez la transcription",
@@ -140,7 +140,7 @@
       },
       "finish": {
         "title": "Fin de la visite",
-        "body": "Pour la revoir, ouvrez Aide et à propos en bas de la barre latérale et choisissez Faire la visite guidée, ou appuyez sur Ctrl+K et cherchez « visite »."
+        "body": "Pour la revoir, ouvrez Aide et à propos en bas de la barre latérale et choisissez Faire la visite guidée, ou appuyez sur Ctrl+K et cherchez « visite »."
       }
     }
   }
