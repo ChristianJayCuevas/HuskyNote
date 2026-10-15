@@ -20,6 +20,8 @@ Repository: https://github.com/ChristianJayCuevas/HuskyNote · [Latest release](
 
 Get the latest version from [Releases](https://github.com/ChristianJayCuevas/HuskyNote/releases/latest).
 
+**v0.7.0 is Windows-only for now.** macOS and Linux builds will follow; until then, download those from [v0.6.0](https://github.com/ChristianJayCuevas/HuskyNote/releases/tag/v0.6.0).
+
 | Platform | File |
 | --- | --- |
 | Windows installer | `HuskyNote-Setup-x64.exe` |
