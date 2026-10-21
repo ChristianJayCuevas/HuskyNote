@@ -1,293 +1,180 @@
-# HuskyNote — Your Local AI Secretary
+<div align="center">
 
-> Capture it. Understand it. Keep it.
+# 🐺 HuskyNote
 
-HuskyNote is a local-first AI secretary for meetings, notes, documents, and step-by-step guides. It records and transcribes meetings on your own computer, writes meeting reports with the AI you choose, and keeps everything in a workspace stored on your device.
+### Your Local AI Secretary
 
-- **Your data stays local.** Notes, meetings, audio, and documents are stored on this device. There are no accounts, no cloud sync, and no tracking.
-- **Transcription runs on your computer.** Speech is never sent anywhere to be transcribed.
-- **Choose your AI:**
-  - Ollama runs on this computer.
-  - Claude uses your own Anthropic API key.
-  - Claude Subscription uses your Claude plan through Claude Code on this computer.
-  - ChatGPT (Codex) uses your ChatGPT plan through the Codex app.
+**Local-first AI note-taking, meetings, documents, and SOP capture.**
+Capture it. Understand it. Keep it.
 
-Repository: https://github.com/ChristianJayCuevas/HuskyNote · [Latest release](https://github.com/ChristianJayCuevas/HuskyNote/releases/latest) · [Roadmap](ROADMAP.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React 18](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 
----
+[Download](https://github.com/ChristianJayCuevas/HuskyNote/releases/latest) · [Features](#features) · [Run from source](#install--run-from-source) · [Roadmap](ROADMAP.md) · [Contributing](CONTRIBUTING.md)
 
-## Download
+<!-- Demo GIF: record per demo-gif-plan.md and save to docs/demo.gif -->
+![HuskyNote demo](docs/demo.gif)
 
-Get the latest version from [Releases](https://github.com/ChristianJayCuevas/HuskyNote/releases/latest).
-
-**v0.7.0 is Windows-only for now.** macOS and Linux builds will follow; until then, download those from [v0.6.0](https://github.com/ChristianJayCuevas/HuskyNote/releases/tag/v0.6.0).
-
-| Platform | File |
-| --- | --- |
-| Windows installer | `HuskyNote-Setup-x64.exe` |
-| Windows portable | `HuskyNote-Windows-Portable.zip` |
-| macOS (Apple Silicon and Intel) | `HuskyNote-macOS-Universal.dmg` |
-| macOS (Apple Silicon only / Intel only) | `HuskyNote-macOS-arm64.dmg` / `HuskyNote-macOS-x64.dmg` |
-| Linux | `HuskyNote-Linux-x86_64.AppImage` or `HuskyNote-Linux-x64.tar.gz` |
-
-- **macOS:** the app is not notarized, so macOS warns on first launch. Run `Open HuskyNote.command` from the disk image once to clear the warning.
-- **Linux:** the AppImage needs FUSE 2 (`libfuse2`); without it, use the tarball.
-- **Checksums:** verify downloads with `SHA256SUMS.txt` (see [Check the download](#install-on-windows)).
-
-Each app and each browser keeps its own workspace. To move your work between them, use a backup (see [Profiles and backups](#profiles-and-backups)).
-
-### Install on Windows
-
-**Requirements**
-
-- Windows 10 (May 2019 Update or later) or Windows 11, 64-bit.
-- About 160 MB of disk space for the app. Speech models download later, when you set up transcription.
-- The Microsoft Edge WebView2 Runtime, which draws HuskyNote's window. Windows 11 and most Windows 10 computers already have it. If yours doesn't, HuskyNote offers to install it from Microsoft when it starts.
-- Nothing else to install: the app includes the .NET runtime it needs, and the installer runs on the .NET Framework 4.8 that is part of Windows. No administrator rights are required.
-
-**Install**
-
-1. Download `HuskyNote-Setup-x64.exe` from [Releases](https://github.com/ChristianJayCuevas/HuskyNote/releases/latest).
-2. Run it. HuskyNote isn't code-signed yet, so Windows SmartScreen may show "Windows protected your PC". Select **More info**, then **Run anyway**.
-3. Select **Install Now**. HuskyNote installs for your Windows account only, in `%LOCALAPPDATA%\Programs\HuskyNote`, with Desktop and Start menu shortcuts.
-
-To run HuskyNote without installing it, unzip `HuskyNote-Windows-Portable.zip` anywhere and open `HuskyNote.exe`.
-
-**Check the download (optional)**
-
-Each release lists a SHA-256 checksum for every file in `SHA256SUMS.txt`. In PowerShell, in the folder you downloaded to:
-
-```powershell
-Get-FileHash .\HuskyNote-Setup-x64.exe -Algorithm SHA256
-```
-
-The hash must match the `HuskyNote-Setup-x64.exe` line in `SHA256SUMS.txt` from the same release (letter case doesn't matter). If it doesn't, delete the file and download it again.
-
-**Update**
-
-Download the newer installer and run it; your notes, meetings and settings stay. Closing HuskyNote's window only hides it in the system tray, so it is often still running: the installer then offers to close it first. If you are recording a meeting, stop the recording before you update.
-
-**Uninstall**
-
-Open **Settings → Apps → Installed apps**, find HuskyNote, and choose **Uninstall** (or use **Control Panel → Programs and Features**). HuskyNote asks first, then closes and removes the program and its shortcuts.
-
-Your notes, meetings, recordings and settings stay in `%LOCALAPPDATA%\HuskyNote`, so reinstalling brings them back. To delete them too, tick **Also delete my notes, meetings, recordings and settings** in the uninstaller; it asks once more, because this can't be undone. Save a backup in **Settings → Storage** first if you might want them later.
-
-For scripts: `"%LOCALAPPDATA%\Programs\HuskyNote\uninstall.exe" /S` uninstalls without asking and keeps the data; add `--delete-data` to remove it as well.
-
-**Coming from DomoNote?** The installer removes the old DomoNote program. On first start, HuskyNote moves DomoNote's data folder (`%LOCALAPPDATA%\DomoNote\WebView2Data`) to its own and copies your notes and meetings into HuskyNote.
+</div>
 
 ---
+
+## Why local-first?
+
+Meetings, notes, and internal documents are some of the most sensitive data you have. HuskyNote keeps them on **your** device:
+
+- **Your data stays on your device.** Notes, meetings, audio, transcripts, and documents live in the app's local database (IndexedDB via Dexie), per profile.
+- **No accounts, no cloud sync, no analytics, no trackers.** The update check is **off by default**; when enabled it only asks GitHub whether a newer release exists.
+- **Transcription always runs on-device** (WebGPU or WASM), whichever AI provider you pick.
+- **You choose where AI text goes** — fully local with Ollama, or opt into Claude / ChatGPT (Codex) with your own key or plan. API keys are left out of backups.
 
 ## Features
 
-### Meetings
-- **Record** your microphone, a browser tab's audio, or both. The microphone is chosen next to the record button.
-- **Transcribe on this device.** Choose an engine in **Settings → Transcription**:
-  - **Parakeet** (default): fastest, 25 European languages, uses the GPU when available.
-  - **Moonshine:** lightweight, English only.
-  - **Whisper:** multilingual, and used for Filipino / Taglish.
-  - **Whisper Small and Turbo:** experimental. A local benchmark lets you compare engines.
-- **Recordings are saved every second.** If a recording is interrupted, **Finish saving** rebuilds it from the saved audio. Search, play, download, or delete saved audio in **Meetings → Recordings & storage**.
-- **Meeting reports** include:
-  - a summary, key decisions, and action items you can tick off;
-  - topics discussed, follow-ups, and a timeline.
+### 🎙️ Meetings
+- Record your **microphone, a browser tab's audio, or both**.
+- **On-device transcription** with selectable engines: **Parakeet** (default, GPU when available), **Moonshine** (lightweight, English), **Whisper** (multilingual, incl. Filipino/Taglish), plus experimental Whisper Small/Turbo and a local engine benchmark.
+- **Crash-resilient recording** — audio is saved every second; **Finish saving** rebuilds interrupted recordings.
+- **AI meeting reports**: summary, key decisions, tickable action items, topics, follow-ups, and a timeline. Generate later if no AI was connected.
+- **Import** Microsoft Teams transcripts (`.vtt` / `.docx` / pasted text) or audio/video files (transcribed locally).
+- **Supplement** a recording with its Teams transcript (time-aligned, speaker names, optional AI cleanup, **Restore original**).
+- **Merge / Unmerge** recordings that belong to one meeting.
+- **Export** a designed PDF report or an AI-ready Markdown file (details, report, notes, full timestamped transcript).
 
-  If no AI was connected when a meeting ended, use **Generate report** later. You can rename a finished meeting and polish its topics with AI.
-- **Import** a meeting from:
-  - a Microsoft Teams transcript (`.vtt` or `.docx`);
-  - transcript text copied out of Teams;
-  - an audio or video recording, which is transcribed on this device.
-- **Supplement** a transcript with the Teams transcript of the same meeting:
-  - HuskyNote lines up the two by time, takes speaker names from Teams, and adds lines it missed.
-  - It can have the AI correct the wording.
-  - **Restore original** undoes it.
-- **Merge** recordings that belong to one meeting, for example after a pause or a crash. The gaps are marked, and **Unmerge** splits them again.
-- **Export:**
-  - a designed PDF report;
-  - a Markdown file with the meeting details, the full report, your notes, and the complete timestamped transcript, ready to hand to another AI;
-  - Copy, or Save as note.
+### 📝 Notes
+- Markdown editor with autosave and a visible save state (unsaved / saving / saved / failed + Retry).
+- Version history with restore, tags, templates, and undo-after-delete.
 
-### Notes
-- Markdown editor with autosave. A visible save state shows unsaved, saving, saved, or failed, with Retry.
-- Version history with restore, tags, templates, and Undo after deleting a note.
+### 📄 Documents
+- PDF reader (PDF.js) with thumbnails, highlights, shapes, numbered step badges, and page-anchored notes.
+- Select text to **Explain, Summarize, Simplify, Make Notes, or Ask AI**.
+- **Turn into Steps** converts a section into a numbered procedure citing its pages.
 
-### Documents
-- PDF reader (PDF.js) with thumbnails, highlights, shapes, numbered step badges, and notes anchored to the page.
-- Select text to Explain, Summarize, Simplify, Make Notes, or Ask AI.
-- **Turn into Steps** converts a section into a numbered procedure that cites its pages.
+### 🧭 Step guides (SOP capture)
+- Capture screens during a task and build a step-by-step guide.
+- Reorder steps; add warnings, prerequisites, expected results, and troubleshooting.
+- Export to **PDF, Markdown, or JSON**.
 
-### Step guides
-- Capture screens during a task, then build a step-by-step guide.
-- Reorder steps and add warnings, prerequisites, expected results, and troubleshooting.
-- Export to PDF, Markdown, JSON, or HTML.
+### 🤖 AI Workspace & Home
+- Attach notes, meetings, and documents as context; chat or run **Summarize, Extract Tasks, Create SOP, Find Decisions, Find Risks**; save answers as notes.
+- Home dashboard: open action items, meeting time, upcoming schedule, meetings without reports, recent work.
+- Full-text search across everything plus a command palette.
 
-### AI Workspace and Home
-- **AI Workspace:** attach notes, meetings, and documents as context, then chat or run commands such as Summarize, Extract Tasks, Find Decisions, or Generate SOP. Save answers as notes.
-- **Home:**
-  - open action items, time spent in meetings, and what's coming up;
-  - meetings still without a report, open questions, and recent work.
-- **Search:** full-text search across everything. Commands open from their own button or shortcut.
+### 🗂️ Profiles & backups
+- Separate **profiles** per job/project, each with its own notes, meetings, documents, guides, and schedule.
+- Complete **`.huskybackup`** archives (including audio) from **Settings → Storage**, restorable into a new profile. See [BACKUP_FORMAT.md](BACKUP_FORMAT.md).
 
-### Profiles and backups
-- **Profiles** keep separate workspaces for different jobs or projects. Each has its own notes, meetings, documents, guides, and schedule.
-- **Backups:** **Settings → Storage** prepares a complete `.huskybackup` file of the current profile, including audio, and restores it into a new profile.
-  - It also shows how much storage is used and whether the browser keeps it permanently.
-  - See [the backup format and recovery notes](BACKUP_FORMAT.md).
+### 🧩 Extras
+- **Browser extension** (Chrome/Edge, [`browser-extension/`](browser-extension)): collect Teams transcripts, capture Google Meet audio, right-click save/summarize.
+- **Optional Python companion** ([`local-companion/`](local-companion)): desktop screen capture and Faster-Whisper.
+- **Desktop apps** for Windows (WebView2), macOS (WKWebView), and Linux (AppImage/tarball).
+- UI localized in English, French, Japanese, and Chinese.
 
----
+## Tech stack
 
-## AI providers
+| Layer | Tools |
+| --- | --- |
+| App | React 18, TypeScript, Vite 6 |
+| UI | Tailwind CSS, Radix UI / shadcn/ui, lucide-react, cmdk |
+| Storage | IndexedDB via Dexie |
+| Speech | `parakeet.js`, `@huggingface/transformers` (Moonshine / Whisper), WebGPU or WASM |
+| Documents & export | pdfjs-dist, jsPDF, react-markdown + remark-gfm, DOMPurify |
+| AI | Ollama (local), `@anthropic-ai/sdk`, Claude Code CLI bridge, Codex CLI bridge (`server/`) |
+| Desktop shells | .NET / WebView2 (Windows), Swift / WKWebView (macOS), AppImage (Linux) |
+| Testing | Vitest, Testing Library, fake-indexeddb, Playwright browser checks |
 
-Choose the AI in **Settings → AI**. Transcription always runs on this device, whichever AI you choose.
+## Install & run from source
 
-| Provider | What you need | Where your text goes |
-| --- | --- | --- |
-| **Local AI (Ollama)** | [Ollama](https://ollama.com) running on this computer with a model such as Llama 3.2, Gemma, or Qwen | Stays on this computer (`http://localhost:11434`) |
-| **Claude** | An Anthropic API key from [platform.claude.com](https://platform.claude.com/settings/keys). Models: Claude Opus 5, Sonnet 5, or Haiku 4.5. Usage is billed to your API account | Anthropic |
-| **Claude Subscription** | A plan that includes [Claude Code](https://code.claude.com/docs/en/setup), installed and signed in on this computer. Works in the Windows app and with `npm run dev` | Anthropic, through Claude Code on this computer |
-| **ChatGPT (Codex)** | A ChatGPT plan and the [Codex app or CLI](https://developers.openai.com/codex) installed and signed in. Works in the Windows app and with `npm run dev` | OpenAI, through Codex on this computer |
+**Prefer a prebuilt app?** Grab it from [Releases](https://github.com/ChristianJayCuevas/HuskyNote/releases/latest) (v0.7.0 ships Windows builds; the latest macOS and Linux builds are in v0.6.0).
 
-### Using your Claude subscription
-1. Install [Claude Code](https://code.claude.com/docs/en/setup).
-2. Open **Settings → AI** and choose **Claude Subscription**.
-3. Click **Sign in with Claude** and finish in the browser. If already signed in to Claude Code with a subscription, the app shows **Signed in with Claude**. You can also run `claude auth login` in a terminal, then click **Check again**.
-4. Use **Plan default**, or choose Sonnet, Opus, or Haiku. Model availability and usage limits depend on your Claude plan.
-
-The local server runs the official `claude --print` CLI. Credentials stay inside Claude Code. Tools, MCP servers, hooks, skills, and session persistence are disabled for these requests. Inherited API credentials and cloud-provider settings are removed from the child process, and an API-account login is rejected before generation. The Claude API option and its model selection remain separate. Like Codex, this requires the Windows desktop app or a local Vite dev/preview server; hosted pages and the macOS/Linux app servers do not provide the bridge yet.
-
-### Using your ChatGPT plan with Codex
-1. Install Codex: the Codex app, or `npm install -g @openai/codex`.
-2. In HuskyNote, open **Settings → AI** and choose **ChatGPT (Codex)**.
-3. Click **Sign in with ChatGPT**. Codex opens the ChatGPT sign-in in your browser. If you are already signed in to Codex, HuskyNote shows **Signed in with ChatGPT**.
-4. Pick a model. Requests count toward your plan's Codex usage limits.
-
-How it works:
-- **HuskyNote never handles your sign-in.** It never sees your ChatGPT password or tokens. Its local server runs `codex exec` with your request, and Codex handles sign-in and billing.
-- **Codex's tools are turned off:** no shell, no code, no web, no files. It can only read what HuskyNote sends and write text back.
-- **The endpoint is locked to HuskyNote.** Only HuskyNote's own page can call it.
-- **Platforms:** the macOS and Linux apps do not include this yet.
-
----
-
-## Browser extension
-
-The extension in [`browser-extension/`](browser-extension) works in Chrome and Edge:
-- It collects Teams meeting transcripts.
-- It captures Google Meet audio.
-- It adds right-click actions to save or summarize selected text.
-
-**Install:**
-1. Open `chrome://extensions` (or `edge://extensions`).
-2. Turn on **Developer mode**.
-3. Click **Load unpacked** and select the `browser-extension` folder.
-
-**Collect a Teams transcript**, even when downloading is turned off:
-1. In Teams on the web, open the meeting's **Recap → Transcript**.
-2. Click the HuskyNote extension, then **Collect transcript from this tab**. You can also right-click and choose **Collect Teams transcript for HuskyNote**.
-
-   The extension scrolls through the transcript panel and reads only the text Teams shows you.
-3. In HuskyNote, open the meeting and choose **Supplement**, or choose **Import a meeting** in Meetings. Select **Paste from Teams**, then **Use it**.
-
----
-
-## Run from source
-
-Requires Node.js 20 or 22.
+Requires **Node.js 20 or 22**.
 
 ```bash
 git clone https://github.com/ChristianJayCuevas/HuskyNote.git
 cd HuskyNote
 npm install
-npm run dev        # http://127.0.0.1:5173
+npm run dev          # http://127.0.0.1:5173
 ```
 
-Quick start scripts check for Ollama, install dependencies, and launch the app:
+Quick-start scripts (check for Ollama, install dependencies, launch):
 
 | System | Command |
 | --- | --- |
 | macOS / Linux | `./start.sh` |
-| Windows | `scripts\setup-windows.bat` |
+| Windows | `scripts\setup-windows.bat` (or `npm run setup:windows`) |
 | Any | `npm start` |
-| Ollama only | `npm run setup:ollama` |
+| Install/configure Ollama only | `npm run setup:ollama` |
 
-Development commands:
+Main `package.json` scripts:
 
 ```bash
-npm test                 # unit and integration tests (Vitest)
-npm run build            # type-check and production build
-npm run build:windows    # Windows desktop app and installer (.NET 9 SDK)
-npm run test:ui-browser  # browser regression checks against a local preview
+npm run dev                         # Vite dev server
+npm run build                       # tsc -b && vite build
+npm run preview                     # preview the production build
+npm test                            # Vitest unit/integration tests
+npm run test:ui-browser             # browser UI regression checks
+npm run test:transcription-browser  # browser transcription checks
+npm run test:backup-browser         # browser backup/restore checks
+npm run build:windows               # Windows app + installer (.NET 9 SDK)
+npm run setup:ollama                # install/configure Ollama
+npm start                           # quick-start launcher
 ```
 
-### Releases
-1. Bump the version in `package.json`.
-2. Add an entry to [`src/data/changelog.json`](src/data/changelog.json). It is both the in-app changelog and the release notes.
-3. Push a tag such as `v0.6.0`.
+## Configuration
 
-GitHub Actions builds Windows, macOS, and Linux and publishes the release with checksums. Every pull request also runs the tests and all three desktop builds.
+### AI providers (Settings → AI)
 
----
+| Provider | What you need | Where your text goes |
+| --- | --- | --- |
+| **Local AI (Ollama)** | [Ollama](https://ollama.com) with a model such as Llama 3.2, Gemma, or Qwen | Stays on this computer (`http://localhost:11434`) |
+| **Claude** | Your Anthropic API key | Anthropic |
+| **Claude Subscription** | Claude Code installed & signed in (Windows app or `npm run dev`) | Anthropic, via local Claude Code |
+| **ChatGPT (Codex)** | Codex app/CLI installed & signed in (Windows app or `npm run dev`) | OpenAI, via local Codex |
 
-## Architecture
+The Claude Code and Codex bridges run the official CLIs with tools disabled; HuskyNote never handles your sign-in credentials.
 
-```
-+-------------------------------------------------------------------------+
-|  Desktop shell: Windows (WebView2) | macOS (WKWebView) | Linux / browser |
-+-------------------------------------------------------------------------+
-|  HuskyNote web app: React 18 + Vite + TypeScript, shadcn/ui components  |
-|                                                                         |
-|  - IndexedDB (Dexie): notes, meetings, audio, documents, per profile    |
-|  - On-device speech: Parakeet, Moonshine, Whisper (WebGPU or WASM)      |
-|  - PDF.js reader, jsPDF and Markdown exports                            |
-+------------------+----------------------+-------------------------------+
-|  Ollama          |  Claude              |  ChatGPT (Codex)              |
-|  localhost:11434 |  Anthropic API,      |  /api/codex on the local      |
-|  (local models)  |  your API key        |  server -> Codex CLI -> OpenAI|
-+------------------+----------------------+-------------------------------+
-   Local server: Vite dev server, the Windows app's built-in server,
-   or serve.py in the macOS and Linux apps
+### Environment (`.env`)
+
+Optionally copy `.env.example` to `.env`. Only non-secret `VITE_`-prefixed values belong here, because they are bundled into the client.
+
+```env
+VITE_OLLAMA_BASE_URL=http://localhost:11434
+VITE_DEFAULT_MODEL=llama3.2:latest
+VITE_LOCAL_COMPANION_URL=http://localhost:8765
 ```
 
-The site can also be deployed as static files (for example, to Vercel with the included `vercel.json`). A hosted copy shows the landing page and downloads. The workspace itself runs in the desktop apps or from a local server, where the data stays on the device.
+Ollama URL and model can also be changed in-app. Transcription engine is chosen in **Settings → Transcription**.
 
-An optional Python companion in [`local-companion/`](local-companion) adds desktop screen capture and Faster-Whisper:
+### Optional local companion
 
 ```bash
 cd local-companion
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-uvicorn main:app --host 127.0.0.1 --port 8765 --reload
+python main.py      # serves http://127.0.0.1:8765
 ```
 
----
+## Roadmap (planned)
 
-## Privacy and data ownership
+> These items are **planned, not shipped**. Full details and acceptance criteria in [ROADMAP.md](ROADMAP.md).
 
-- **Local storage:** notes, meetings, recordings, transcripts, and documents are stored in the app's local database (IndexedDB) on this device.
-- **No accounts, cloud sync, analytics, or trackers.** The update check is off by default. When turned on, it only asks GitHub whether a newer release exists.
-- **On-device transcription:** audio is always transcribed on this device.
-- **AI requests:**
-  - **Ollama:** text stays on this computer.
-  - **Claude:** text is sent to Anthropic. Your key stays on this device and is left out of backups.
-  - **Claude Subscription:** text is sent to Anthropic through the local Claude Code CLI. Sign-in stays inside Claude Code.
-  - **ChatGPT (Codex):** text is sent to OpenAI. Sign-in stays inside Codex.
+- **M1 – Protect user work:** storage usage/quota visibility; verified legacy migration and profile isolation *(backup archive format already implemented)*.
+- **M2 – Trust everyday capture:** first-run readiness flow, clearer model downloads, recording-failure hardening, browser-driven end-to-end tests, capability matrix.
+- **M3 – Connect knowledge to action:** ranked/filtered search with jump-to-source, traceable AI source references, action items → schedule.
+- **M4 – Dependable release:** verified install/upgrade/uninstall on all platforms, security review of bridges and companion, accessibility pass.
+- **Later (evidence-driven):** local OCR, local semantic retrieval, more calendar integrations, optional encrypted sync.
 
----
+## Contributing
 
-## Project documents
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) and use the issue templates for bugs and feature requests. Before opening a PR:
 
-- [Roadmap](ROADMAP.md): priorities, milestones, and acceptance criteria
-- [Backup format](BACKUP_FORMAT.md): archive layout, what is included, and recovery
-- [Transcription plan](TRANSCRIPTION_PLAN.md): engines, language routing, and validation status
-- [Contributing](CONTRIBUTING.md)
-- [Rebranding notes](REBRANDING.md)
+```bash
+npm test && npm run build
+```
 
----
+CI runs the tests (Node 20 and 22) and the Windows, macOS, and Linux desktop builds on every pull request to `main`. Report security issues per [SECURITY.md](SECURITY.md).
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
-
-HuskyNote is a rebranded fork of [DomoNote](https://github.com/darknecrocities/DomoNote) by darknecrocities, used under the MIT License. The original copyright notice is retained in [LICENSE](LICENSE). Rebranding progress for the codebase is tracked in [REBRANDING.md](REBRANDING.md).
+[MIT](LICENSE). HuskyNote is a rebranded fork of [DomoNote](https://github.com/darknecrocities/DomoNote) by darknecrocities, used under the MIT License; the original copyright notice is retained in [LICENSE](LICENSE).
