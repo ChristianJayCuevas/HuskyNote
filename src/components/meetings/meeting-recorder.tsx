@@ -41,6 +41,8 @@ import { FloatingMeetingController } from './floating-meeting-controller';
 import { MicrophonePicker } from '../ui/microphone-picker';
 import { openMicrophone } from '../../services/audio/microphone';
 import { ScreenSnipperOverlay, type CropRect } from './screen-snipper-overlay';
+import { PasteTranscriptField } from './paste-transcript-field';
+import { importTranscriptText } from '../../services/meetings/meeting-import';
 import {
   SUPPORTED_LANGUAGES,
   TRANSLATION_TARGETS,
@@ -66,6 +68,7 @@ import {
   ExternalLink,
   HardDrive,
   ChevronDown,
+  ClipboardPaste,
 } from 'lucide-react';
 import { tourTarget } from '@/features/guided-tour/tours/targets';
 
@@ -92,7 +95,9 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
   const [isPaused, setIsPaused] = useState(false);
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [isSnipping, setIsSnipping] = useState(false);
-  const [recordSource, setRecordSource] = useState<'mic' | 'tab'>('mic');
+  const [recordSource, setRecordSource] = useState<'mic' | 'tab' | 'paste'>('mic');
+  const [pastedTranscript, setPastedTranscript] = useState('');
+  const [isSavingPaste, setIsSavingPaste] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
 
   // Scheduled events detected by Local AI / speech transcription
@@ -1096,6 +1101,21 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
   };
   stopAndSaveRef.current = stopAndSaveMeeting;
 
+  /** Save a pasted transcript as a new meeting, the same way an imported transcript is saved */
+  const savePastedTranscript = async () => {
+    setIsSavingPaste(true);
+    try {
+      const id = await importTranscriptText(pastedTranscript, { title: meetingTitle.trim() || 'Meeting Title', startTime: Date.now(), manualNotes });
+      const saved = await db.meetings.get(id);
+      addToast('Transcript saved. Generate a report from it.', 'success');
+      if (saved) onMeetingSaved(saved);
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : String(error), 'error');
+    } finally {
+      setIsSavingPaste(false);
+    }
+  };
+
   // Generic "Speaker N" labels are shown as the host; dots use chart-1..5 in order of first appearance
   const displaySpeakerOf = (speaker: string) => (/^speaker\s*\d*$/i.test(speaker) ? 'You / Host' : speaker);
   const speakerColors = useMemo(
@@ -1198,12 +1218,12 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
               {!isRecording ? (
                 <>
                   <div className="flex w-fit max-w-full flex-wrap items-center gap-2" {...tourTarget('meeting-record')}>
-                    {/* Source choice: microphone or Meet / tab audio */}
+                    {/* Source choice: microphone, Meet / tab audio, or a pasted transcript */}
                     <ToggleGroup
                       type="single"
                       variant="outline"
                       value={recordSource}
-                      onValueChange={(source) => source && setRecordSource(source as 'mic' | 'tab')}
+                      onValueChange={(source) => source && setRecordSource(source as 'mic' | 'tab' | 'paste')}
                       aria-label="Recording source"
                     >
                       <ToggleGroupItem value="mic" title="Record from your microphone">
@@ -1214,34 +1234,51 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({ onMeetingSaved
                         <Radio aria-hidden="true" />
                         <span>Tab</span>
                       </ToggleGroupItem>
+                      <ToggleGroupItem value="paste" title="Paste a transcript instead of recording">
+                        <ClipboardPaste aria-hidden="true" />
+                        <span>Paste transcript</span>
+                      </ToggleGroupItem>
                     </ToggleGroup>
 
-                    <div className="inline-flex items-stretch">
-                      <Button
-                        variant="default"
-                        onClick={() => (recordSource === 'tab' ? setIsMeetModalOpen(true) : startRecording())}
-                        className="rounded-r-none"
-                      >
-                        <Mic aria-hidden="true" />
-                        <span>Start recording</span>
+                    {recordSource === 'paste' ? (
+                      <Button variant="default" onClick={() => void savePastedTranscript()} disabled={isSavingPaste || !pastedTranscript.trim()}>
+                        <FileText aria-hidden="true" />
+                        <span>{isSavingPaste ? 'Saving…' : 'Save transcript'}</span>
                       </Button>
-                      {/* The chosen microphone is also the host mic for Google Meet / Tab capture */}
-                      <MicrophonePicker
-                        align="right"
-                        triggerClassName={cn(
-                          buttonVariants({ variant: 'default', size: 'icon' }),
-                          'w-7 rounded-l-none border-l border-primary-foreground/20 focus-visible:ring-offset-0'
-                        )}
-                      />
-                    </div>
+                    ) : (
+                      <div className="inline-flex items-stretch">
+                        <Button
+                          variant="default"
+                          onClick={() => (recordSource === 'tab' ? setIsMeetModalOpen(true) : startRecording())}
+                          className="rounded-r-none"
+                        >
+                          <Mic aria-hidden="true" />
+                          <span>Start recording</span>
+                        </Button>
+                        {/* The chosen microphone is also the host mic for Google Meet / Tab capture */}
+                        <MicrophonePicker
+                          align="right"
+                          triggerClassName={cn(
+                            buttonVariants({ variant: 'default', size: 'icon' }),
+                            'w-7 rounded-l-none border-l border-primary-foreground/20 focus-visible:ring-offset-0'
+                          )}
+                        />
+                      </div>
+                    )}
                   </div>
 
-                  <p className="mt-3 text-sm text-muted-foreground" role="status">
-                    {speechEngine.state === 'ready' ? 'Transcription is ready on this device.'
-                      : speechEngine.state === 'loading' ? 'The speech model is loading. Audio capture and transcript readiness are separate.'
-                      : 'Set up and test transcription in Settings before relying on live text.'}
-                    {' '}{recordSource === 'mic' ? 'Microphone permission is requested when you start.' : 'Choose a shared tab with audio when you start.'}
-                  </p>
+                  {recordSource === 'paste' ? (
+                    <div className="mt-3">
+                      <PasteTranscriptField id="meeting-pasted-transcript" value={pastedTranscript} onChange={setPastedTranscript} disabled={isSavingPaste} />
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-muted-foreground" role="status">
+                      {speechEngine.state === 'ready' ? 'Transcription is ready on this device.'
+                        : speechEngine.state === 'loading' ? 'The speech model is loading. Audio capture and transcript readiness are separate.'
+                        : 'Set up and test transcription in Settings before relying on live text.'}
+                      {' '}{recordSource === 'mic' ? 'Microphone permission is requested when you start.' : 'Choose a shared tab with audio when you start.'}
+                    </p>
+                  )}
                 </>
               ) : (
                 /* Live audio level meter */

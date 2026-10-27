@@ -7,7 +7,7 @@ import { normalizeSpeech } from '../audio/speech-dsp';
 import { resolveTranscriptionEngine } from '../audio/transcription-engines';
 import { WHISPER_SAMPLE_RATE } from '../audio/pcm-capture';
 import { extractDocxParagraphs } from '../documents/universal-parser';
-import { cuesToSegments, mergeCues, parseTeamsDocxParagraphs, parseVtt, type ImportedCue } from './transcript-import';
+import { cuesToSegments, mergeCues, parseTeamsDocxParagraphs, parseTranscriptText, parseVtt, type ImportedCue } from './transcript-import';
 
 const RECORDING_SPEAKER = 'Speaker';
 /** Windows are cut at the quietest moment between 18 s and 25 s so words are not split */
@@ -19,6 +19,8 @@ const SILENCE_RMS = 0.0025;
 export interface ImportDetails {
   title: string;
   startTime: number;
+  /** Notes typed before the transcript was pasted */
+  manualNotes?: string;
 }
 
 function newMeeting(id: string, details: ImportDetails, durationSeconds: number, transcript: TranscriptSegment[], spokenLanguage?: string): Meeting {
@@ -29,7 +31,7 @@ function newMeeting(id: string, details: ImportDetails, durationSeconds: number,
     endTime: details.startTime + Math.round(durationSeconds * 1000),
     durationSeconds: Math.round(durationSeconds),
     transcript,
-    manualNotes: '',
+    manualNotes: details.manualNotes ?? '',
     timeline: [],
     screenshots: [],
     createdAt: Date.now(),
@@ -57,10 +59,40 @@ export async function importTranscriptCues(lines: ImportedCue[], details: Import
   if (!lines.length) throw new Error('There are no transcript lines to import.');
   const cues = mergeCues(lines);
   const id = crypto.randomUUID();
-  const lastStart = cues[cues.length - 1].startSeconds;
-  const durationSeconds = lastStart + Math.min(30, Math.max(5, cues[cues.length - 1].text.split(' ').length / 2.5));
-  await db.meetings.put(newMeeting(id, details, durationSeconds, cuesToSegments(cues, id)));
+  await db.meetings.put(newMeeting(id, details, transcriptSeconds(cues), cuesToSegments(cues, id)));
   return id;
+}
+
+/** From the start to the end of the last line, which has no end time of its own */
+const transcriptSeconds = (cues: ImportedCue[]) => {
+  const last = cues[cues.length - 1];
+  return last.startSeconds + Math.min(30, Math.max(5, last.text.split(' ').length / 2.5));
+};
+
+function readTranscriptText(text: string): ImportedCue[] {
+  const cues = parseTranscriptText(text);
+  if (!cues.length) throw new Error('No transcript lines were found in the pasted text.');
+  return cues;
+}
+
+/** Create a meeting from a transcript pasted as text; returns its id */
+export async function importTranscriptText(text: string, details: ImportDetails): Promise<string> {
+  return importTranscriptCues(readTranscriptText(text), details);
+}
+
+/** Give a meeting that has no transcript one pasted as text; returns the number of speaker turns */
+export async function addPastedTranscript(meetingId: string, text: string): Promise<number> {
+  const cues = mergeCues(readTranscriptText(text));
+  return db.transaction('rw', db.meetings, async () => {
+    const meeting = await db.meetings.get(meetingId);
+    if (!meeting) throw new Error('This meeting no longer exists.');
+    if (meeting.transcript.length) throw new Error('This meeting already has a transcript.');
+    await db.meetings.update(meetingId, {
+      transcript: cuesToSegments(cues, meetingId),
+      durationSeconds: meeting.durationSeconds || Math.round(transcriptSeconds(cues)),
+    });
+    return cues.length;
+  });
 }
 
 // ── Recording import job (one at a time, survives switching pages) ──────────
