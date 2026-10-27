@@ -78,6 +78,7 @@ import {
   Combine,
   Wrench,
   FilePlus2,
+  ClipboardPaste,
 } from 'lucide-react';
 import { useAI } from '../../context/ai-context';
 import { PROVIDER_NAMES } from '../../services/ai/active-provider';
@@ -87,6 +88,7 @@ import { finishInterruptedRecording, isUnfinishedRecording, unmergeMeeting } fro
 import { MergeMeetingsDialog } from './merge-meetings-dialog';
 import { RecordingParts } from './recording-parts';
 import { SupplementTranscriptDialog } from './supplement-transcript-dialog';
+import { PasteTranscriptDialog } from './paste-transcript-dialog';
 import { restoreOriginalTranscript } from '../../services/meetings/supplement-store';
 import { SETTINGS_TAB_STORAGE_KEY } from '../../views/settings-view';
 import type { ScheduleEvent } from '../../types';
@@ -185,6 +187,7 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
   const [isFinishing, setIsFinishing] = useState(false);
   const [isUnmerging, setIsUnmerging] = useState(false);
   const [isSupplementOpen, setIsSupplementOpen] = useState(false);
+  const [isPasteOpen, setIsPasteOpen] = useState(false);
   const { isConnected, isChecking, selectedModel, provider } = useAI();
 
   // ── Local State ───────────────────────────────────────────────────────────
@@ -658,6 +661,13 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
         open={isSupplementOpen}
         onOpenChange={setIsSupplementOpen}
         meeting={currentMeeting}
+        onDone={(message) => addToast(message, 'success')}
+      />
+
+      <PasteTranscriptDialog
+        open={isPasteOpen}
+        onOpenChange={setIsPasteOpen}
+        meetingId={currentMeeting.id}
         onDone={(message) => addToast(message, 'success')}
       />
 
@@ -1173,9 +1183,13 @@ export const MeetingSummaryView: React.FC<MeetingSummaryViewProps> = ({
               </div>
 
               {currentMeeting.transcript.length === 0 ? (
-                <p className="py-12 text-center text-sm text-muted-foreground">
-                  No verbal transcript was recorded for this session.
-                </p>
+                <div className="flex flex-col items-center gap-3 py-12 text-center">
+                  <p className="text-sm text-muted-foreground">No verbal transcript was recorded for this session.</p>
+                  <Button size="sm" variant="outline" onClick={() => setIsPasteOpen(true)}>
+                    <ClipboardPaste aria-hidden="true" />
+                    <span>Paste transcript</span>
+                  </Button>
+                </div>
               ) : (
                 <ol className="mt-2 space-y-px" aria-label="Transcript segments">
                   {currentMeeting.transcript.map((seg, idx) => {

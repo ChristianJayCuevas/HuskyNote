@@ -132,6 +132,67 @@ export function parsePastedTranscript(text: string): ImportedCue[] {
   return parseTeamsDocxParagraphs(joined);
 }
 
+const TIME = String.raw`\d{1,2}:\d{2}(?::\d{2})?(?:[.,]\d+)?`;
+/** "[00:01:02] ", "(0:03) - ", a bare "00:01:02 " before a speaker label, or a time on its own line */
+const LEADING_TIME = new RegExp(`^(?:[[(](${TIME})[\\])]|(${TIME})(?=\\s+[^:]{1,60}:(?:\\s|$)|$))\\s*(?:[-–|]\\s*)?`);
+/** "Ana Cruz: Hello", "Ana Cruz (0:03): Hello", "Ana Cruz [00:00:03]:" */
+const SPEAKER_LABEL = new RegExp(`^([^\\s\\d:[(][^:!?,;]{0,59}?)\\s*(?:[[(](${TIME})[\\])])?\\s*:(?:\\s+(.*))?$`);
+/** Seconds a line takes to say, at about 150 words a minute */
+const spokenSeconds = (text: string) => Math.max(1, Math.round(text.split(' ').length / 2.5));
+
+function readTextLine(line: string) {
+  const lead = line.match(LEADING_TIME);
+  const leadTime = lead ? parseTimestamp(lead[1] ?? lead[2]) : null;
+  const rest = lead ? line.slice(lead[0].length) : line;
+  const label = rest.match(SPEAKER_LABEL);
+  const speaker = label && label[1].trim().split(' ').length <= 4 ? label[1].trim() : null;
+  return { leadTime, rest, label: speaker ? { speaker, time: label?.[2] ? parseTimestamp(label[2]) : null, text: label?.[3] ?? '' } : null };
+}
+
+/**
+ * Parse a transcript pasted as text from any app. WebVTT/SRT and Teams panel
+ * copies are read as those. Otherwise "Ana: Hello" lines keep their speaker
+ * (when enough lines have one, so a colon in a sentence is not a name), lines
+ * without one continue the speaker above, and a leading "[00:01:02]" keeps its
+ * time; lines without a time are placed after the one before.
+ */
+export function parseTranscriptText(text: string): ImportedCue[] {
+  const raw = text.replace(/^﻿/, '').replace(/\r\n?/g, '\n').trim();
+  if (!raw) return [];
+  if (/^WEBVTT/.test(raw) || /^\S.*-->/m.test(raw)) {
+    const cues = parseVtt(raw);
+    if (cues.length) return cues;
+  }
+  const lines = raw.split('\n').map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  const read = lines.map(readTextLine);
+  const labeled = read.filter((l) => l.label).length;
+  const useLabels = labeled > 0 && labeled >= lines.length * 0.3;
+  if (!useLabels) {
+    // A Teams panel copy ("Ana Cruz" / "0:03" / "Hello"), only when it starts at the top so nothing above is dropped
+    const teams = parsePastedTranscript(raw);
+    const first = lines.find((l) => !/^[A-Z]{1,3}$/.test(l) && !NOT_SPEECH.test(l));
+    if (teams.length && first?.startsWith(teams[0].speaker)) return teams;
+  }
+
+  const cues: ImportedCue[] = [];
+  let pendingTime: number | null = null;
+  let nextStart = 0;
+  for (const { leadTime, rest, label } of read) {
+    const spoken = useLabels ? label : null;
+    const words = spoken ? spoken.text : rest;
+    const time: number | null = spoken?.time ?? leadTime ?? pendingTime;
+    // A time on its own line belongs to the line after it
+    if (!words && !spoken) { pendingTime = time; continue; }
+    pendingTime = null;
+    const last = cues[cues.length - 1];
+    if (useLabels && !spoken && last && time === null) last.text = last.text ? `${last.text} ${words}` : words;
+    else cues.push({ startSeconds: time ?? nextStart, speaker: spoken?.speaker ?? (useLabels && last ? last.speaker : UNKNOWN_SPEAKER), text: words });
+    const current = cues[cues.length - 1];
+    nextStart = current.startSeconds + spokenSeconds(current.text);
+  }
+  return cues.filter((c) => c.text);
+}
+
 /**
  * Add newly pasted lines to those collected so far. Pieces may overlap: a line
  * pasted twice (same speaker and time) is kept once, in its longest form.
